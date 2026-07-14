@@ -41,9 +41,11 @@ class CreamSceneBoundary extends Component<
   }
 }
 
-const MINIMUM_DISPLAY_MS = 2200;
+const FALLBACK_MINIMUM_MS = 2200;
+const SHADER_RESIDENCY_MS = 2200;
+const WEBGL_ACQUISITION_MS = 2400;
 const EXIT_DURATION_MS = 1780;
-const HARD_DEADLINE_MS = 4200;
+const HARD_DEADLINE_MS = 5000;
 
 function waitForImage(image: HTMLImageElement | null) {
   if (!image) return Promise.resolve();
@@ -56,16 +58,20 @@ export function CreamIntro() {
   const [webglReady, setWebglReady] = useState(false);
   const webglReadyRef = useRef(false);
   const leavingRef = useRef(false);
+  const registerWebglReadyRef = useRef<() => void>(() => undefined);
+  const registerWebglFailureRef = useRef<() => void>(() => undefined);
 
   const handleFirstFrame = useCallback(() => {
     if (leavingRef.current) return;
     webglReadyRef.current = true;
     setWebglReady(true);
+    registerWebglReadyRef.current();
   }, []);
   const handleSceneFailure = useCallback(() => {
     webglReadyRef.current = false;
     setWebglReady(false);
     setAllowWebgl(false);
+    registerWebglFailureRef.current();
   }, []);
 
   useEffect(() => {
@@ -85,9 +91,12 @@ export function CreamIntro() {
     const previousOverflow = document.body.style.overflow;
     let disposed = false;
     let leaving = false;
-    let minimumReady = false;
+    let fallbackMinimumReady = false;
+    let shaderResidencyReady = false;
+    let fallbackMode = false;
     let pageReady = false;
     let exitTimer = 0;
+    let shaderResidencyTimer = 0;
 
     root.classList.add('cream-intro-active');
     document.body.style.overflow = 'hidden';
@@ -117,13 +126,43 @@ export function CreamIntro() {
     };
 
     const checkReadiness = () => {
-      if (minimumReady && pageReady) leave();
+      if (!pageReady) return;
+      if (webglReadyRef.current && shaderResidencyReady) leave();
+      if (fallbackMode && fallbackMinimumReady) leave();
     };
 
-    const minimumTimer = window.setTimeout(() => {
-      minimumReady = true;
+    const registerWebglReady = () => {
+      if (disposed || leaving) return;
+      fallbackMode = false;
+      shaderResidencyReady = false;
+      window.clearTimeout(shaderResidencyTimer);
+      shaderResidencyTimer = window.setTimeout(() => {
+        shaderResidencyReady = true;
+        checkReadiness();
+      }, SHADER_RESIDENCY_MS);
+    };
+
+    const registerWebglFailure = () => {
+      if (disposed || leaving || webglReadyRef.current) return;
+      fallbackMode = true;
+      shaderResidencyReady = false;
+      window.clearTimeout(shaderResidencyTimer);
       checkReadiness();
-    }, MINIMUM_DISPLAY_MS);
+    };
+
+    registerWebglReadyRef.current = registerWebglReady;
+    registerWebglFailureRef.current = registerWebglFailure;
+
+    const fallbackMinimumTimer = window.setTimeout(() => {
+      fallbackMinimumReady = true;
+      checkReadiness();
+    }, FALLBACK_MINIMUM_MS);
+
+    const webglAcquisitionTimer = window.setTimeout(() => {
+      if (webglReadyRef.current) return;
+      setAllowWebgl(false);
+      registerWebglFailure();
+    }, WEBGL_ACQUISITION_MS);
 
     const hardDeadline = window.setTimeout(leave, HARD_DEADLINE_MS);
 
@@ -157,12 +196,16 @@ export function CreamIntro() {
     return () => {
       disposed = true;
       window.cancelAnimationFrame(enableFrame);
-      window.clearTimeout(minimumTimer);
+      window.clearTimeout(fallbackMinimumTimer);
+      window.clearTimeout(webglAcquisitionTimer);
+      window.clearTimeout(shaderResidencyTimer);
       window.clearTimeout(hardDeadline);
       window.clearTimeout(exitTimer);
       motionQuery.removeEventListener('change', handleMotionChange);
       document.removeEventListener('visibilitychange', handleVisibility);
       window.removeEventListener('load', handleWindowLoad);
+      registerWebglReadyRef.current = () => undefined;
+      registerWebglFailureRef.current = () => undefined;
       restorePage();
     };
   }, []);
