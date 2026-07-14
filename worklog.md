@@ -553,3 +553,65 @@ Unresolved Issues / Risks / Next-phase Priorities:
 4. Could add an Instagram/social UGC feed section. Future enhancement.
 5. Cart could persist across the WhatsApp send (currently in-memory + localStorage; on successful
    send could offer "vaciar carrito"). Minor.
+
+---
+Task ID: cron-round-9
+Agent: webDevReview (cron)
+Task: Recurring QA + integrate testimonial avatars (from round-9 image gen), cart success state, hero parallax.
+
+Work Log:
+- Read prior worklog (8 rounds complete). Round 9 (previous) was interrupted by a tooling outage
+  during avatar image generation — 6 avatar images were actually all generated successfully
+  (mariana, refugio, tonita, diego, lalo, chelo in public/img/avatars/) but NO code was integrated.
+- Confirmed project stable (HTTP 200, lint 0 errors/1 font warning, no runtime errors).
+- agent-browser QA: all subsystems healthy. VLM suggested: (1) customer photos in testimonials for
+  social proof, (2) hero parallax for dynamism. Both align with planned round-9 work.
+
+Implemented (all melting-theme coherent):
+1. **Real customer avatars in testimonials** (VLM #1, completed round-9 image-gen integration):
+   Replaced the 6 plain white gooey SVG avatar placeholders with real AI-generated customer photos
+   (Mariana, Don Refugio, La Toñita, Diego, Chef Lalo, Doña Chelo) inside the existing gooey-filtered
+   circular frames (kept the drip + soft highlight overlay for theme consistency). CSS updated:
+   `.head` now `overflow:hidden` with `img{object-fit:cover}`, highlight `::after` opacity reduced
+   to 0.25 so faces stay visible. Verified: 12 avatar imgs in DOM (6×2 marquee), all serve 200,
+   VLM "avatars visible and clear, add social proof/authenticity, no bugs".
+2. **Cart post-WhatsApp success state** (worklog priority #5): after the WhatsApp send, the cart
+   transitions (600ms delay) to an `is-success` state showing a bobbing 🍦 emoji, "¡Pedido enviado!"
+   title, a confirmation message, and two buttons: "Vaciar carrito" (clears cart + saves + exits
+   success) and "Guardarlo" (keeps cart for re-order, exits success). Success view hides body/checkout/
+   foot. Success state cleared on cart open/close. Verified: WhatsApp click → is-success ✓; "Vaciar"
+   → success gone + empty state + badge "0" ✓.
+3. **Hero scroll parallax** (VLM #2): added two ScrollTrigger scrub parallax effects on the hero:
+   - Cone: drifts up (translateY -80px) + fades (opacity → 0.4) as you scroll past the hero. Integrated
+     into the existing cursor-tilt coneTick via a `parallaxY` variable (transform now includes
+     translateY). Desktop only (cursor tilt is desktop-only).
+   - Bubbles container: drifts down (translateY +60px) + fades (opacity → 0.2) — opposite direction
+     creates depth. Renamed local var to `bubbleContainer` to avoid redeclaring the existing
+     `bubbleField` (caught a 500 SSR error from the duplicate const, fixed immediately).
+4. **Styling polish**: success-state visuals (successBob keyframe bobbing emoji, pistache/fresa button
+   hovers), avatar frame highlight softened.
+
+Verification (agent-browser + VLM, post-changes):
+- DOM: 12 testi avatar imgs ✓, .cart__success ✓, .cart__success-btn--clear/keep ✓.
+- Avatars: /img/avatars/mariana.png 200 ✓; VLM "visible, clear, add social proof, no bugs".
+- Cart success: WhatsApp send → is-success ✓; "Vaciar" → success gone + empty + badge "0" ✓;
+  "Guardarlo" exits success ✓. VLM: "polished, on-theme, buttons clear, no bugs".
+- Hero parallax: ScrollTrigger created for cone + bubbles (scrub). No errors.
+- Mobile 390×844: 12 avatars + cart success present ✓.
+- VLM full-page: "no broken/overlaps, cohesive, high production value".
+- Fixed a 500 SSR error (duplicate `bubbleField` const) → HTTP 200 recovered.
+- `bun run lint` = 0 errors (1 acceptable font warning). HTTP 200. No runtime/console errors.
+
+Stage Summary:
+- Testimonials now show real customer faces → stronger social proof + authenticity.
+- Cart has a complete post-purchase success flow (celebration + clear/keep) → better UX closure.
+- Hero is now dynamic with scroll parallax (cone drifts up/fades, bubbles drift down/fades) → depth.
+- All 6 generated avatar images from the interrupted round-9 are now productively used.
+
+Unresolved Issues / Risks / Next-phase Priorities:
+1. Image optimization: full-size PNGs still served (~95-136KB avatars + ~100-160KB gallery/historia).
+   Next/Image + WebP would improve LCP. Low priority for single landing page.
+2. Color-contrast audit (fresa-on-crema small text) still pending formal check.
+3. Promo is hardcoded to Cajeta/-15%/end-of-month. Could be configurable. Low priority.
+4. Could add an Instagram/social UGC feed section. Future enhancement.
+5. Cart success state could capture the order total/items for display. Minor.

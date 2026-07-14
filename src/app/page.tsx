@@ -471,8 +471,9 @@ section{position:relative}
 }
 .testi__avatar{display:flex;align-items:center;gap:0.8rem}
 .testi__avatar-goo{width:54px;height:54px;flex-shrink:0;filter:url(#goo);position:relative}
-.testi__avatar-goo .head{position:absolute;inset:0;border-radius:50%;background:rgba(255,255,255,0.7)}
-.testi__avatar-goo .head::after{content:'';position:absolute;left:22%;top:16%;width:34%;height:28%;border-radius:50%;background:rgba(255,255,255,0.85);filter:blur(1px)}
+.testi__avatar-goo .head{position:absolute;inset:0;border-radius:50%;background:rgba(255,255,255,0.7);overflow:hidden}
+.testi__avatar-goo .head img{width:100%;height:100%;object-fit:cover;display:block}
+.testi__avatar-goo .head::after{content:'';position:absolute;left:22%;top:16%;width:34%;height:28%;border-radius:50%;background:rgba(255,255,255,0.25);filter:blur(1px);pointer-events:none}
 .testi__avatar-goo .drip{position:absolute;left:50%;bottom:-2px;width:10px;height:10px;border-radius:50%;background:rgba(255,255,255,0.7);transform:translateX(-50%)}
 .testi__who{font-family:var(--display);font-weight:700;font-size:1.05rem;line-height:1.1}
 .testi__where{font-size:0.82rem;opacity:0.7;font-weight:500}
@@ -688,6 +689,21 @@ section{position:relative}
 .cart__summary-row span:last-child{font-weight:600}
 .cart__checkout-msg{font-size:0.82rem;color:var(--fresa-deep);min-height:1.1em;font-weight:600;text-align:center}
 .cart__cta-whatsapp{background:linear-gradient(160deg,#B8E0C8,#6FB489);color:var(--chocolate);box-shadow:inset 0 2px 4px rgba(255,255,255,0.4),inset 0 -6px 10px rgba(59,35,24,0.12),0 12px 24px -10px rgba(111,180,137,0.55)}
+
+/* cart success state (after WhatsApp send) */
+.cart__success{display:none;flex-direction:column;align-items:center;text-align:center;gap:0.8rem;padding:2.5rem 1.6rem;flex:1;justify-content:center}
+.cart.is-success .cart__body,.cart.is-success .cart__checkout,.cart.is-success .cart__foot{display:none}
+.cart.is-success .cart__success{display:flex}
+.cart__success-emoji{font-size:3.4rem;filter:drop-shadow(0 6px 10px rgba(232,85,122,0.3));animation:successBob 1.6s var(--ease-cream) infinite}
+@keyframes successBob{0%,100%{transform:translateY(0) rotate(-3deg)}50%{transform:translateY(-8px) rotate(3deg)}}
+.cart__success-title{font-family:var(--display);font-weight:800;font-size:1.5rem;color:var(--chocolate)}
+.cart__success-text{font-size:0.95rem;color:var(--chocolate);opacity:0.75;max-width:28ch;line-height:1.5}
+.cart__success-actions{display:flex;gap:0.6rem;margin-top:0.6rem;flex-wrap:wrap;justify-content:center}
+.cart__success-btn{border:0;border-radius:999px;padding:0.7rem 1.3rem;font-family:var(--display);font-weight:700;font-size:0.9rem;cursor:pointer;transition:transform 0.3s var(--ease-cream),background 0.3s var(--ease-cream)}
+.cart__success-btn--clear{background:var(--fresa);color:var(--chocolate)}
+.cart__success-btn--clear:hover{transform:scale(0.95);background:var(--fresa-deep);color:var(--crema)}
+.cart__success-btn--keep{background:rgba(59,35,24,0.1);color:var(--chocolate)}
+.cart__success-btn--keep:hover{transform:scale(0.95);background:rgba(59,35,24,0.2)}
 
 /* restore toast */
 .restore-toast{
@@ -1143,7 +1159,7 @@ export default function Home() {
       // ---------- Hero cone cursor tilt ----------
       const cone = document.querySelector('.hero__cone') as HTMLElement;
       if (cone && !isTouch) {
-        let tx = 0, ty = 0, cx = 0, cy = 0;
+        let tx = 0, ty = 0, cx = 0, cy = 0, parallaxY = 0;
         w.addEventListener('mousemove', (e: MouseEvent) => {
           const rx = (e.clientX / w.innerWidth - 0.5) * 2;
           const ry = (e.clientY / w.innerHeight - 0.5) * 2;
@@ -1151,10 +1167,24 @@ export default function Home() {
         });
         const coneTick = () => {
           cx += (tx - cx) * 0.08; cy += (ty - cy) * 0.08;
-          cone.style.transform = `perspective(900px) rotateY(${cx}deg) rotateX(${cy}deg)`;
+          cone.style.transform = `perspective(900px) rotateY(${cx}deg) rotateX(${cy}deg) translateY(${parallaxY}px)`;
           requestAnimationFrame(coneTick);
         };
         requestAnimationFrame(coneTick);
+        // scroll parallax: cone drifts up + fades as you scroll past hero
+        ScrollTrigger.create({
+          trigger: '.hero', start: 'top top', end: 'bottom top', scrub: 1,
+          onUpdate: (self: any) => { parallaxY = -self.progress * 80; cone.style.opacity = String(1 - self.progress * 0.6); },
+        });
+      }
+
+      // ---------- Hero bubbles scroll parallax ----------
+      const bubbleContainer = document.querySelector('.hero__bubbles');
+      if (bubbleContainer) {
+        ScrollTrigger.create({
+          trigger: '.hero', start: 'top top', end: 'bottom top', scrub: 1.2,
+          onUpdate: (self: any) => { bubbleContainer.style.transform = `translateY(${self.progress * 60}px)`; bubbleContainer.style.opacity = String(1 - self.progress * 0.8); },
+        });
       }
 
       // ---------- Buttons squish + drips ----------
@@ -1340,12 +1370,12 @@ export default function Home() {
         if (cartCtaLabel) cartCtaLabel.textContent = 'Ver mi pedido';
       };
       const openCart = () => {
-        if (cartEl) cartEl.classList.add('is-open');
+        if (cartEl) { cartEl.classList.add('is-open'); cartEl.classList.remove('is-success'); }
         if (cartOverlay) cartOverlay.classList.add('is-open');
         exitCheckout();
       };
       const closeCart = () => {
-        if (cartEl) { cartEl.classList.remove('is-open'); exitCheckout(); }
+        if (cartEl) { cartEl.classList.remove('is-open'); cartEl.classList.remove('is-success'); exitCheckout(); }
         if (cartOverlay) cartOverlay.classList.remove('is-open');
       };
       if (cartOverlay) cartOverlay.addEventListener('click', closeCart);
@@ -1380,6 +1410,19 @@ export default function Home() {
         const msg = `¡Hola Helado Nube! 🍦 Quiero pedir:%0A${lines}${discountLine}%0ATotal: $${total} MNX%0A%0ANombre: ${name}%0ATel: ${phone || '—'}%0ADirección: ${addr || '—'}`;
         if (cartCheckoutMsg) { cartCheckoutMsg.textContent = '¡Abriendo WhatsApp! Te esperamos cremosito. 🍦'; cartCheckoutMsg.style.color = '#6FB489'; }
         w.open('https://wa.me/?text=' + msg, '_blank');
+        // show success state after opening WhatsApp
+        setTimeout(() => { if (cartEl) cartEl.classList.add('is-success'); }, 600);
+      });
+      // success state buttons
+      document.querySelector('.cart__success-btn--clear')?.addEventListener('click', () => {
+        Object.keys(cartItems).forEach((k) => delete cartItems[k]);
+        renderCart(); saveCart();
+        if (cartEl) cartEl.classList.remove('is-success');
+        exitCheckout();
+      });
+      document.querySelector('.cart__success-btn--keep')?.addEventListener('click', () => {
+        if (cartEl) cartEl.classList.remove('is-success');
+        exitCheckout();
       });
       // open cart when clicking the float-order bubble (instead of jumping straight to CTA)
       floatOrderEl?.addEventListener('click', (e) => {
@@ -2353,7 +2396,7 @@ export default function Home() {
             <div className="testi__track">
               <article className="testi__card" style={{ ['--tc' as any]: 'var(--fresa)' }}>
                 <div className="testi__avatar">
-                  <div className="testi__avatar-goo"><div className="head" /><div className="drip" /></div>
+                  <div className="testi__avatar-goo"><div className="head"><img src="/img/avatars/mariana.png" alt="Mariana G." loading="lazy" /></div><div className="drip" /></div>
                   <div>
                     <div className="testi__who">Mariana G.</div>
                     <div className="testi__where">Roma Norte, CDMX</div>
@@ -2367,7 +2410,7 @@ export default function Home() {
               </article>
               <article className="testi__card" style={{ ['--tc' as any]: 'var(--pistache)' }}>
                 <div className="testi__avatar">
-                  <div className="testi__avatar-goo"><div className="head" /><div className="drip" /></div>
+                  <div className="testi__avatar-goo"><div className="head"><img src="/img/avatars/refugio.png" alt="Don Refugio" loading="lazy" /></div><div className="drip" /></div>
                   <div>
                     <div className="testi__who">Don Refugio</div>
                     <div className="testi__where">Coyoacán, CDMX</div>
@@ -2381,7 +2424,7 @@ export default function Home() {
               </article>
               <article className="testi__card" style={{ ['--tc' as any]: 'var(--vainilla)' }}>
                 <div className="testi__avatar">
-                  <div className="testi__avatar-goo"><div className="head" /><div className="drip" /></div>
+                  <div className="testi__avatar-goo"><div className="head"><img src="/img/avatars/tonita.png" alt="La Toñita" loading="lazy" /></div><div className="drip" /></div>
                   <div>
                     <div className="testi__who">La Toñita</div>
                     <div className="testi__where">Pátzcuaro, Mich</div>
@@ -2395,7 +2438,7 @@ export default function Home() {
               </article>
               <article className="testi__card" style={{ ['--tc' as any]: 'var(--mango)' }}>
                 <div className="testi__avatar">
-                  <div className="testi__avatar-goo"><div className="head" /><div className="drip" /></div>
+                  <div className="testi__avatar-goo"><div className="head"><img src="/img/avatars/diego.png" alt="Diego R." loading="lazy" /></div><div className="drip" /></div>
                   <div>
                     <div className="testi__who">Diego R.</div>
                     <div className="testi__where">Condesa, CDMX</div>
@@ -2409,7 +2452,7 @@ export default function Home() {
               </article>
               <article className="testi__card" style={{ ['--tc' as any]: '#E9C9A8' }}>
                 <div className="testi__avatar">
-                  <div className="testi__avatar-goo"><div className="head" /><div className="drip" /></div>
+                  <div className="testi__avatar-goo"><div className="head"><img src="/img/avatars/lalo.png" alt="Chef Lalo" loading="lazy" /></div><div className="drip" /></div>
                   <div>
                     <div className="testi__who">Chef Lalo</div>
                     <div className="testi__where">Polanco, CDMX</div>
@@ -2423,7 +2466,7 @@ export default function Home() {
               </article>
               <article className="testi__card" style={{ ['--tc' as any]: '#E6C39A' }}>
                 <div className="testi__avatar">
-                  <div className="testi__avatar-goo"><div className="head" /><div className="drip" /></div>
+                  <div className="testi__avatar-goo"><div className="head"><img src="/img/avatars/chelo.png" alt="Doña Chelo" loading="lazy" /></div><div className="drip" /></div>
                   <div>
                     <div className="testi__who">Doña Chelo</div>
                     <div className="testi__where">Del Valle, CDMX</div>
@@ -2579,6 +2622,15 @@ export default function Home() {
           </div>
         </div>
         <div className="cart__body" />
+        <div className="cart__success">
+          <span className="cart__success-emoji">🍦</span>
+          <span className="cart__success-title">¡Pedido enviado!</span>
+          <p className="cart__success-text">Te esperamos en WhatsApp para confirmar tu helado cremosito. ¿Vaciamos el carrito o lo guardamos para repetir?</p>
+          <div className="cart__success-actions">
+            <button className="cart__success-btn cart__success-btn--clear" type="button">Vaciar carrito</button>
+            <button className="cart__success-btn cart__success-btn--keep" type="button">Guardarlo</button>
+          </div>
+        </div>
         <div className="cart__checkout">
           <div className="cart__summary" />
           <div className="cart__field cart__field--name">
