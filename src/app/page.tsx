@@ -1,2793 +1,929 @@
 'use client';
 
-import { useEffect } from 'react';
+import Image from 'next/image';
+import {
+  ArrowDownRight,
+  ArrowRight,
+  Check,
+  ChevronDown,
+  Clock3,
+  Leaf,
+  Menu,
+  Minus,
+  Plus,
+  ShoppingBag,
+  Snowflake,
+  X,
+} from 'lucide-react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
-const CSS = `
-:root{
-  --crema:#FFF6EC;
-  --crema-2:#FBE9D6;
-  --fresa:#FFB3C7;
-  --fresa-deep:#E8557A;
-  --pistache:#B8E0C8;
-  --pistache-deep:#6FB489;
-  --vainilla:#FFE8B8;
-  --vainilla-deep:#E0B864;
-  --chocolate:#3B2318;
-  --chocolate-2:#2A1810;
-  --cereza:#E8557A;
-  --mango:#FFD27A;
-  --cajeta:#C98A4B;
-  --ink:#3B2318;
-  --display:'Baloo 2',system-ui,sans-serif;
-  --body:'Outfit',system-ui,sans-serif;
-  --ease-cream:cubic-bezier(0.25,0.8,0.25,1);
-}
+type Flavor = {
+  id: string;
+  name: string;
+  eyebrow: string;
+  description: string;
+  origin: string;
+  price: number;
+  image: string;
+  imageAlt: string;
+};
 
-*{margin:0;padding:0;box-sizing:border-box}
-html{-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
-html.lenis,html.lenis body{height:auto}
-.lenis.lenis-smooth{scroll-behavior:auto !important}
-.lenis.lenis-smooth [data-lenis-prevent]{overscroll-behavior:contain}
-.lenis.lenis-stopped{overflow:hidden}
+const FLAVORS: Flavor[] = [
+  {
+    id: 'fresa',
+    name: 'Fresa',
+    eyebrow: 'Frutal · Disponible vegano',
+    description: 'Fresas de Zamora y una acidez limpia. Dulce, fresca y sin colorantes.',
+    origin: 'Zamora, Michoacán',
+    price: 65,
+    image: '/img/historia-1.png',
+    imageAlt: 'Helado artesanal de fresa servido con fresas frescas',
+  },
+  {
+    id: 'vainilla',
+    name: 'Vainilla de Papantla',
+    eyebrow: 'Floral · Cremoso',
+    description: 'Vainilla veracruzana curada a mano, con aroma profundo y final sedoso.',
+    origin: 'Papantla, Veracruz',
+    price: 72,
+    image: '/img/historia-2.png',
+    imageAlt: 'Helado cremoso de vainilla servido con cuchara',
+  },
+  {
+    id: 'pistache',
+    name: 'Pistache tostado',
+    eyebrow: 'Intenso · Cremoso',
+    description: 'Pistache tostado al comal, una pizca de sal y una textura larga en boca.',
+    origin: 'Tostado en casa',
+    price: 85,
+    image: '/img/historia-3.png',
+    imageAlt: 'Cono de helado artesanal de pistache con pistaches tostados',
+  },
+  {
+    id: 'chocolate',
+    name: 'Chocolate Oaxaqueño',
+    eyebrow: 'Cacao · Profundo',
+    description: 'Tableta de cacao molida, notas tostadas y un final cálido que permanece.',
+    origin: 'Oaxaca, México',
+    price: 78,
+    image: '/img/gallery-3.png',
+    imageAlt: 'Helado de chocolate oaxaqueño con textura intensa',
+  },
+  {
+    id: 'mango',
+    name: 'Mango con chile',
+    eyebrow: 'Frutal · Disponible vegano',
+    description: 'Mango Manila maduro, cítricos y un toque medido de chile mexicano.',
+    origin: 'Fruta de temporada',
+    price: 70,
+    image: '/img/gallery-2.png',
+    imageAlt: 'Helado artesanal de mango con un toque de chile',
+  },
+  {
+    id: 'cajeta',
+    name: 'Cajeta de Celaya',
+    eyebrow: 'Edición de temporada',
+    description: 'Leche de cabra cocida a fuego lento: caramelo, humo suave y mucha memoria.',
+    origin: 'Celaya, Guanajuato',
+    price: 74,
+    image: '/img/gallery-4.png',
+    imageAlt: 'Helado de cajeta de Celaya con caramelo',
+  },
+];
 
-body{
-  font-family:var(--body);
-  background:var(--crema);
-  color:var(--ink);
-  overflow-x:hidden;
-  font-weight:400;
-  line-height:1.6;
-}
-@media (hover:hover) and (pointer:fine){
-  body.has-cursor{cursor:none}
-  body.has-cursor a,body.has-cursor button,body.has-cursor [data-cursor]{cursor:none}
-}
+const FAQS = [
+  {
+    question: '¿Hasta dónde entregan?',
+    answer:
+      'Entregamos en CDMX y parte de la zona metropolitana. El envío es sin costo en pedidos mayores a $200 MXN; en pedidos menores se calcula una tarifa de $40 MXN.',
+  },
+  {
+    question: '¿Cómo conservo el helado?',
+    answer:
+      'Guárdalo bien tapado en el congelador. Para recuperar su textura, déjalo reposar cinco minutos antes de servir. Recomendamos disfrutarlo durante la primera semana.',
+  },
+  {
+    question: '¿Hay opciones veganas o sin lactosa?',
+    answer:
+      'Sí. Fresa y mango con chile pueden prepararse con base de coco. Indícalo al confirmar tu pedido para revisar disponibilidad del día.',
+  },
+  {
+    question: '¿Atienden bodas y eventos?',
+    answer:
+      'Sí. Preparamos selecciones de sabores y servicio para bodas, celebraciones y eventos de marca. Compártenos fecha, zona y número de invitados para armar una propuesta.',
+  },
+];
 
-::selection{background:var(--fresa);color:var(--chocolate)}
+const money = new Intl.NumberFormat('es-MX', {
+  style: 'currency',
+  currency: 'MXN',
+  maximumFractionDigits: 0,
+});
 
-h1,h2,h3,h4{font-family:var(--display);font-weight:800;line-height:0.98;letter-spacing:-0.01em}
+const whatsappNumber = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER?.replace(/\D/g, '') ?? '';
 
-.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
-
-:focus-visible{outline:none;box-shadow:0 0 0 3px var(--crema),0 0 0 6px var(--fresa-deep);border-radius:14px}
-
-/* ===== GRAIN ===== */
-.grain{
-  position:fixed;inset:-50%;width:200%;height:200%;
-  pointer-events:none;z-index:9990;opacity:0.04;
-  filter:url(#grain);mix-blend-mode:multiply;
-  animation:grainShift 8s steps(6) infinite;
+function getWhatsAppHref(message: string) {
+  return `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`;
 }
-@keyframes grainShift{
-  0%{transform:translate(0,0)}10%{transform:translate(-3%,-2%)}20%{transform:translate(2%,-4%)}
-  30%{transform:translate(-2%,3%)}40%{transform:translate(3%,2%)}50%{transform:translate(-4%,-1%)}
-  60%{transform:translate(2%,4%)}70%{transform:translate(-3%,2%)}80%{transform:translate(4%,-3%)}
-  90%{transform:translate(-1%,3%)}100%{transform:translate(0,0)}
-}
-
-/* ===== CURSOR ===== */
-.cursor-goo{
-  position:fixed;top:0;left:0;width:60px;height:60px;
-  pointer-events:none;z-index:9998;
-  filter:url(#goo-strong);
-  mix-blend-mode:multiply;
-  will-change:transform;
-}
-.cursor-goo .blob{
-  position:absolute;left:0;top:0;width:34px;height:34px;
-  background:var(--fresa);border-radius:50%;
-  transform:translate(-50%,-50%) scale(1);
-  transition:background 0.5s var(--ease-cream);
-}
-.cursor-goo .dot{
-  position:absolute;left:0;top:0;width:12px;height:12px;
-  background:var(--cereza);border-radius:50%;
-  transform:translate(-50%,-50%);
-}
-body.cursor-hover .cursor-goo .blob{transform:translate(-50%,-50%) scale(2.5);opacity:0.55}
-body.cursor-down .cursor-goo .blob{transform:translate(-50%,-50%) scale(0.7)}
-@media (hover:none),(pointer:coarse){.cursor-goo{display:none}}
-
-/* ===== PRELOADER ===== */
-.preloader{
-  position:fixed;inset:0;z-index:9999;
-  background:var(--crema);
-  display:flex;align-items:center;justify-content:center;
-  flex-direction:column;
-  clip-path:url(#preDrip);
-  -webkit-clip-path:url(#preDrip);
-}
-.preloader__goo{filter:url(#goo);position:relative;width:min(46vw,220px);height:min(46vw,220px)}
-.preloader__cone{position:absolute;left:50%;top:54%;transform:translateX(-50%);width:42%;height:46%}
-.preloader__scoop{
-  position:absolute;left:50%;top:24%;transform:translateX(-50%);
-  width:78%;height:52%;
-}
-.preloader__pct{
-  position:absolute;bottom:14%;left:50%;transform:translateX(-50%);
-  font-family:var(--display);font-weight:800;font-size:clamp(1.4rem,3vw,2rem);
-  color:var(--chocolate);letter-spacing:0.02em;
-  text-shadow:0 1px 0 rgba(255,255,255,0.4);
-}
-.preloader__pct::after{content:'%';font-size:0.7em;vertical-align:super;margin-left:1px}
-
-/* ===== NAV ===== */
-.nav{
-  position:fixed;top:0;left:0;right:0;z-index:200;
-  display:flex;align-items:center;justify-content:space-between;
-  padding:1.4rem clamp(1.2rem,5vw,4rem);
-  mix-blend-mode:normal;
-  transition:transform 0.6s var(--ease-cream);
-}
-.nav__brand{
-  font-family:var(--display);font-weight:800;font-size:1.4rem;
-  color:var(--chocolate);display:flex;align-items:center;gap:0.5rem;
-  text-decoration:none;
-}
-.nav__brand .dot-mark{width:12px;height:12px;border-radius:50%;background:var(--fresa-deep);box-shadow:0 0 0 3px var(--crea,rgba(255,179,199,0.4))}
-.nav__links{display:flex;gap:2rem;align-items:center}
-.nav__links a{
-  font-family:var(--body);font-weight:500;font-size:0.98rem;
-  color:var(--chocolate);text-decoration:none;position:relative;
-}
-@media (max-width:760px){.nav__links .drip-link{display:none}.nav__links{gap:0.6rem}}
-
-/* drip underline links */
-.drip-link{position:relative;display:inline-block}
-.drip-link svg{position:absolute;left:0;bottom:-6px;width:100%;height:14px;overflow:visible;pointer-events:none}
-.drip-link svg path{fill:none;stroke:var(--fresa-deep);stroke-width:3;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:1;stroke-dashoffset:1;opacity:0.9}
-.drip-link:hover svg path,.drip-link:focus-visible svg path{stroke-dashoffset:0;transition:stroke-dashoffset 0.8s var(--ease-cream)}
-
-/* ===== BUTTONS ===== */
-.btn{
-  --bc1:var(--fresa);--bc2:var(--fresa-deep);
-  position:relative;display:inline-flex;align-items:center;justify-content:center;gap:0.5rem;
-  font-family:var(--display);font-weight:700;font-size:1.05rem;
-  padding:1.05rem 2.2rem;border:0;border-radius:999px;
-  background:linear-gradient(160deg,var(--bc1),var(--bc2));
-  color:var(--chocolate);text-decoration:none;
-  box-shadow:inset 0 2px 4px rgba(255,255,255,0.55),inset 0 -6px 10px rgba(59,35,24,0.12),0 12px 24px -10px rgba(232,85,122,0.55);
-  transform-origin:center bottom;
-  transition:transform 0.5s var(--ease-cream),box-shadow 0.5s var(--ease-cream),background 0.6s var(--ease-cream);
-  will-change:transform;overflow:visible;
-}
-.btn .btn__label{display:inline-block;transition:transform 0.5s var(--ease-cream)}
-.btn:hover{transform:scaleY(1.06) scaleX(0.98) translateY(2px);box-shadow:inset 0 2px 4px rgba(255,255,255,0.6),inset 0 -8px 14px rgba(59,35,24,0.16),0 18px 30px -12px rgba(232,85,122,0.6)}
-.btn:hover .btn__label{transform:translateY(2px)}
-.btn:active{transform:scaleY(0.85) scaleX(1.04)}
-.btn--chocolate{--bc1:#5a3a28;--bc2:var(--chocolate);color:var(--crema);box-shadow:inset 0 2px 4px rgba(255,255,255,0.18),inset 0 -6px 10px rgba(0,0,0,0.3),0 12px 24px -10px rgba(59,35,24,0.6)}
-.btn--ghost{background:transparent;color:var(--chocolate);box-shadow:inset 0 0 0 2px rgba(59,35,24,0.25)}
-.btn--ghost:hover{box-shadow:inset 0 0 0 2px var(--chocolate)}
-.btn__drips{position:absolute;left:12%;right:12%;bottom:-6px;height:18px;filter:url(#goo);pointer-events:none}
-.btn__drips i{position:absolute;bottom:0;width:10px;height:10px;border-radius:50%;background:var(--bc2);transform:translateY(-2px) scale(0.6);opacity:0}
-.btn:hover .btn__drips i{opacity:1}
-.btn__drips i:nth-child(1){left:18%}
-.btn__drips i:nth-child(2){left:48%;width:8px;height:8px}
-.btn__drips i:nth-child(3){left:78%;width:11px;height:11px}
-
-/* ===== LAYOUT ===== */
-.wrap{max-width:1280px;margin:0 auto;padding:0 clamp(1.2rem,5vw,3rem);position:relative}
-section{position:relative}
-
-/* ===== PROMO BANNER (flavor of the month + countdown) ===== */
-.promo{
-  position:relative;z-index:5;
-  background:linear-gradient(95deg,var(--chocolate) 0%,#5a3a28 100%);
-  color:var(--crema);overflow:hidden;
-}
-.promo__bar{
-  max-width:1280px;margin:0 auto;padding:0.7rem clamp(1.2rem,5vw,3rem);
-  display:flex;align-items:center;justify-content:center;gap:clamp(0.6rem,2vw,1.4rem);flex-wrap:wrap;
-  font-family:var(--display);font-weight:700;font-size:clamp(0.82rem,1.6vw,1rem);
-}
-.promo__pill{
-  background:var(--fresa);color:var(--chocolate);padding:0.25rem 0.7rem;border-radius:999px;
-  font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;font-weight:800;
-  animation:pipPulse 2.4s var(--ease-cream) infinite;
-}
-.promo__flavor{color:var(--vainilla)}
-.promo__sep{opacity:0.4}
-.promo__countdown{display:inline-flex;align-items:center;gap:0.35rem}
-.promo__cd-unit{
-  display:inline-flex;align-items:baseline;gap:0.1rem;
-  background:rgba(255,246,236,0.22);border-radius:8px;padding:0.15rem 0.45rem;
-  font-variant-numeric:tabular-nums;min-width:34px;justify-content:center;
-}
-.promo__cd-unit b{font-weight:800;font-size:1.05em}
-.promo__cd-unit small{font-size:0.62em;opacity:0.7;font-weight:600;text-transform:uppercase;letter-spacing:0.05em}
-.promo__cd-sep{opacity:0.5}
-.promo__cta{
-  color:var(--fresa);text-decoration:none;border-bottom:2px dotted var(--fresa);
-  padding-bottom:1px;transition:opacity 0.3s var(--ease-cream);white-space:nowrap;
-}
-.promo__cta:hover{opacity:0.75}
-/* melting drip at the bottom of the promo */
-.promo__drip{position:absolute;left:0;right:0;bottom:-1px;height:18px;pointer-events:none;z-index:1}
-.promo__drip svg{width:100%;height:100%;display:block;overflow:visible}
-.promo__drip path{fill:var(--chocolate)}
-@media (max-width:560px){.promo__bar{gap:0.5rem;font-size:0.78rem}.promo__cd-unit{min-width:30px;padding:0.12rem 0.35rem}.promo__cta{font-size:0.78rem}}
-
-/* ===== HERO ===== */
-.hero{
-  min-height:100vh;display:flex;flex-direction:column;justify-content:center;
-  padding-top:7rem;padding-bottom:4rem;position:relative;overflow:hidden;
-}
-.hero__eyebrow{
-  display:inline-flex;align-items:center;gap:0.5rem;
-  font-family:var(--body);font-weight:500;font-size:0.9rem;letter-spacing:0.16em;text-transform:uppercase;
-  color:var(--chocolate);opacity:0.7;margin-bottom:1.2rem;
-}
-.hero__eyebrow .pip{width:8px;height:8px;border-radius:50%;background:var(--fresa-deep)}
-.hero__title-wrap{position:relative;width:100%;max-width:1280px}
-.hero__title{
-  position:relative;width:100%;height:clamp(5rem,15vw,13rem);
-}
-.hero__title svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
-.hero__title .goo-text{filter:url(#goo)}
-.hero__title .goo-text text{font-family:var(--display);font-weight:800;fill:var(--chocolate)}
-.hero__title .goo-text .drip-circle{fill:var(--chocolate)}
-.hero__sub{
-  margin-top:1.6rem;max-width:42ch;font-size:clamp(1.05rem,1.6vw,1.35rem);
-  color:var(--chocolate);opacity:0.85;font-weight:400;
-}
-.hero__ctas{margin-top:2.2rem;display:flex;gap:1rem;flex-wrap:wrap;align-items:center}
-
-/* hero trust badge */
-.hero__trust{margin-top:1.8rem;display:flex;align-items:center;gap:0.9rem;flex-wrap:wrap}
-.hero__trust-stars{display:inline-flex;align-items:center;gap:0.35rem}
-.hero__trust-stars .stars{color:var(--fresa-deep);font-size:1.05rem;letter-spacing:1px}
-.hero__trust-stars b{font-family:var(--display);font-weight:800;color:var(--chocolate);font-size:1.1rem}
-.hero__trust-sep{width:4px;height:4px;border-radius:50%;background:var(--chocolate);opacity:0.25}
-.hero__trust-text{font-size:0.9rem;color:var(--chocolate);opacity:0.7;font-weight:500}
-.hero__trust-text b{font-family:var(--display);font-weight:800;color:var(--chocolate);opacity:1}
-.hero__trust-avatars{display:inline-flex;align-items:center}
-.hero__trust-avatars img{width:30px;height:30px;border-radius:50%;border:2px solid var(--crema);object-fit:cover;margin-left:-10px;box-shadow:0 2px 6px -2px rgba(59,35,24,0.3)}
-.hero__trust-avatars img:first-child{margin-left:0}
-@media (max-width:560px){.hero__trust{gap:0.6rem}.hero__trust-avatars img{width:26px;height:26px}}
-
-.hero__cone{
-  position:absolute;right:-2%;top:14%;width:clamp(220px,32vw,460px);
-  pointer-events:none;z-index:2;will-change:transform;
-  transform-style:preserve-3d;
-}
-.hero__cone svg{width:100%;height:auto;filter:drop-shadow(0 30px 30px rgba(232,85,122,0.18))}
-@media (max-width:900px){.hero__cone{position:relative;right:auto;top:auto;margin:1.5rem auto 0;width:min(60vw,300px)}}
-
-.hero__scroll{
-  position:absolute;left:50%;bottom:2rem;transform:translateX(-50%);
-  display:flex;flex-direction:column;align-items:center;gap:0.5rem;
-  font-family:var(--body);font-size:0.78rem;letter-spacing:0.2em;text-transform:uppercase;
-  color:var(--chocolate);opacity:0.6;
-}
-.hero__scroll .capsule{
-  width:26px;height:46px;border:2px solid var(--chocolate);border-radius:999px;
-  position:relative;overflow:hidden;opacity:0.5;
-}
-.hero__scroll .capsule .drop{
-  position:absolute;left:50%;top:8px;transform:translateX(-50%);
-  width:8px;height:8px;border-radius:50%;background:var(--fresa-deep);
-}
-
-/* ===== DIVIDERS ===== */
-.drip-divider{position:relative;display:block;width:100%;height:clamp(60px,9vw,120px);overflow:visible;z-index:3}
-.drip-divider svg{position:absolute;inset:0;width:100%;height:100%;display:block}
-.drip-divider .fill-top{fill:var(--crema)}
-.drip-divider .fill-bottom{fill:var(--fresa)}
-
-/* ===== SECTION HEADS ===== */
-.section{padding:clamp(4rem,9vw,8rem) 0;position:relative}
-.section__eyebrow{
-  font-family:var(--body);font-weight:600;font-size:0.82rem;letter-spacing:0.22em;text-transform:uppercase;
-  color:var(--fresa-deep);margin-bottom:1rem;display:inline-block;
-}
-.section__title{
-  font-size:clamp(2.2rem,6vw,4.6rem);color:var(--chocolate);max-width:18ch;
-  margin-bottom:1rem;
-}
-.section__sub{font-size:clamp(1rem,1.5vw,1.2rem);color:var(--chocolate);opacity:0.75;max-width:46ch}
-
-/* ===== SABORES ===== */
-#sabores{background:var(--crema);transition:background 0.9s var(--ease-cream)}
-.sabores__grid{
-  margin-top:3rem;display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1.6rem;
-}
-.flavor{
-  --fc:var(--fresa);
-  position:relative;border-radius:48% 52% 55% 45% / 45% 48% 52% 55%;
-  background:var(--fc);
-  padding:2.2rem 1.6rem 2.4rem;min-height:340px;
-  display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:0.6rem;
-  box-shadow:inset 0 4px 10px rgba(255,255,255,0.5),inset 0 -10px 18px rgba(59,35,24,0.1),0 22px 40px -22px rgba(59,35,24,0.3);
-  transform-style:preserve-3d;will-change:transform;
-  animation:blobMorph 18s var(--ease-cream) infinite alternate;
-  overflow:hidden;cursor:pointer;
-}
-@keyframes blobMorph{
-  0%{border-radius:48% 52% 55% 45% / 45% 48% 52% 55%}
-  50%{border-radius:55% 45% 48% 52% / 52% 55% 45% 48%}
-  100%{border-radius:45% 55% 52% 48% / 48% 45% 55% 52%}
-}
-.flavor__glare{
-  position:absolute;inset:0;border-radius:inherit;pointer-events:none;
-  background:radial-gradient(circle at var(--gx,50%) var(--gy,30%),rgba(255,255,255,0.55),transparent 55%);
-  opacity:0;transition:opacity 0.5s var(--ease-cream);mix-blend-mode:soft-light;
-}
-.flavor:hover .flavor__glare{opacity:1}
-.flavor__scoop{width:120px;height:120px;position:relative;filter:url(#goo);margin-bottom:0.4rem}
-.flavor__scoop .ball{width:100%;height:88%;border-radius:50% 50% 48% 48% / 60% 60% 40% 40%;background:rgba(255,255,255,0.55);position:relative}
-.flavor__scoop .ball::after{content:'';position:absolute;left:22%;top:18%;width:34%;height:30%;border-radius:50%;background:rgba(255,255,255,0.7);filter:blur(2px)}
-.flavor__scoop .drip{position:absolute;left:50%;bottom:0;width:14px;height:14px;border-radius:50%;background:rgba(255,255,255,0.55);transform:translate(-50%,-4px) scale(0);opacity:0}
-.flavor:hover .flavor__scoop .drip{opacity:1}
-.flavor__name{font-family:var(--display);font-weight:800;font-size:1.5rem;color:var(--chocolate);text-align:center}
-.flavor__desc{font-size:0.92rem;color:var(--chocolate);opacity:0.72;text-align:center;max-width:22ch}
-.flavor__price{font-family:var(--display);font-weight:700;color:var(--chocolate);font-size:1rem;margin-top:0.4rem;opacity:0.85}
-.flavor__info{
-  position:absolute;top:0.8rem;right:0.8rem;width:30px;height:30px;border-radius:50%;
-  border:0;background:rgba(59,35,24,0.18);color:var(--chocolate);font-family:var(--display);font-weight:800;
-  font-size:0.9rem;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;
-  opacity:0;transform:scale(0.7);transition:opacity 0.4s var(--ease-cream),transform 0.4s var(--ease-cream),background 0.3s var(--ease-cream);
-  z-index:2;
-}
-.flavor:hover .flavor__info,.flavor:focus-within .flavor__info{opacity:1;transform:scale(1)}
-.flavor__info:hover{background:rgba(59,35,24,0.35);color:var(--crema)}
-@media (max-width:760px){.flavor__info{opacity:1;transform:scale(1)}}
-
-/* ===== HISTORIA ===== */
-#historia{background:var(--vainilla)}
-.historia__grid{display:grid;grid-template-columns:1fr 1fr;gap:clamp(2rem,5vw,5rem);align-items:start}
-@media (max-width:880px){.historia__grid{grid-template-columns:1fr}}
-.historia__visual{
-  position:relative;border-radius:42% 58% 50% 50% / 55% 45% 55% 45%;
-  aspect-ratio:4/5;overflow:hidden;
-  box-shadow:inset 0 6px 14px rgba(255,255,255,0.5),0 30px 50px -25px rgba(59,35,24,0.4);
-  animation:blobMorph 22s var(--ease-cream) infinite alternate;
-}
-.historia__scene{position:absolute;inset:0;width:100%;height:100%}
-.historia__scene svg{width:100%;height:100%;display:block}
-.historia__scene img{width:100%;height:100%;display:block;object-fit:cover}
-.historia__text p{font-size:1.08rem;color:var(--chocolate);margin-bottom:1.1rem;opacity:0;max-width:42ch}
-.historia__text .lead{font-family:var(--display);font-weight:700;font-size:clamp(1.4rem,2.4vw,2rem);color:var(--chocolate);margin-bottom:1.4rem;opacity:0}
-.historia__sig{margin-top:1.5rem;font-family:var(--display);font-style:italic;color:var(--fresa-deep);font-size:1.1rem;opacity:0}
-
-/* ===== PROCESO ===== */
-#proceso{background:var(--pistache)}
-.proceso__steps{margin-top:3.5rem;display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;position:relative}
-@media (max-width:820px){.proceso__steps{grid-template-columns:1fr}}
-.proceso__line{position:absolute;top:54px;left:8%;right:8%;height:40px;pointer-events:none;z-index:0}
-.proceso__line svg{width:100%;height:100%;overflow:visible}
-.proceso__line .track{stroke:rgba(59,35,24,0.18);stroke-width:8;stroke-linecap:round;fill:none}
-.proceso__line .goo-line{filter:url(#goo)}
-.proceso__line .blob-travel{fill:var(--crema);stroke:var(--chocolate);stroke-width:0}
-.proceso__step{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;text-align:center;padding:0 0.5rem}
-.proceso__icon{
-  width:108px;height:108px;border-radius:50%;
-  background:var(--crema);display:flex;align-items:center;justify-content:center;
-  box-shadow:inset 0 3px 6px rgba(255,255,255,0.7),inset 0 -8px 14px rgba(59,35,24,0.12),0 16px 26px -14px rgba(59,35,24,0.4);
-  margin-bottom:1.2rem;will-change:transform;
-}
-.proceso__icon svg{width:60%;height:60%}
-.proceso__num{font-family:var(--display);font-weight:800;color:var(--fresa-deep);font-size:0.9rem;margin-bottom:0.3rem}
-.proceso__h{font-family:var(--display);font-weight:800;font-size:1.5rem;color:var(--chocolate);margin-bottom:0.4rem}
-.proceso__p{font-size:0.98rem;color:var(--chocolate);opacity:0.75;max-width:26ch}
-
-/* ===== CTA FINAL ===== */
-#cta-final{background:var(--fresa);padding:clamp(5rem,11vw,9rem) 0;text-align:center;overflow:hidden}
-.cta-final__title{font-size:clamp(3rem,11vw,8rem);color:var(--chocolate);line-height:0.92;position:relative;display:inline-block}
-.cta-final__sub{margin:1.4rem auto 2.4rem;max-width:40ch;font-size:1.15rem;color:var(--chocolate);opacity:0.85}
-.magnetic-wrap{display:inline-block;position:relative;will-change:transform}
-.cta-final__decor{position:absolute;pointer-events:none}
-
-/* ===== FOOTER ===== */
-.footer{position:relative;background:var(--chocolate);color:var(--crema);padding:7rem 0 2.5rem;margin-top:-1px}
-.footer__drip{position:absolute;top:calc(-1 * clamp(60px,8vw,100px));left:0;right:0;height:clamp(60px,8vw,100px);z-index:1;pointer-events:none}
-.footer__drip svg{width:100%;height:100%;display:block;overflow:visible}
-.footer__drip path{fill:var(--chocolate)}
-.footer__grid{position:relative;z-index:2;display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:2.5rem}
-@media (max-width:760px){.footer__grid{grid-template-columns:1fr}}
-.footer__brand{font-family:var(--display);font-weight:800;font-size:2rem;margin-bottom:0.6rem;color:var(--vainilla)}
-.footer__tag{color:rgba(255,246,236,0.7);max-width:34ch;font-size:0.98rem}
-.footer__social{display:flex;gap:0.6rem;margin-top:1.1rem}
-.footer__social a{
-  width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;
-  background:rgba(255,246,236,0.1);color:var(--crema);text-decoration:none;
-  transition:transform 0.4s var(--ease-cream),background 0.4s var(--ease-cream);
-}
-.footer__social a:hover{transform:translateY(-4px) scale(1.08);background:var(--fresa);color:var(--chocolate)}
-.footer__social svg{width:18px;height:18px;fill:currentColor}
-.footer h4{font-family:var(--display);color:var(--vainilla);font-size:1.1rem;margin-bottom:1rem}
-.footer ul{list-style:none}
-.footer li{margin-bottom:0.5rem}
-.footer a{color:rgba(255,246,236,0.82);text-decoration:none;font-size:1rem;transition:color 0.4s var(--ease-cream);display:inline-block}
-.footer a:hover{color:var(--fresa)}
-.news{position:relative;margin-top:1.2rem}
-.news__field{
-  display:flex;align-items:center;gap:0.5rem;background:rgba(255,246,236,0.1);
-  border:1.5px solid rgba(255,246,236,0.25);border-radius:999px;padding:0.4rem 0.5rem 0.4rem 1.2rem;
-}
-.news__field input{
-  flex:1;background:transparent;border:0;color:var(--crema);font-family:var(--body);font-size:0.95rem;outline:none;min-width:0;
-}
-.news__field input::placeholder{color:rgba(255,246,236,0.5)}
-.news__field button{
-  flex-shrink:0;border:0;background:var(--fresa);color:var(--chocolate);
-  font-family:var(--display);font-weight:700;border-radius:999px;padding:0.6rem 1.1rem;cursor:pointer;
-  transition:transform 0.4s var(--ease-cream),background 0.4s var(--ease-cream);
-}
-.news__field button:hover{transform:scale(0.96);background:var(--fresa-deep)}
-.news__msg{margin-top:0.8rem;font-size:0.88rem;color:var(--vainilla);min-height:1.2em}
-.sprinkle-stage{position:absolute;inset:-40px;pointer-events:none;overflow:visible;z-index:5}
-.sprinkle{position:absolute;width:6px;height:14px;border-radius:3px;opacity:0}
-
-.footer__bottom{position:relative;z-index:2;margin-top:3.5rem;padding-top:1.6rem;border-top:1px solid rgba(255,246,236,0.15);display:flex;justify-content:space-between;flex-wrap:wrap;gap:1rem;font-size:0.84rem;color:rgba(255,246,236,0.55)}
-.footer__legal a{color:rgba(255,246,236,0.55);text-decoration:none;margin-left:1.2rem}
-.footer__legal a:hover{color:var(--fresa)}
-
-/* reveal helpers */
-.reveal{opacity:0;will-change:transform,opacity}
-.media-clip{clip-path:circle(0% at 50% 50%);will-change:clip-path}
-
-/* blob reveal path */
-@keyframes wobble{0%,100%{border-radius:48% 52% 55% 45% / 45% 48% 52% 55%}50%{border-radius:55% 45% 48% 52% / 52% 55% 45% 48%}}
-
-/* ===== SKIP LINK ===== */
-.skip-link{
-  position:fixed;top:-100px;left:1rem;z-index:10000;
-  background:var(--chocolate);color:var(--crema);
-  font-family:var(--display);font-weight:700;font-size:0.95rem;
-  padding:0.7rem 1.4rem;border-radius:0 0 999px 999px;
-  text-decoration:none;transition:top 0.5s var(--ease-cream);
-  box-shadow:0 8px 20px -8px rgba(59,35,24,0.5);
-}
-.skip-link:focus{top:0}
-
-/* ===== SCROLL PROGRESS DRIP ===== */
-.scroll-drip{
-  position:fixed;left:max(0.8rem,env(safe-area-inset-left));top:50%;transform:translateY(-50%);
-  width:14px;height:min(46vh,320px);z-index:150;pointer-events:none;
-  display:flex;flex-direction:column;align-items:center;
-}
-.scroll-drip__track{width:100%;height:100%;background:rgba(59,35,24,0.1);border-radius:999px;overflow:hidden;position:relative}
-.scroll-drip__fill{
-  position:absolute;left:0;right:0;top:0;height:0%;
-  background:linear-gradient(180deg,var(--fresa),var(--fresa-deep));
-  border-radius:999px;
-  box-shadow:inset 0 2px 4px rgba(255,255,255,0.5);
-}
-.scroll-drip__head{
-  position:absolute;left:50%;bottom:-6px;transform:translateX(-50%);
-  width:18px;height:18px;border-radius:50%;
-  background:var(--fresa-deep);
-  filter:url(#goo-strong);opacity:0;
-}
-@media (max-width:760px){.scroll-drip{display:none}}
-
-/* ===== HERO FLOATING BUBBLES (balance the right side) ===== */
-.hero__bubbles{position:absolute;inset:0;pointer-events:none;z-index:1;overflow:hidden}
-.hero__bubble{
-  position:absolute;border-radius:50%;
-  filter:blur(0.5px);opacity:0.85;
-  box-shadow:inset 0 4px 8px rgba(255,255,255,0.5),inset 0 -6px 10px rgba(59,35,24,0.08);
-  will-change:transform;
-}
-.hero__bubble::after{
-  content:'';position:absolute;left:24%;top:18%;width:32%;height:26%;
-  border-radius:50%;background:rgba(255,255,255,0.6);filter:blur(2px);
-}
-@media (max-width:900px){.hero__bubbles{display:none}}
-
-/* ===== TESTIMONIOS ===== */
-#testimonios{background:var(--crema);padding:clamp(4rem,8vw,7rem) 0;overflow:hidden}
-.testi__head{text-align:center;max-width:640px;margin:0 auto 3rem}
-.testi__head .section__title{margin-left:auto;margin-right:auto}
-.testi__marquee{position:relative;width:100%;overflow:hidden;-webkit-mask-image:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent);mask-image:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent)}
-.testi__track{display:flex;gap:1.4rem;width:max-content;will-change:transform}
-.testi__card{
-  --tc:var(--fresa);
-  flex:0 0 340px;background:var(--tc);color:var(--chocolate);
-  border-radius:46% 54% 52% 48% / 50% 46% 54% 50%;
-  padding:2rem 1.8rem 2.2rem;display:flex;flex-direction:column;gap:0.9rem;
-  box-shadow:inset 0 3px 8px rgba(255,255,255,0.5),inset 0 -8px 14px rgba(59,35,24,0.1),0 20px 36px -20px rgba(59,35,24,0.3);
-  animation:blobMorph 16s var(--ease-cream) infinite alternate;
-  position:relative;
-}
-.testi__avatar{display:flex;align-items:center;gap:0.8rem}
-.testi__avatar-goo{width:54px;height:54px;flex-shrink:0;filter:url(#goo);position:relative}
-.testi__avatar-goo .head{position:absolute;inset:0;border-radius:50%;background:rgba(255,255,255,0.7);overflow:hidden}
-.testi__avatar-goo .head img{width:100%;height:100%;object-fit:cover;display:block}
-.testi__avatar-goo .head::after{content:'';position:absolute;left:22%;top:16%;width:34%;height:28%;border-radius:50%;background:rgba(255,255,255,0.25);filter:blur(1px);pointer-events:none}
-.testi__avatar-goo .drip{position:absolute;left:50%;bottom:-2px;width:10px;height:10px;border-radius:50%;background:rgba(255,255,255,0.7);transform:translateX(-50%)}
-.testi__who{font-family:var(--display);font-weight:700;font-size:1.05rem;line-height:1.1}
-.testi__where{font-size:0.82rem;opacity:0.7;font-weight:500}
-.testi__stars{color:var(--fresa-deep);font-size:1rem;letter-spacing:2px;margin-top:0.2rem}
-.testi__quote{font-size:1.02rem;line-height:1.5;font-weight:500}
-.testi__quote::before{content:'“';font-family:var(--display);font-size:1.6rem;line-height:0;vertical-align:-0.3em;color:var(--chocolate);opacity:0.4;margin-right:0.15em}
-.testi__quote::after{content:'”';font-family:var(--display);font-size:1.6rem;line-height:0;vertical-align:-0.3em;color:var(--chocolate);opacity:0.4;margin-left:0.1em}
-.testi__rating-row{display:flex;align-items:center;justify-content:space-between;margin-top:auto;padding-top:0.4rem}
-.testi__flavor-tag{font-family:var(--display);font-weight:600;font-size:0.78rem;background:rgba(59,35,24,0.12);padding:0.3rem 0.8rem;border-radius:999px}
-
-/* ===== FLOATING ORDER BUBBLE ===== */
-.float-order{
-  position:fixed;right:max(1.2rem,env(safe-area-inset-right));bottom:max(1.2rem,env(safe-area-inset-bottom));
-  z-index:180;pointer-events:none;opacity:0;transform:translateY(20px) scale(0.8);
-  transition:opacity 0.6s var(--ease-cream),transform 0.6s var(--ease-cream);
-  will-change:transform,opacity;
-}
-.float-order.is-visible{opacity:1;transform:translateY(0) scale(1);pointer-events:auto}
-.float-order__goo{position:relative;width:74px;height:84px;filter:url(#goo-strong);cursor:pointer}
-.float-order__scoop{
-  position:absolute;left:50%;top:0;transform:translateX(-50%);
-  width:64px;height:58px;border-radius:50% 50% 46% 46% / 60% 60% 40% 40%;
-  background:linear-gradient(160deg,#FFD9E3,var(--fresa-deep));
-  box-shadow:inset 0 3px 6px rgba(255,255,255,0.6),inset 0 -6px 10px rgba(59,35,24,0.18);
-  display:flex;align-items:center;justify-content:center;
-  font-family:var(--display);font-weight:800;font-size:0.72rem;color:var(--chocolate);
-  text-align:center;line-height:1;padding-top:4px;
-}
-.float-order__drip{position:absolute;left:50%;bottom:6px;transform:translateX(-50%);width:14px;height:14px;border-radius:50%;background:var(--fresa-deep)}
-.float-order__pulse{position:absolute;inset:0;border-radius:50%;border:2px solid var(--fresa-deep);opacity:0;animation:floatPulse 2.6s var(--ease-cream) infinite}
-@keyframes floatPulse{0%{transform:scale(0.8);opacity:0.5}100%{transform:scale(1.6);opacity:0}}
-.float-order__label{
-  position:absolute;right:90px;top:50%;transform:translateY(-50%);
-  background:var(--chocolate);color:var(--crema);font-family:var(--display);font-weight:700;font-size:0.85rem;
-  padding:0.5rem 0.9rem;border-radius:999px;white-space:nowrap;
-  box-shadow:0 8px 18px -8px rgba(59,35,24,0.5);opacity:0;transition:opacity 0.4s var(--ease-cream);
-}
-.float-order:hover .float-order__label{opacity:1}
-@media (max-width:600px){.float-order__label{display:none}}
-
-/* float-order count badge (mini-cart) */
-.float-order__badge{
-  position:absolute;top:-4px;right:-4px;min-width:24px;height:24px;padding:0 6px;
-  background:var(--chocolate);color:var(--crema);border-radius:999px;
-  font-family:var(--display);font-weight:800;font-size:0.78rem;line-height:24px;text-align:center;
-  box-shadow:0 4px 10px -3px rgba(59,35,24,0.6);z-index:3;
-  transform:scale(0);transform-origin:center;transition:transform 0.4s var(--ease-cream);
-}
-.float-order__badge.is-active{transform:scale(1)}
-.float-order__badge.pulse{animation:badgePulse 0.5s var(--ease-cream)}
-@keyframes badgePulse{0%{transform:scale(1)}40%{transform:scale(1.5)}100%{transform:scale(1)}}
-.float-order__pop{
-  position:absolute;left:50%;bottom:calc(100% + 8px);transform:translateX(-50%) translateY(8px);
-  background:var(--chocolate);color:var(--crema);font-family:var(--display);font-weight:700;font-size:0.82rem;
-  padding:0.5rem 0.9rem;border-radius:999px;white-space:nowrap;opacity:0;pointer-events:none;z-index:4;
-  box-shadow:0 8px 18px -8px rgba(59,35,24,0.5);
-}
-.float-order__pop.is-show{opacity:1;transform:translateX(-50%) translateY(0);transition:opacity 0.4s var(--ease-cream),transform 0.4s var(--ease-cream)}
-
-/* flying scoop (quick-add animation) */
-.fly-scoop{
-  position:fixed;width:34px;height:30px;border-radius:50% 50% 46% 46% / 60% 60% 40% 40%;
-  z-index:9995;pointer-events:none;will-change:transform,opacity;
-  box-shadow:inset 0 2px 4px rgba(255,255,255,0.6),inset 0 -4px 8px rgba(59,35,24,0.2);
-}
-
-/* ===== CART POPOVER ===== */
-.cart-overlay{
-  position:fixed;inset:0;z-index:1990;background:rgba(59,35,24,0.45);
-  opacity:0;pointer-events:none;transition:opacity 0.5s var(--ease-cream);
-  backdrop-filter:blur(2px);-webkit-backdrop-filter:blur(2px);
-}
-.cart-overlay.is-open{opacity:1;pointer-events:auto}
-.cart{
-  position:fixed;right:max(1rem,env(safe-area-inset-right));bottom:max(1rem,env(safe-area-inset-bottom));
-  z-index:2000;width:min(380px,calc(100vw - 2rem));max-height:min(80vh,640px);
-  background:var(--crema);border-radius:36px 36px 30px 30px;
-  box-shadow:0 30px 60px -20px rgba(59,35,24,0.5),inset 0 2px 4px rgba(255,255,255,0.6);
-  display:flex;flex-direction:column;overflow:hidden;
-  transform:translateY(40px) scale(0.92);opacity:0;pointer-events:none;
-  transform-origin:bottom right;
-  transition:transform 0.6s var(--ease-cream),opacity 0.5s var(--ease-cream);
-}
-.cart.is-open{transform:translateY(0) scale(1);opacity:1;pointer-events:auto}
-.cart__head{
-  padding:1.3rem 1.4rem 1rem;background:linear-gradient(160deg,var(--fresa),var(--fresa-deep));
-  color:var(--chocolate);display:flex;align-items:center;justify-content:space-between;gap:0.6rem;
-}
-.cart__title{font-family:var(--display);font-weight:800;font-size:1.25rem;display:flex;align-items:center;gap:0.5rem}
-.cart__head-actions{display:flex;align-items:center;gap:0.5rem}
-.cart__clear{
-  background:rgba(59,35,24,0.12);border:0;border-radius:999px;color:var(--chocolate);
-  font-family:var(--body);font-weight:600;font-size:0.74rem;padding:0.4rem 0.8rem;cursor:pointer;
-  transition:background 0.3s var(--ease-cream),transform 0.3s var(--ease-cream);
-  display:none;
-}
-.cart.has-items .cart__clear{display:inline-block}
-.cart__clear:hover{background:rgba(59,35,24,0.22);transform:scale(0.95)}
-.cart__close{
-  width:34px;height:34px;border-radius:50%;border:0;background:rgba(255,255,255,0.5);
-  cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--chocolate);
-  font-size:1.2rem;line-height:1;transition:transform 0.4s var(--ease-cream),background 0.4s var(--ease-cream);
-}
-.cart__close:hover{transform:rotate(90deg) scale(1.08);background:rgba(255,255,255,0.8)}
-.cart__body{flex:1;overflow-y:auto;padding:0.6rem 1rem;scrollbar-width:thin;scrollbar-color:var(--fresa) transparent}
-.cart__body::-webkit-scrollbar{width:6px}
-.cart__body::-webkit-scrollbar-thumb{background:var(--fresa);border-radius:999px}
-.cart__empty{
-  text-align:center;padding:2.5rem 1rem;color:var(--chocolate);opacity:0.6;
-  font-family:var(--display);font-weight:600;
-}
-.cart__empty .emoji{font-size:2.4rem;display:block;margin-bottom:0.6rem;filter:drop-shadow(0 4px 6px rgba(232,85,122,0.3))}
-.cart__row{
-  display:grid;grid-template-columns:40px 1fr auto;gap:0.7rem;align-items:center;
-  padding:0.7rem 0.5rem;border-bottom:1px dashed rgba(59,35,24,0.15);
-  animation:rowPlop 0.6s var(--ease-cream);
-}
-@keyframes rowPlop{0%{opacity:0;transform:translateX(20px) scale(0.9)}100%{opacity:1;transform:translateX(0) scale(1)}}
-.cart__row:last-child{border-bottom:0}
-.cart__swatch{
-  width:40px;height:40px;border-radius:50% 50% 46% 46% / 60% 60% 40% 40%;
-  box-shadow:inset 0 2px 4px rgba(255,255,255,0.5),inset 0 -3px 6px rgba(59,35,24,0.15);
-}
-.cart__info{min-width:0}
-.cart__fname{font-family:var(--display);font-weight:700;font-size:0.98rem;color:var(--chocolate);line-height:1.1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.cart__fprice{font-size:0.8rem;color:var(--chocolate);opacity:0.65}
-.cart__qty{display:flex;align-items:center;gap:0.3rem;background:rgba(59,35,24,0.08);border-radius:999px;padding:0.2rem}
-.cart__qty button{
-  width:26px;height:26px;border:0;border-radius:50%;background:var(--crema);color:var(--chocolate);
-  font-family:var(--display);font-weight:800;font-size:1rem;line-height:1;cursor:pointer;
-  display:flex;align-items:center;justify-content:center;transition:transform 0.3s var(--ease-cream),background 0.3s var(--ease-cream);
-}
-.cart__qty button:hover{background:var(--fresa);transform:scale(1.12)}
-.cart__qty button:active{transform:scale(0.88)}
-.cart__qty span{min-width:18px;text-align:center;font-family:var(--display);font-weight:700;font-size:0.92rem;color:var(--chocolate)}
-.cart__remove{
-  grid-column:1 / -1;background:none;border:0;color:var(--fresa-deep);font-family:var(--body);
-  font-size:0.76rem;font-weight:600;cursor:pointer;text-align:right;padding:0.2rem 0 0;justify-self:end;
-  transition:opacity 0.3s var(--ease-cream);
-}
-.cart__remove:hover{opacity:0.7;text-decoration:underline}
-.cart__foot{padding:1rem 1.4rem 1.3rem;background:rgba(255,246,236,0.6);border-top:1px solid rgba(59,35,24,0.1)}
-.cart__total{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:0.9rem}
-.cart__total-label{font-family:var(--body);font-weight:600;color:var(--chocolate);opacity:0.7;font-size:0.9rem}
-.cart__total-val{font-family:var(--display);font-weight:800;color:var(--chocolate);font-size:1.6rem}
-.cart__total-val small{font-size:0.6em;opacity:0.6;font-weight:600}
-.cart__cta{display:block;width:100%;text-align:center}
-
-/* ===== LIGHTBOX ===== */
-.lightbox{
-  position:fixed;inset:0;z-index:3000;background:rgba(59,35,24,0.85);
-  display:flex;align-items:center;justify-content:center;padding:clamp(1rem,4vw,3rem);
-  opacity:0;pointer-events:none;transition:opacity 0.5s var(--ease-cream);
-  backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
-}
-.lightbox.is-open{opacity:1;pointer-events:auto}
-.lightbox__inner{
-  position:relative;max-width:min(90vw,720px);max-height:80vh;
-  border-radius:42% 58% 50% 50% / 55% 45% 55% 45%;
-  overflow:hidden;transform:scale(0.85) rotate(-2deg);opacity:0;
-  transition:transform 0.7s var(--ease-cream),opacity 0.5s var(--ease-cream);
-  box-shadow:0 40px 80px -20px rgba(0,0,0,0.6);
-}
-.lightbox.is-open .lightbox__inner{transform:scale(1) rotate(0);opacity:1}
-.lightbox__inner img{width:100%;height:100%;object-fit:cover;display:block;max-height:80vh}
-.lightbox__cap{
-  position:absolute;left:0;right:0;bottom:0;padding:1.5rem 1.5rem 1.2rem;
-  background:linear-gradient(0deg,rgba(59,35,24,0.85),transparent);
-  color:var(--crema);font-family:var(--display);font-weight:700;font-size:1.1rem;text-align:center;
-}
-.lightbox__close{
-  position:absolute;top:1rem;right:1rem;z-index:2;width:44px;height:44px;border-radius:50%;
-  border:0;background:var(--crema);color:var(--chocolate);font-size:1.4rem;line-height:1;cursor:pointer;
-  display:flex;align-items:center;justify-content:center;
-  box-shadow:0 6px 14px -4px rgba(0,0,0,0.4);transition:transform 0.4s var(--ease-cream);
-}
-.lightbox__close:hover{transform:rotate(90deg) scale(1.08)}
-.lightbox__nav{
-  position:absolute;top:50%;transform:translateY(-50%);z-index:2;
-  width:48px;height:48px;border-radius:50%;border:0;background:var(--crema);color:var(--chocolate);
-  font-size:1.4rem;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;
-  box-shadow:0 6px 14px -4px rgba(0,0,0,0.4);transition:transform 0.4s var(--ease-cream),background 0.4s var(--ease-cream);
-}
-.lightbox__nav:hover{transform:translateY(-50%) scale(1.12);background:var(--fresa)}
-.lightbox__nav--prev{left:clamp(0.5rem,3vw,2rem)}
-.lightbox__nav--next{right:clamp(0.5rem,3vw,2rem)}
-@media (max-width:600px){.lightbox__nav{width:40px;height:40px;font-size:1.2rem}}
-.lightbox__count{
-  position:absolute;top:1.2rem;left:50%;transform:translateX(-50%);z-index:2;
-  background:rgba(255,246,236,0.92);color:var(--chocolate);font-family:var(--display);font-weight:700;font-size:0.85rem;
-  padding:0.4rem 1rem;border-radius:999px;box-shadow:0 6px 14px -4px rgba(0,0,0,0.4);
-}
-
-/* ===== CART CHECKOUT STEP ===== */
-.cart__checkout{display:none;flex-direction:column;gap:0.7rem;padding:0.8rem 1rem 0.4rem}
-.cart.is-checkout .cart__body{display:none}
-.cart.is-checkout .cart__checkout{display:flex}
-.cart.is-checkout .cart__cta .btn__label::before{content:'← '}
-.cart__field{display:flex;flex-direction:column;gap:0.3rem}
-.cart__field label{font-family:var(--body);font-weight:600;font-size:0.8rem;color:var(--chocolate);opacity:0.8}
-.cart__field input,.cart__field textarea{
-  font-family:var(--body);font-size:0.95rem;color:var(--chocolate);
-  background:rgba(255,246,236,0.8);border:1.5px solid rgba(59,35,24,0.18);border-radius:14px;
-  padding:0.6rem 0.9rem;outline:none;transition:border-color 0.4s var(--ease-cream),box-shadow 0.4s var(--ease-cream);
-}
-.cart__field input:focus,.cart__field textarea:focus{border-color:var(--fresa-deep);box-shadow:0 0 0 3px rgba(232,85,122,0.18)}
-.cart__field textarea{resize:vertical;min-height:60px}
-.cart__summary{
-  background:rgba(232,85,122,0.1);border-radius:14px;padding:0.7rem 0.9rem;
-  font-size:0.85rem;color:var(--chocolate);max-height:120px;overflow-y:auto;
-}
-.cart__summary-row{display:flex;justify-content:space-between;padding:0.15rem 0}
-.cart__summary-row span:last-child{font-weight:600}
-.cart__checkout-msg{font-size:0.82rem;color:var(--fresa-deep);min-height:1.1em;font-weight:600;text-align:center}
-.cart__cta-whatsapp{background:linear-gradient(160deg,#B8E0C8,#6FB489);color:var(--chocolate);box-shadow:inset 0 2px 4px rgba(255,255,255,0.4),inset 0 -6px 10px rgba(59,35,24,0.12),0 12px 24px -10px rgba(111,180,137,0.55)}
-
-/* cart success state (after WhatsApp send) */
-.cart__success{display:none;flex-direction:column;align-items:center;text-align:center;gap:0.8rem;padding:2.5rem 1.6rem;flex:1;justify-content:center}
-.cart.is-success .cart__body,.cart.is-success .cart__checkout,.cart.is-success .cart__foot{display:none}
-.cart.is-success .cart__success{display:flex}
-.cart__success-emoji{font-size:3.4rem;filter:drop-shadow(0 6px 10px rgba(232,85,122,0.3));animation:successBob 1.6s var(--ease-cream) infinite}
-@keyframes successBob{0%,100%{transform:translateY(0) rotate(-3deg)}50%{transform:translateY(-8px) rotate(3deg)}}
-.cart__success-title{font-family:var(--display);font-weight:800;font-size:1.5rem;color:var(--chocolate)}
-.cart__success-text{font-size:0.95rem;color:var(--chocolate);opacity:0.75;max-width:28ch;line-height:1.5}
-.cart__success-summary{background:rgba(232,85,122,0.1);border-radius:14px;padding:0.7rem 1rem;width:100%;max-width:280px;font-size:0.82rem;color:var(--chocolate);text-align:left}
-.cart__success-summary-row{display:flex;justify-content:space-between;padding:0.12rem 0}
-.cart__success-summary-row span:last-child{font-weight:600}
-.cart__success-summary-total{border-top:1px dashed rgba(59,35,24,0.2);margin-top:0.4rem;padding-top:0.4rem;font-family:var(--display);font-weight:800;font-size:0.95rem}
-.cart__success-summary-total span:last-child{color:var(--fresa-deep)}
-.cart__success-actions{display:flex;gap:0.6rem;margin-top:0.6rem;flex-wrap:wrap;justify-content:center}
-.cart__success-btn{border:0;border-radius:999px;padding:0.7rem 1.3rem;font-family:var(--display);font-weight:700;font-size:0.9rem;cursor:pointer;transition:transform 0.3s var(--ease-cream),background 0.3s var(--ease-cream)}
-.cart__success-btn--clear{background:var(--fresa);color:var(--chocolate)}
-.cart__success-btn--clear:hover{transform:scale(0.95);background:var(--fresa-deep);color:var(--crema)}
-.cart__success-btn--keep{background:rgba(59,35,24,0.1);color:var(--chocolate)}
-.cart__success-btn--keep:hover{transform:scale(0.95);background:rgba(59,35,24,0.2)}
-
-/* restore toast */
-.restore-toast{
-  position:fixed;left:50%;bottom:max(5.5rem,calc(env(safe-area-inset-bottom) + 5.5rem));transform:translateX(-50%) translateY(20px);
-  z-index:2100;background:var(--chocolate);color:var(--crema);font-family:var(--display);font-weight:700;font-size:0.92rem;
-  padding:0.8rem 1.3rem;border-radius:999px;box-shadow:0 12px 28px -10px rgba(59,35,24,0.6);
-  opacity:0;pointer-events:none;transition:opacity 0.5s var(--ease-cream),transform 0.5s var(--ease-cream);
-  display:flex;align-items:center;gap:0.6rem;max-width:calc(100vw - 2rem);
-}
-.restore-toast.is-show{opacity:1;transform:translateX(-50%) translateY(0);pointer-events:auto}
-.restore-toast .btn-mini{
-  background:var(--fresa);color:var(--chocolate);border:0;border-radius:999px;padding:0.35rem 0.9rem;
-  font-family:var(--display);font-weight:700;font-size:0.82rem;cursor:pointer;transition:transform 0.3s var(--ease-cream);
-}
-.restore-toast .btn-mini:hover{transform:scale(0.94)}
-.restore-toast .btn-mini--ghost{background:transparent;color:var(--crema);opacity:0.7}
-.restore-toast .btn-mini--ghost:hover{opacity:1}
-
-/* ===== STYLING DETAILS ===== */
-/* flavor price tag drip */
-.flavor__price{position:relative;display:inline-block;padding-left:1.1rem}
-.flavor__price::before{content:'';position:absolute;left:0;top:50%;transform:translateY(-50%);width:8px;height:10px;border-radius:50% 50% 50% 0 / 60% 60% 40% 40%;background:var(--fresa-deep);opacity:0.7;filter:url(#goo)}
-
-/* section eyebrow pip pulse */
-.section__eyebrow .pip,.hero__eyebrow .pip{display:inline-block;animation:pipPulse 2.4s var(--ease-cream) infinite}
-@keyframes pipPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.4)}}
-
-/* testimonial card visual hierarchy: quote indent + drip accent */
-.testi__card{position:relative;overflow:visible}
-.testi__card::after{
-  content:'';position:absolute;left:1.6rem;bottom:-4px;width:10px;height:10px;border-radius:50%;
-  background:rgba(255,255,255,0.6);filter:url(#goo);opacity:0.7;
-}
-
-/* hero decorative melting accent near eyebrow */
-.hero__accent-drip{position:absolute;left:0;top:clamp(5.5rem,8vw,7rem);width:90px;height:120px;opacity:0.5;pointer-events:none;z-index:0}
-.hero__accent-drip svg{width:100%;height:100%}
-@media (max-width:900px){.hero__accent-drip{display:none}}
-
-
-/* ===== GALERIA ===== */
-#galeria{background:var(--crema);padding:clamp(4rem,8vw,7rem) 0;overflow:hidden}
-.gal__head{max-width:1280px;margin:0 auto 3rem;padding:0 clamp(1.2rem,5vw,3rem);text-align:center}
-.gal__head .section__title{margin-left:auto;margin-right:auto}
-.gal__grid{
-  max-width:1280px;margin:0 auto;padding:0 clamp(1.2rem,5vw,3rem);
-  display:grid;grid-template-columns:repeat(4,1fr);grid-auto-rows:160px;gap:1rem;
-}
-@media (max-width:820px){.gal__grid{grid-template-columns:repeat(2,1fr);grid-auto-rows:140px}}
-.gal__item{
-  position:relative;overflow:hidden;border-radius:32% 36% 34% 30% / 38% 32% 36% 34%;
-  box-shadow:inset 0 4px 10px rgba(255,255,255,0.4),0 18px 34px -22px rgba(59,35,24,0.4);
-  animation:blobMorph 20s var(--ease-cream) infinite alternate;cursor:pointer;
-}
-.gal__item--wide{grid-column:span 2}
-.gal__item--tall{grid-row:span 2}
-@media (max-width:820px){.gal__item--wide{grid-column:span 2}.gal__item--tall{grid-row:span 1}}
-.gal__item img{width:100%;height:100%;object-fit:cover;display:block;transition:transform 0.8s var(--ease-cream),filter 0.6s var(--ease-cream);filter:saturate(1.05)}
-.gal__item:hover img{transform:scale(1.08);filter:saturate(1.15) brightness(1.05)}
-.gal__cap{
-  position:absolute;left:0;right:0;bottom:0;padding:1.6rem 1rem 0.8rem;
-  background:linear-gradient(0deg,rgba(59,35,24,0.7),transparent);
-  color:var(--crema);font-family:var(--display);font-weight:700;font-size:0.92rem;
-  transform:translateY(100%);transition:transform 0.6s var(--ease-cream);text-align:center;
-}
-.gal__item:hover .gal__cap{transform:translateY(0)}
-
-/* proceso icon hover */
-.proceso__step{cursor:default}
-.proceso__icon{transition:transform 0.5s var(--ease-cream)}
-@media (hover:hover){.proceso__step:hover .proceso__icon{transform:translateY(-6px) scale(1.05)}}
-
-/* nav scroll behavior */
-.nav{transition:transform 0.5s var(--ease-cream),background 0.5s var(--ease-cream),box-shadow 0.5s var(--ease-cream)}
-.nav.is-hidden{transform:translateY(-110%)}
-.nav.is-scrolled{background:rgba(255,246,236,0.82);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);box-shadow:0 6px 24px -12px rgba(59,35,24,0.25)}
-@media (max-width:760px){.nav{padding:1rem clamp(1rem,5vw,1.5rem)}}
-
-/* ===== FAQ ===== */
-#faq{background:var(--vainilla);padding:clamp(4rem,8vw,7rem) 0}
-.faq__head{text-align:center;max-width:640px;margin:0 auto 3rem}
-.faq__head .section__title{margin-left:auto;margin-right:auto}
-.faq__list{max-width:760px;margin:0 auto;display:flex;flex-direction:column;gap:0.8rem}
-.faq__item{
-  background:var(--crema);border-radius:28px;overflow:hidden;
-  box-shadow:inset 0 2px 6px rgba(255,255,255,0.5),0 10px 24px -16px rgba(59,35,24,0.3);
-  transition:border-radius 0.5s var(--ease-cream);
-}
-.faq__item.is-open{border-radius:36px 36px 28px 28px}
-.faq__q{
-  width:100%;display:flex;align-items:center;justify-content:space-between;gap:1rem;
-  padding:1.3rem 1.6rem;background:none;border:0;cursor:pointer;text-align:left;
-  font-family:var(--display);font-weight:700;font-size:clamp(1rem,2vw,1.2rem);color:var(--chocolate);
-}
-.faq__q-icon{
-  flex-shrink:0;width:32px;height:32px;border-radius:50%;background:var(--fresa);
-  display:flex;align-items:center;justify-content:center;color:var(--chocolate);font-size:1.3rem;line-height:1;
-  transition:transform 0.5s var(--ease-cream),background 0.4s var(--ease-cream);
-  will-change:transform;
-}
-.faq__item.is-open .faq__q-icon{transform:rotate(45deg) scale(1.1);background:var(--fresa-deep);color:var(--crema)}
-.faq__a{
-  max-height:0;overflow:hidden;opacity:0;
-  transition:max-height 0.6s var(--ease-cream),opacity 0.4s var(--ease-cream),padding 0.5s var(--ease-cream);
-  padding:0 1.6rem;
-}
-.faq__item.is-open .faq__a{max-height:240px;opacity:1;padding:0 1.6rem 1.4rem}
-.faq__a p{font-size:1rem;color:var(--chocolate);opacity:0.8;line-height:1.6}
-.faq__a p+p{margin-top:0.6rem}
-.faq__contact{text-align:center;margin-top:2.5rem;font-family:var(--display);font-weight:600;color:var(--chocolate);opacity:0.7;font-size:1rem}
-.faq__contact a{color:var(--fresa-deep);text-decoration:none;border-bottom:2px dotted var(--fresa-deep);padding-bottom:1px;transition:opacity 0.3s var(--ease-cream)}
-.faq__contact a:hover{opacity:0.7}
-
-/* ===== BACK TO TOP ===== */
-.back-top{
-  position:fixed;left:max(1rem,env(safe-area-inset-left));bottom:max(1.2rem,env(safe-area-inset-bottom));
-  z-index:170;width:48px;height:56px;pointer-events:none;opacity:0;transform:translateY(20px) scale(0.7);
-  transition:opacity 0.5s var(--ease-cream),transform 0.5s var(--ease-cream);will-change:transform,opacity;
-}
-.back-top.is-visible{opacity:1;transform:translateY(0) scale(1);pointer-events:auto;cursor:pointer}
-.back-top__goo{position:relative;width:100%;height:100%;filter:url(#goo-strong)}
-.back-top__drop{
-  position:absolute;left:50%;top:0;transform:translateX(-50%);
-  width:40px;height:46px;border-radius:50% 50% 46% 46% / 60% 60% 40% 40%;
-  background:linear-gradient(160deg,#FFD9E3,var(--fresa-deep));
-  box-shadow:inset 0 2px 4px rgba(255,255,255,0.5),inset 0 -4px 8px rgba(59,35,24,0.15);
-  display:flex;align-items:center;justify-content:center;color:var(--chocolate);
-}
-.back-top__drop svg{width:18px;height:18px}
-.back-top__drip{position:absolute;left:50%;bottom:4px;transform:translateX(-50%);width:12px;height:12px;border-radius:50%;background:var(--fresa-deep)}
-.back-top:hover .back-top__drop{animation:bobUp 0.6s var(--ease-cream)}
-@keyframes bobUp{0%{transform:translateX(-50%) translateY(0)}50%{transform:translateX(-50%) translateY(-6px)}100%{transform:translateX(-50%) translateY(0)}}
-@media (max-width:760px){.back-top{left:auto;right:max(5rem,calc(env(safe-area-inset-right) + 5rem));bottom:max(5.5rem,calc(env(safe-area-inset-bottom) + 5.5rem))}}
-
-/* nav cart count badge */
-.nav__cart-count{
-  display:inline-flex;align-items:center;justify-content:center;min-width:20px;height:20px;padding:0 5px;
-  background:var(--chocolate);color:var(--crema);border-radius:999px;font-family:var(--display);font-weight:800;
-  font-size:0.72rem;margin-left:0.4rem;transform:scale(0);transition:transform 0.4s var(--ease-cream);vertical-align:middle;
-}
-.nav__cart-count.is-active{transform:scale(1)}
-
-/* ===== CART DISCOUNT LINE ===== */
-.cart__discount{
-  display:none;justify-content:space-between;align-items:baseline;margin-top:0.4rem;padding-top:0.4rem;
-  border-top:1px dashed rgba(111,180,137,0.5);
-}
-.cart.has-discount .cart__discount{display:flex}
-.cart__discount-label{font-family:var(--body);font-weight:600;color:var(--pistache-deep);font-size:0.82rem;display:flex;align-items:center;gap:0.3rem}
-.cart__discount-label .tag{background:var(--pistache);color:var(--chocolate);font-family:var(--display);font-weight:800;font-size:0.68rem;padding:0.1rem 0.4rem;border-radius:999px;letter-spacing:0.02em}
-.cart__discount-val{font-family:var(--display);font-weight:800;color:var(--pistache-deep);font-size:1rem}
-.cart__total-val.has-discount{font-size:1.3rem}
-.cart__total-val .original{font-size:0.6em;text-decoration:line-through;opacity:0.5;font-weight:600;margin-right:0.3em}
-
-/* ===== SHARE BUTTON ===== */
-.promo__share{
-  background:rgba(255,246,236,0.15);border:0;border-radius:999px;color:var(--crema);
-  width:30px;height:30px;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;
-  transition:background 0.3s var(--ease-cream),transform 0.3s var(--ease-cream);
-}
-.promo__share:hover{background:rgba(255,246,236,0.28);transform:scale(1.1)}
-.promo__share svg{width:15px;height:15px;fill:currentColor}
-
-/* ===== FLAVOR DETAILS MODAL ===== */
-.flavor-modal{
-  position:fixed;inset:0;z-index:2500;background:rgba(59,35,24,0.6);
-  display:flex;align-items:center;justify-content:center;padding:clamp(1rem,4vw,2rem);
-  opacity:0;pointer-events:none;transition:opacity 0.5s var(--ease-cream);
-  backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);
-}
-.flavor-modal.is-open{opacity:1;pointer-events:auto}
-.flavor-modal__inner{
-  position:relative;width:min(440px,calc(100vw - 2rem));max-height:85vh;overflow-y:auto;
-  background:var(--crema);border-radius:36px 36px 28px 28px;
-  transform:scale(0.85) translateY(20px);opacity:0;
-  transition:transform 0.6s var(--ease-cream),opacity 0.5s var(--ease-cream);
-  box-shadow:0 30px 60px -20px rgba(59,35,24,0.5);
-}
-.flavor-modal.is-open .flavor-modal__inner{transform:scale(1) translateY(0);opacity:1}
-.flavor-modal__hero{
-  height:160px;display:flex;align-items:center;justify-content:center;position:relative;
-  border-radius:36px 36px 0 0;
-}
-.flavor-modal__hero .scoop-ill{width:120px;height:120px;filter:url(#goo);position:relative}
-.flavor-modal__hero .scoop-ill .ball{width:100%;height:88%;border-radius:50% 50% 48% 48% / 60% 60% 40% 40%;background:rgba(255,255,255,0.6);position:relative}
-.flavor-modal__hero .scoop-ill .ball::after{content:'';position:absolute;left:22%;top:18%;width:34%;height:30%;border-radius:50%;background:rgba(255,255,255,0.8);filter:blur(2px)}
-.flavor-modal__hero .scoop-ill .drip{position:absolute;left:50%;bottom:0;width:14px;height:14px;border-radius:50%;background:rgba(255,255,255,0.6);transform:translateX(-50%)}
-.flavor-modal__close{
-  position:absolute;top:0.8rem;right:0.8rem;z-index:2;width:34px;height:34px;border-radius:50%;
-  border:0;background:rgba(255,255,255,0.6);color:var(--chocolate);font-size:1.2rem;line-height:1;cursor:pointer;
-  display:flex;align-items:center;justify-content:center;transition:transform 0.4s var(--ease-cream);
-}
-.flavor-modal__close:hover{transform:rotate(90deg) scale(1.08)}
-.flavor-modal__body{padding:1.4rem 1.6rem 1.8rem}
-.flavor-modal__name{font-family:var(--display);font-weight:800;font-size:1.8rem;color:var(--chocolate);line-height:1}
-.flavor-modal__price{font-family:var(--display);font-weight:700;color:var(--fresa-deep);font-size:1.1rem;margin-top:0.2rem}
-.flavor-modal__desc{font-size:0.98rem;color:var(--chocolate);opacity:0.8;margin-top:0.8rem;line-height:1.55}
-.flavor-modal__meta{margin-top:1.2rem;display:grid;grid-template-columns:1fr 1fr;gap:0.8rem}
-.flavor-modal__meta-item{background:rgba(59,35,24,0.06);border-radius:14px;padding:0.7rem 0.9rem}
-.flavor-modal__meta-label{font-family:var(--body);font-weight:600;font-size:0.72rem;color:var(--chocolate);opacity:0.6;text-transform:uppercase;letter-spacing:0.06em}
-.flavor-modal__meta-val{font-family:var(--display);font-weight:700;font-size:0.92rem;color:var(--chocolate);margin-top:0.15rem}
-.flavor-modal__pairing{margin-top:1rem;font-size:0.9rem;color:var(--chocolate);opacity:0.75;line-height:1.5}
-.flavor-modal__pairing b{color:var(--fresa-deep);font-family:var(--display)}
-.flavor-modal__cta{display:block;width:100%;margin-top:1.4rem;text-align:center}
-
-/* reduced motion */
-@media (prefers-reduced-motion:reduce){
-  *{animation:none !important;transition:none !important}
-  .grain{display:none}
-  .cursor-goo{display:none}
-  .preloader{transition:opacity 0.4s linear}
-  .reveal{opacity:1 !important}
-  .media-clip{clip-path:none !important}
-  .scroll-drip{display:none}
-  .hero__bubbles{display:none}
-  .float-order{transition:opacity 0.4s linear}
-}
-`;
 
 export default function Home() {
+  const [cart, setCart] = useState<Record<string, number>>({});
+  const [cartOpen, setCartOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [activeFaq, setActiveFaq] = useState<number | null>(0);
+  const [recentlyAdded, setRecentlyAdded] = useState<string | null>(null);
+  const [cartReady, setCartReady] = useState(false);
+  const closeCartRef = useRef<HTMLButtonElement>(null);
+  const drawerRef = useRef<HTMLElement>(null);
+  const returnFocusRef = useRef<HTMLElement | null>(null);
+
   useEffect(() => {
-    const w = window as any;
-    if (w.__heladoInit) return;
-    w.__heladoInit = true;
-
-    const reduce = w.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const isTouch = w.matchMedia('(hover: none), (pointer: coarse)').matches;
-
-    const loadScript = (src: string) =>
-      new Promise<void>((res) => {
-        const s = document.createElement('script');
-        s.src = src;
-        s.async = true;
-        s.onload = () => res();
-        s.onerror = () => res();
-        document.head.appendChild(s);
-      });
-
-    (async () => {
-      if (reduce) {
-        // simple fade preloader, keep content usable
-        const pre = document.querySelector('.preloader') as HTMLElement | null;
-        if (pre) {
-          requestAnimationFrame(() => {
-            pre.style.transition = 'opacity 0.5s linear';
-            pre.style.opacity = '0';
-            setTimeout(() => { pre.style.display = 'none'; }, 520);
-          });
-        }
-        // reveal everything
-        document.querySelectorAll('.reveal').forEach((el) => { (el as HTMLElement).style.opacity = '1'; });
-        document.querySelectorAll('.media-clip').forEach((el) => { (el as HTMLElement).style.clipPath = 'none'; });
-        initBaseOnly();
-        return;
+    const frame = window.requestAnimationFrame(() => {
+      try {
+        const saved = window.localStorage.getItem('helado-nube-cart-v2');
+        if (saved) setCart(JSON.parse(saved));
+      } catch {
+        window.localStorage.removeItem('helado-nube-cart-v2');
+      } finally {
+        setCartReady(true);
       }
-      await loadScript('https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js');
-      await loadScript('https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js');
-      await loadScript('https://cdn.jsdelivr.net/npm/@studio-freight/lenis@1.0.42/dist/lenis.min.js');
-      initFull();
-    })();
-
-    function initBaseOnly() {
-      // newsletter + footer sprinkle even in reduced motion (light)
-      wireNewsletter(true);
-      wireDripUnderlines();
-    }
-
-    function initFull() {
-      const gsap = w.gsap;
-      const ScrollTrigger = w.ScrollTrigger;
-      const Lenis = w.Lenis;
-      gsap.registerPlugin(ScrollTrigger);
-
-      // ---------- Lenis viscous scroll ----------
-      const lenis = new Lenis({
-        duration: 1.4,
-        easing: (t: number) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
-        smoothWheel: true,
-        wheelMultiplier: 0.9,
-        touchMultiplier: 1.4,
-      });
-      lenis.on('scroll', ScrollTrigger.update);
-      const raf = (time: number) => { lenis.raf(time); requestAnimationFrame(raf); };
-      requestAnimationFrame(raf);
-
-      // anchor links via lenis
-      document.querySelectorAll('a[href^="#"]').forEach((a) => {
-        a.addEventListener('click', (e) => {
-          const href = (a as HTMLAnchorElement).getAttribute('href');
-          if (href && href.length > 1) {
-            const t = document.querySelector(href);
-            if (t) { e.preventDefault(); lenis.scrollTo(t as HTMLElement, { offset: -20, duration: 1.6 }); }
-          }
-        });
-      });
-
-      // ---------- Nav: hide on scroll-down, show on scroll-up + scrolled state ----------
-      const nav = document.querySelector('.nav') as HTMLElement;
-      if (nav) {
-        let lastY = 0;
-        const onScroll = () => {
-          const y = w.scrollY;
-          if (y > 40) nav.classList.add('is-scrolled'); else nav.classList.remove('is-scrolled');
-          if (y > 200 && y > lastY + 8) nav.classList.add('is-hidden');
-          else if (y < lastY - 8 || y < 200) nav.classList.remove('is-hidden');
-          lastY = y;
-        };
-        w.addEventListener('scroll', onScroll, { passive: true });
-        onScroll();
-      }
-
-      // ---------- Promo countdown (ends end of current month) ----------
-      const promoD = document.querySelector('#promo-d') as HTMLElement;
-      const promoH = document.querySelector('#promo-h') as HTMLElement;
-      const promoM = document.querySelector('#promo-m') as HTMLElement;
-      const promoS = document.querySelector('#promo-s') as HTMLElement;
-      if (promoD && promoH && promoM && promoS) {
-        const tick = () => {
-          const now = new Date();
-          // end of current month, then roll to next month if passed
-          let end = new Date(now.getFullYear(), now.getMonth() + 1, 1, 0, 0, 0);
-          let diff = Math.max(0, end.getTime() - now.getTime());
-          const d = Math.floor(diff / 86400000); diff -= d * 86400000;
-          const h = Math.floor(diff / 3600000); diff -= h * 3600000;
-          const m = Math.floor(diff / 60000); diff -= m * 60000;
-          const s = Math.floor(diff / 1000);
-          promoD.textContent = String(d);
-          promoH.textContent = String(h).padStart(2, '0');
-          promoM.textContent = String(m).padStart(2, '0');
-          promoS.textContent = String(s).padStart(2, '0');
-        };
-        tick();
-        setInterval(tick, 1000);
-      }
-
-      // ---------- Promo share button (Web Share API + clipboard fallback) ----------
-      document.querySelector('.promo__share')?.addEventListener('click', async () => {
-        const shareData = {
-          title: 'Helado Nube — Sabor del mes',
-          text: '¡Cajeta de Celaya con -15% en Helado Nube! Solo este mes. 🍦',
-          url: w.location.href,
-        };
-        try {
-          if (navigator.share) { await navigator.share(shareData); }
-          else { await navigator.clipboard.writeText(shareData.text + ' ' + shareData.url); showToastCopied(); }
-        } catch (e) { /* user cancelled share */ }
-      });
-      const showToastCopied = () => {
-        const t = document.querySelector('.restore-toast') as HTMLElement;
-        if (t) {
-          t.querySelector('span')!.innerHTML = '¡Copiado! Pégalo donde quieras 🍦';
-          t.querySelector('.btn-mini--open')?.remove();
-          t.querySelector('.btn-mini--ghost')?.remove();
-          t.classList.add('is-show');
-          setTimeout(() => { t.classList.remove('is-show'); w.location.reload(); }, 2000);
-        }
-      };
-
-      // ---------- Cursor ----------
-      if (!isTouch) {
-        document.body.classList.add('has-cursor');
-        const goo = document.querySelector('.cursor-goo') as HTMLElement;
-        const blob = goo.querySelector('.blob') as HTMLElement;
-        const dot = goo.querySelector('.dot') as HTMLElement;
-        let mx = w.innerWidth / 2, my = w.innerHeight / 2;
-        let bx = mx, by = my, dx = mx, dy = my;
-        w.addEventListener('mousemove', (e: MouseEvent) => { mx = e.clientX; my = e.clientY; });
-        const hoverSel = 'a,button,[data-cursor],.flavor,.proceso__icon,.magnetic-wrap .btn,input';
-        document.addEventListener('mouseover', (e: MouseEvent) => {
-          if ((e.target as HTMLElement).closest(hoverSel)) document.body.classList.add('cursor-hover');
-        });
-        document.addEventListener('mouseout', (e: MouseEvent) => {
-          if ((e.target as HTMLElement).closest(hoverSel)) document.body.classList.remove('cursor-hover');
-        });
-        document.addEventListener('mousedown', () => document.body.classList.add('cursor-down'));
-        document.addEventListener('mouseup', () => document.body.classList.remove('cursor-down'));
-        const tick = () => {
-          bx += (mx - bx) * 0.12; by += (my - by) * 0.12;
-          dx += (mx - dx) * 0.28; dy += (my - dy) * 0.28;
-          goo.style.transform = `translate(${bx}px,${by}px)`;
-          blob.style.transform = `translate(-50%,-50%) scale(${document.body.classList.contains('cursor-hover') ? 2.5 : document.body.classList.contains('cursor-down') ? 0.7 : 1})`;
-          dot.style.transform = `translate(${dx - bx}px,${dy - by}px) translate(-50%,-50%)`;
-          requestAnimationFrame(tick);
-        };
-        requestAnimationFrame(tick);
-      }
-
-      // ---------- Preloader melt ----------
-      const pre = document.querySelector('.preloader') as HTMLElement;
-      const scoop = pre.querySelector('.preloader__scoop') as HTMLElement;
-      const pctEl = pre.querySelector('.preloader__pct') as HTMLElement;
-      const disp = document.querySelector('#melt-displace feDisplacementMap') as any;
-      const turb = document.querySelector('#melt-displace feTurbulence') as any;
-
-      const counter = { v: 0 };
-      const tl = gsap.timeline();
-      tl.to(counter, {
-        v: 100, duration: 1.5, ease: 'power1.inOut',
-        onUpdate: () => { pctEl.textContent = String(Math.round(counter.v)); },
-      }, 0);
-      // scoop sags + drip forms
-      tl.to(scoop, { y: 14, scaleY: 0.92, duration: 1.5, ease: 'power2.inOut', transformOrigin: 'center top' }, 0);
-      tl.fromTo('.preloader__scoop .sag-drip', { scaleY: 0, opacity: 0 }, { scaleY: 1, opacity: 1, duration: 1, ease: 'elastic.out(1,0.6)' }, 0.5);
-
-      // melt reveal 1.5 - 3.5
-      tl.to(disp, { attr: { scale: 130 }, duration: 1.4, ease: 'power2.in' }, 1.5);
-      tl.to(turb, { attr: { baseFrequency: '0.02 0.04' }, duration: 1.4, ease: 'power2.in' }, 1.5);
-      tl.to(pre, { y: w.innerHeight * 1.15, scaleY: 1.25, duration: 1.5, ease: 'power2.in', transformOrigin: 'center top' }, 1.7);
-      tl.to(pre, { opacity: 0, duration: 0.4, ease: 'power2.out' }, 2.9);
-      tl.set(pre, { display: 'none' });
-
-      // ---------- Hero title melt-in ----------
-      tl.from('.hero__eyebrow', { y: 20, opacity: 0, duration: 0.8, ease: 'power3.out' }, 2.4);
-      tl.from('.hero__title', { opacity: 0, duration: 0.1 }, 2.4);
-      tl.from('.hero__title .goo-text text', { scale: 0.85, opacity: 0, duration: 1.2, ease: 'elastic.out(1,0.6)', transformOrigin: 'center bottom', stagger: 0.06 }, 2.5);
-      tl.from('.hero__sub', { y: 26, opacity: 0, duration: 1, ease: 'power3.out' }, 3.0);
-      tl.from('.hero__ctas .btn', { y: 22, opacity: 0, duration: 0.9, ease: 'elastic.out(1,0.7)', stagger: 0.12 }, 3.2);
-      tl.from('.hero__cone', { y: 40, opacity: 0, rotation: 6, duration: 1.4, ease: 'elastic.out(1,0.6)' }, 2.6);
-      tl.from('.hero__scroll', { opacity: 0, y: -10, duration: 0.8, ease: 'power3.out' }, 3.4);
-
-      // ---------- Hero title drips loop ----------
-      const dripLayer = document.querySelector('.hero__title .goo-text') as any;
-      const titleDrips = dripLayer ? Array.from(dripLayer.querySelectorAll('.drip-circle')) : [];
-      const ns = 'http://www.w3.org/2000/svg';
-      const titleText = dripLayer ? dripLayer.querySelector('text') : null;
-      function spawnTitleDrip() {
-        if (!dripLayer || !titleText) return;
-        const vb = (dripLayer.closest('svg') as any).viewBox.baseVal;
-        const x = 80 + Math.random() * (vb.width - 160);
-        const c = document.createElementNS(ns, 'circle');
-        c.setAttribute('cx', String(x));
-        c.setAttribute('cy', String(vb.height * 0.62));
-        c.setAttribute('r', String(4 + Math.random() * 5));
-        c.setAttribute('class', 'drip-circle');
-        c.setAttribute('fill', 'var(--chocolate)');
-        dripLayer.appendChild(c);
-        const startCy = vb.height * 0.62;
-        const endCy = vb.height + 40;
-        gsap.to(c, {
-          attr: { cy: endCy }, duration: 1.8 + Math.random() * 1.2, ease: 'power1.in',
-          onUpdate: () => { c.setAttribute('r', String(parseFloat(c.getAttribute('r')) * 0.998)); },
-        });
-        gsap.to(c, { attr: { r: 1 }, duration: 0.6, ease: 'power2.in', delay: 1.4 });
-        gsap.to(c, { opacity: 0, duration: 0.4, onComplete: () => c.remove(), delay: 2.0 });
-      }
-      // ambient drip every 6-9s
-      function ambientLoop() {
-        spawnTitleDrip();
-        gsap.delayedCall(6 + Math.random() * 3, ambientLoop);
-      }
-      gsap.delayedCall(4, ambientLoop);
-
-      // ---------- Hero cone cursor tilt ----------
-      const cone = document.querySelector('.hero__cone') as HTMLElement;
-      if (cone && !isTouch) {
-        let tx = 0, ty = 0, cx = 0, cy = 0, parallaxY = 0;
-        w.addEventListener('mousemove', (e: MouseEvent) => {
-          const rx = (e.clientX / w.innerWidth - 0.5) * 2;
-          const ry = (e.clientY / w.innerHeight - 0.5) * 2;
-          tx = rx * 6; ty = ry * -6;
-        });
-        const coneTick = () => {
-          cx += (tx - cx) * 0.08; cy += (ty - cy) * 0.08;
-          cone.style.transform = `perspective(900px) rotateY(${cx}deg) rotateX(${cy}deg) translateY(${parallaxY}px)`;
-          requestAnimationFrame(coneTick);
-        };
-        requestAnimationFrame(coneTick);
-        // scroll parallax: cone drifts up + fades as you scroll past hero
-        ScrollTrigger.create({
-          trigger: '.hero', start: 'top top', end: 'bottom top', scrub: 1,
-          onUpdate: (self: any) => { parallaxY = -self.progress * 80; cone.style.opacity = String(1 - self.progress * 0.6); },
-        });
-      }
-
-      // ---------- Hero bubbles scroll parallax ----------
-      const bubbleContainer = document.querySelector('.hero__bubbles');
-      if (bubbleContainer) {
-        ScrollTrigger.create({
-          trigger: '.hero', start: 'top top', end: 'bottom top', scrub: 1.2,
-          onUpdate: (self: any) => { bubbleContainer.style.transform = `translateY(${self.progress * 60}px)`; bubbleContainer.style.opacity = String(1 - self.progress * 0.8); },
-        });
-      }
-
-      // ---------- Buttons squish + drips ----------
-      document.querySelectorAll('.btn').forEach((btn) => {
-        const drips = btn.querySelectorAll('.btn__drips i');
-        btn.addEventListener('mouseenter', () => {
-          drips.forEach((d, i) => {
-            gsap.fromTo(d, { y: -6, scaleY: 0.4, opacity: 0 }, {
-              y: 14 + i * 4, scaleY: 1.2, opacity: 1, duration: 0.7, ease: 'elastic.out(1,0.6)', delay: i * 0.06,
-            });
-          });
-        });
-        btn.addEventListener('mouseleave', () => {
-          drips.forEach((d) => gsap.to(d, { y: 22, opacity: 0, duration: 0.5, ease: 'power2.in' }));
-        });
-        btn.addEventListener('click', () => {
-          gsap.timeline()
-            .to(btn, { scaleY: 0.85, scaleX: 1.04, duration: 0.12, ease: 'power2.out' })
-            .to(btn, { scaleY: 1, scaleX: 1, duration: 0.7, ease: 'elastic.out(1,0.4)' });
-        });
-      });
-
-      // ---------- Drip underlines ----------
-      wireDripUnderlines(gsap);
-
-      // ---------- Section divider morph (hero -> sabores) ----------
-      const morphPath = document.querySelector('#dividerMorphPath') as any;
-      if (morphPath) {
-        const d1 = morphPath.getAttribute('d');
-        const d2 = 'M0,0 L1440,0 L1440,40 C1320,70 1200,20 1080,55 C960,90 840,30 720,60 C600,90 480,25 360,58 C240,90 120,30 0,55 Z';
-        gsap.to(morphPath, { attr: { d: d2 }, duration: 8, ease: 'sine.inOut', yoyo: true, repeat: -1 });
-      }
-
-      // ---------- Scroll reveals (scoop in) ----------
-      gsap.utils.toArray('.reveal').forEach((el: any) => {
-        gsap.fromTo(el, { y: 60, rotation: -3, opacity: 0, scale: 0.94 }, {
-          y: 0, rotation: 0, opacity: 1, scale: 1, duration: 1.2, ease: 'elastic.out(1,0.7)',
-          scrollTrigger: { trigger: el, start: 'top 86%' },
-        });
-      });
-
-      // media clip reveals (blob)
-      gsap.utils.toArray('.media-clip').forEach((el: any) => {
-        gsap.to(el, {
-          clipPath: 'circle(75% at 50% 50%)', duration: 1.4, ease: 'power3.out',
-          scrollTrigger: { trigger: el, start: 'top 80%' },
-        });
-      });
-
-      // ---------- Flavor cards: tilt + tint + drip + quick-add ----------
-      const sabores = document.querySelector('#sabores');
-      const flavorData: Record<string, string> = {
-        Fresa: '#FFD4DF', 'Vainilla de Papantla': '#FFEFC9', Pistache: '#CFEEDB',
-        'Chocolate Oaxaqueño': '#E9C9A8', 'Mango con Chile': '#FFE2A8', Cajeta: '#E6C39A',
-      };
-      const flavorColor: Record<string, string> = {
-        Fresa: '#FFB3C7', 'Vainilla de Papantla': '#FFE8B8', Pistache: '#B8E0C8',
-        'Chocolate Oaxaqueño': '#8a5a3c', 'Mango con Chile': '#FFD27A', Cajeta: '#C98A4B',
-      };
-      // mini-cart state -> full cart with quantities + prices + total + localStorage + checkout
-      const cartBadge = document.querySelector('.float-order__badge') as HTMLElement;
-      const cartPop = document.querySelector('.float-order__pop') as HTMLElement;
-      const floatOrderEl = document.querySelector('.float-order') as HTMLElement;
-      const cartEl = document.querySelector('.cart') as HTMLElement;
-      const cartOverlay = document.querySelector('.cart-overlay') as HTMLElement;
-      const cartBody = document.querySelector('.cart__body') as HTMLElement;
-      const cartTotalVal = document.querySelector('.cart__total-val') as HTMLElement;
-      const cartCtaLabel = document.querySelector('.cart__cta .btn__label') as HTMLElement;
-      const cartCheckout = document.querySelector('.cart__checkout') as HTMLElement;
-      const cartSummary = document.querySelector('.cart__summary') as HTMLElement;
-      const cartCheckoutMsg = document.querySelector('.cart__checkout-msg') as HTMLElement;
-      const cartItems: Record<string, { name: string; price: number; color: string; qty: number }> = {};
-      const flavorPrice: Record<string, number> = {
-        Fresa: 65, 'Vainilla de Papantla': 72, Pistache: 85,
-        'Chocolate Oaxaqueño': 78, 'Mango con Chile': 70, Cajeta: 74,
-      };
-      // promo: -15% on Cajeta (Sabor del mes)
-      const PROMO_FLAVOR = 'Cajeta';
-      const PROMO_RATE = 0.15;
-      const calcDiscount = () => {
-        if (cartItems[PROMO_FLAVOR]) return Math.round(cartItems[PROMO_FLAVOR].qty * cartItems[PROMO_FLAVOR].price * PROMO_RATE * 100) / 100;
-        return 0;
-      };
-      const STORAGE_KEY = 'helado-nube-cart';
-      const saveCart = () => {
-        try { localStorage.setItem(STORAGE_KEY, JSON.stringify(cartItems)); } catch (e) {}
-      };
-      const loadCart = (): boolean => {
-        try {
-          const raw = localStorage.getItem(STORAGE_KEY);
-          if (!raw) return false;
-          const parsed = JSON.parse(raw);
-          if (parsed && typeof parsed === 'object') {
-            Object.keys(cartItems).forEach((k) => delete cartItems[k]);
-            Object.assign(cartItems, parsed);
-            return Object.keys(cartItems).reduce((s, k) => s + cartItems[k].qty, 0) > 0;
-          }
-        } catch (e) {}
-        return false;
-      };
-      const formatTotal = (n: number) => '$' + n + ' <small>MNX</small>';
-      const navCartCount = document.querySelector('.nav__cart-count') as HTMLElement;
-      const syncNavCount = () => {
-        const c = Object.keys(cartItems).reduce((s, k) => s + cartItems[k].qty, 0);
-        if (navCartCount) {
-          navCartCount.textContent = String(c);
-          if (c > 0) navCartCount.classList.add('is-active'); else navCartCount.classList.remove('is-active');
-        }
-      };
-      const renderCart = () => {
-        const keys = Object.keys(cartItems);
-        const count = keys.reduce((s, k) => s + cartItems[k].qty, 0);
-        const subtotal = keys.reduce((s, k) => s + cartItems[k].qty * cartItems[k].price, 0);
-        const discount = calcDiscount();
-        const total = Math.round((subtotal - discount) * 100) / 100;
-        if (cartBadge) {
-          cartBadge.textContent = String(count);
-          if (count > 0) cartBadge.classList.add('is-active'); else cartBadge.classList.remove('is-active');
-        }
-        if (cartEl) {
-          if (count > 0) cartEl.classList.add('has-items'); else cartEl.classList.remove('has-items');
-          if (discount > 0) cartEl.classList.add('has-discount'); else cartEl.classList.remove('has-discount');
-        }
-        const cartDiscountVal = document.querySelector('.cart__discount-val') as HTMLElement;
-        if (cartDiscountVal) cartDiscountVal.innerHTML = '-$' + discount + ' <small>MNX</small>';
-        if (cartTotalVal) {
-          if (discount > 0) {
-            cartTotalVal.classList.add('has-discount');
-            cartTotalVal.innerHTML = '<span class="original">$' + subtotal + '</span>$' + total + ' <small>MNX</small>';
-          } else {
-            cartTotalVal.classList.remove('has-discount');
-            cartTotalVal.innerHTML = formatTotal(total);
-          }
-        }
-        // if cart empties, exit checkout view
-        if (count === 0 && cartEl?.classList.contains('is-checkout')) exitCheckout();
-        // render summary (checkout step)
-        if (cartSummary) {
-          cartSummary.innerHTML = keys.length
-            ? keys.map((k) => `<div class="cart__summary-row"><span>${cartItems[k].name} ×${cartItems[k].qty}</span><span>$${cartItems[k].qty * cartItems[k].price}</span></div>`).join('') +
-              (discount > 0 ? `<div class="cart__summary-row" style="color:var(--pistache-deep);margin-top:0.3rem;padding-top:0.3rem;border-top:1px dashed rgba(111,180,137,0.5)"><span>Descuento Sabor del mes (-15%)</span><span>-$${discount}</span></div>` : '')
-            : '';
-        }
-        if (!cartBody) { syncNavCount(); return; }
-        if (count === 0) {
-          cartBody.innerHTML = '<div class="cart__empty"><span class="emoji">🍦</span>Tu carrito está derretido de vacío.<br/>¡Agrega un sabor!</div>';
-          syncNavCount();
-          return;
-        }
-        cartBody.innerHTML = keys.map((k) => {
-          const it = cartItems[k];
-          return `<div class="cart__row" data-key="${k}">
-            <div class="cart__swatch" style="background:${it.color}"></div>
-            <div class="cart__info">
-              <div class="cart__fname">${it.name}</div>
-              <div class="cart__fprice">$${it.price} · litro</div>
-            </div>
-            <div class="cart__qty">
-              <button class="cart__dec" aria-label="Quitar uno">−</button>
-              <span>${it.qty}</span>
-              <button class="cart__inc" aria-label="Agregar uno">+</button>
-            </div>
-            <button class="cart__remove">quitar</button>
-          </div>`;
-        }).join('');
-        // wire qty buttons
-        cartBody.querySelectorAll('.cart__row').forEach((row) => {
-          const key = (row as HTMLElement).dataset.key;
-          row.querySelector('.cart__inc')?.addEventListener('click', () => { if (cartItems[key]) { cartItems[key].qty += 1; renderCart(); saveCart(); } });
-          row.querySelector('.cart__dec')?.addEventListener('click', () => { if (cartItems[key]) { cartItems[key].qty -= 1; if (cartItems[key].qty <= 0) delete cartItems[key]; renderCart(); saveCart(); } });
-          row.querySelector('.cart__remove')?.addEventListener('click', () => { delete cartItems[key]; renderCart(); saveCart(); });
-        });
-        syncNavCount();
-      };
-      // checkout step (form inside cart)
-      const enterCheckout = () => {
-        cartEl?.classList.add('is-checkout');
-        if (cartCtaLabel) cartCtaLabel.textContent = 'Volver';
-        if (cartCheckoutMsg) cartCheckoutMsg.textContent = '';
-      };
-      const exitCheckout = () => {
-        cartEl?.classList.remove('is-checkout');
-        if (cartCtaLabel) cartCtaLabel.textContent = 'Ver mi pedido';
-      };
-      const openCart = () => {
-        if (cartEl) { cartEl.classList.add('is-open'); cartEl.classList.remove('is-success'); }
-        if (cartOverlay) cartOverlay.classList.add('is-open');
-        exitCheckout();
-      };
-      const closeCart = () => {
-        if (cartEl) { cartEl.classList.remove('is-open'); cartEl.classList.remove('is-success'); exitCheckout(); }
-        if (cartOverlay) cartOverlay.classList.remove('is-open');
-      };
-      if (cartOverlay) cartOverlay.addEventListener('click', closeCart);
-      document.querySelector('.cart__close')?.addEventListener('click', closeCart);
-      // clear all button
-      document.querySelector('.cart__clear')?.addEventListener('click', () => {
-        Object.keys(cartItems).forEach((k) => delete cartItems[k]);
-        renderCart();
-        saveCart();
-      });
-      // CTA button: toggles between "Ver mi pedido" (enter checkout) and "Volver" (exit)
-      document.querySelector('.cart__cta')?.addEventListener('click', (e) => {
-        e.preventDefault();
-        if (cartEl?.classList.contains('is-checkout')) { exitCheckout(); return; }
-        const count = Object.keys(cartItems).reduce((s, k) => s + cartItems[k].qty, 0);
-        if (count > 0) enterCheckout();
-      });
-      // WhatsApp checkout submit
-      document.querySelector('.cart__cta-whatsapp')?.addEventListener('click', (e) => {
-        e.preventDefault();
-        const name = (document.querySelector('.cart__field--name input') as HTMLInputElement)?.value.trim();
-        const phone = (document.querySelector('.cart__field--phone input') as HTMLInputElement)?.value.trim();
-        const addr = (document.querySelector('.cart__field--addr textarea') as HTMLTextAreaElement)?.value.trim();
-        if (!name) { if (cartCheckoutMsg) { cartCheckoutMsg.textContent = '¿Cómo te llamas, cremosito?'; cartCheckoutMsg.style.color = 'var(--fresa-deep)'; } return; }
-        if (!phone && !addr) { if (cartCheckoutMsg) { cartCheckoutMsg.textContent = 'Necesitamos un teléfono o dirección para llevártelo.'; cartCheckoutMsg.style.color = 'var(--fresa-deep)'; } return; }
-        const keys = Object.keys(cartItems);
-        const subtotal = keys.reduce((s, k) => s + cartItems[k].qty * cartItems[k].price, 0);
-        const discount = calcDiscount();
-        const total = Math.round((subtotal - discount) * 100) / 100;
-        const lines = keys.map((k) => `• ${cartItems[k].name} ×${cartItems[k].qty} — $${cartItems[k].qty * cartItems[k].price}`).join('%0A');
-        const discountLine = discount > 0 ? `%0ADescuento Sabor del mes (-15%): -$${discount}` : '';
-        const msg = `¡Hola Helado Nube! 🍦 Quiero pedir:%0A${lines}${discountLine}%0ATotal: $${total} MNX%0A%0ANombre: ${name}%0ATel: ${phone || '—'}%0ADirección: ${addr || '—'}`;
-        if (cartCheckoutMsg) { cartCheckoutMsg.textContent = '¡Abriendo WhatsApp! Te esperamos cremosito. 🍦'; cartCheckoutMsg.style.color = '#6FB489'; }
-        w.open('https://wa.me/?text=' + msg, '_blank');
-        // populate success summary + show success state after opening WhatsApp
-        const successSummary = document.querySelector('.cart__success-summary') as HTMLElement;
-        if (successSummary) {
-          const summaryRows = keys.map((k) => `<div class="cart__success-summary-row"><span>${cartItems[k].name} ×${cartItems[k].qty}</span><span>$${cartItems[k].qty * cartItems[k].price}</span></div>`).join('');
-          const discountRow = discount > 0 ? `<div class="cart__success-summary-row" style="color:var(--pistache-deep)"><span>Descuento -15%</span><span>-$${discount}</span></div>` : '';
-          successSummary.innerHTML = summaryRows + discountRow + `<div class="cart__success-summary-total"><span>Total</span><span>$${total} MNX</span></div>`;
-        }
-        setTimeout(() => { if (cartEl) cartEl.classList.add('is-success'); }, 600);
-      });
-      // success state buttons
-      document.querySelector('.cart__success-btn--clear')?.addEventListener('click', () => {
-        Object.keys(cartItems).forEach((k) => delete cartItems[k]);
-        renderCart(); saveCart();
-        if (cartEl) cartEl.classList.remove('is-success');
-        exitCheckout();
-      });
-      document.querySelector('.cart__success-btn--keep')?.addEventListener('click', () => {
-        if (cartEl) cartEl.classList.remove('is-success');
-        exitCheckout();
-      });
-      // open cart when clicking the float-order bubble (instead of jumping straight to CTA)
-      floatOrderEl?.addEventListener('click', (e) => {
-        e.preventDefault();
-        const count = Object.keys(cartItems).reduce((s, k) => s + cartItems[k].qty, 0);
-        if (count > 0) openCart(); else lenis.scrollTo('#cta-final', { duration: 1.4 });
-      });
-      // restore cart from localStorage on load
-      const hadCart = loadCart();
-      renderCart();
-      if (hadCart) {
-        const toast = document.querySelector('.restore-toast') as HTMLElement;
-        if (toast) {
-          const count = Object.keys(cartItems).reduce((s, k) => s + cartItems[k].qty, 0);
-          toast.querySelector('.restore-toast__count')!.textContent = String(count);
-          toast.classList.add('is-show');
-          floatOrderEl?.classList.add('is-visible');
-          toast.querySelector('.btn-mini--open')?.addEventListener('click', () => { openCart(); toast.classList.remove('is-show'); });
-          toast.querySelector('.btn-mini--ghost')?.addEventListener('click', () => { toast.classList.remove('is-show'); });
-          setTimeout(() => toast.classList.remove('is-show'), 8000);
-        }
-      }
-      const updateCart = (flavorName: string) => {
-        const color = flavorColor[flavorName] || '#FFB3C7';
-        const price = flavorPrice[flavorName] || 70;
-        if (cartItems[flavorName]) cartItems[flavorName].qty += 1;
-        else cartItems[flavorName] = { name: flavorName, price, color, qty: 1 };
-        renderCart();
-        saveCart();
-        if (cartBadge) {
-          cartBadge.classList.remove('pulse');
-          void cartBadge.offsetWidth; // reflow to restart animation
-          cartBadge.classList.add('pulse');
-        }
-        if (cartPop && floatOrderEl) {
-          cartPop.textContent = `+1 ${flavorName} 🍦`;
-          cartPop.classList.add('is-show');
-          floatOrderEl.classList.add('is-visible');
-          clearTimeout((cartPop as any)._t);
-          (cartPop as any)._t = setTimeout(() => cartPop.classList.remove('is-show'), 1600);
-        }
-      };
-      const flyScoop = (fromEl: HTMLElement, color: string) => {
-        const fr = fromEl.getBoundingClientRect();
-        const target = floatOrderEl ? floatOrderEl.getBoundingClientRect() : { left: w.innerWidth - 60, top: w.innerHeight - 60, width: 60, height: 60 };
-        const scoop = document.createElement('div');
-        scoop.className = 'fly-scoop';
-        scoop.style.background = `linear-gradient(160deg, ${color}, ${color})`;
-        scoop.style.left = (fr.left + fr.width / 2 - 17) + 'px';
-        scoop.style.top = (fr.top + fr.height / 2 - 15) + 'px';
-        document.body.appendChild(scoop);
-        const dx = (target.left + target.width / 2) - (fr.left + fr.width / 2);
-        const dy = (target.top + target.height / 2) - (fr.top + fr.height / 2);
-        gsap.timeline({
-          onComplete: () => scoop.remove(),
-        })
-          .to(scoop, { y: -60, duration: 0.35, ease: 'power2.out' })
-          .to(scoop, { x: dx, y: dy, duration: 0.7, ease: 'power1.in' })
-          .to(scoop, { scale: 0.3, opacity: 0, duration: 0.25, ease: 'power2.in' });
-      };
-      document.querySelectorAll('.flavor').forEach((card) => {
-        const name = (card.querySelector('.flavor__name') as HTMLElement)?.textContent?.trim() || '';
-        const tint = flavorData[name] || '#FFEAD7';
-        if (!isTouch) {
-          card.addEventListener('mousemove', (e: MouseEvent) => {
-            const r = card.getBoundingClientRect();
-            const px = (e.clientX - r.left) / r.width;
-            const py = (e.clientY - r.top) / r.height;
-            card.style.setProperty('--gx', `${px * 100}%`);
-            card.style.setProperty('--gy', `${py * 100}%`);
-            gsap.to(card, { rotateY: (px - 0.5) * 16, rotateX: -(py - 0.5) * 16, duration: 0.4, ease: 'power2.out', transformPerspective: 1000 });
-          });
-          card.addEventListener('mouseleave', () => {
-            gsap.to(card, { rotateY: 0, rotateX: 0, duration: 0.9, ease: 'elastic.out(1,0.5)' });
-          });
-        }
-        card.addEventListener('mouseenter', () => {
-          if (sabores) gsap.to(sabores, { backgroundColor: tint, duration: 0.8, ease: 'power2.out' });
-          const drip = card.querySelector('.flavor__scoop .drip') as HTMLElement;
-          if (drip) gsap.fromTo(drip, { scaleY: 0.3, opacity: 0 }, { scaleY: 1, opacity: 1, y: 18, duration: 0.9, ease: 'elastic.out(1,0.6)', transformOrigin: 'center top' });
-        });
-        card.addEventListener('mouseleave', () => {
-          if (sabores) gsap.to(sabores, { backgroundColor: '#FFF6EC', duration: 0.9, ease: 'power2.out' });
-          const drip = card.querySelector('.flavor__scoop .drip') as HTMLElement;
-          if (drip) gsap.to(drip, { opacity: 0, y: 26, duration: 0.5, ease: 'power2.in' });
-        });
-        // quick-add to mini-cart on click
-        card.setAttribute('role', 'button');
-        card.setAttribute('tabindex', '0');
-        const addFlavor = () => {
-          const color = flavorColor[name] || '#FFB3C7';
-          flyScoop(card as HTMLElement, color);
-          // card squash feedback
-          gsap.timeline()
-            .to(card, { scaleY: 0.92, scaleX: 1.05, duration: 0.12, ease: 'power2.out' })
-            .to(card, { scaleY: 1, scaleX: 1, duration: 0.6, ease: 'elastic.out(1,0.4)' });
-          setTimeout(() => updateCart(name), 700);
-        };
-        card.addEventListener('click', addFlavor);
-        card.addEventListener('keydown', (e: KeyboardEvent) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); addFlavor(); } });
-      });
-
-      // ---------- Historia pinned image swap ----------
-      const scenes = gsap.utils.toArray('.historia__scene');
-      if (scenes.length) {
-        scenes.forEach((sc: any, i) => {
-          gsap.set(sc, { opacity: i === 0 ? 1 : 0, clipPath: i === 0 ? 'circle(75% at 50% 50%)' : 'circle(0% at 50% 50%)' });
-        });
-        ScrollTrigger.create({
-          trigger: '#historia', start: 'top 60%', end: 'bottom 70%', scrub: 1,
-          onUpdate: (self: any) => {
-            const p = self.progress;
-            const seg = 1 / scenes.length;
-            scenes.forEach((sc: any, i: number) => {
-              if (i === 0) {
-                const o = p < seg ? 1 : Math.max(0, 1 - (p - seg) / seg);
-                gsap.set(sc, { opacity: o, clipPath: `circle(${75 * o}% at 50% 50%)` });
-              } else {
-                const local = (p - i * seg) / seg;
-                const o = Math.max(0, Math.min(1, local));
-                gsap.set(sc, { opacity: o, clipPath: `circle(${75 * o}% at 50% 50%)` });
-              }
-            });
-          },
-        });
-        // historia text line reveals
-        gsap.utils.toArray('.historia__text .lead, .historia__text p, .historia__sig').forEach((el: any, i) => {
-          gsap.to(el, { opacity: 1, y: 0, duration: 1, ease: 'power3.out', delay: i * 0.08, scrollTrigger: { trigger: el, start: 'top 88%' } });
-          gsap.set(el, { y: 20 });
-        });
-      }
-
-      // ---------- Proceso gooey progress line ----------
-      const travel = document.querySelector('#progresoBlob') as any;
-      if (travel) {
-        gsap.fromTo(travel, { attr: { cx: 60 } }, {
-          attr: { cx: 1380 }, ease: 'none',
-          scrollTrigger: { trigger: '#proceso', start: 'top 70%', end: 'bottom 80%', scrub: 1.2 },
-        });
-        // squash the blob as it travels
-        gsap.to(travel, { attr: { r: 22 }, duration: 1.2, yoyo: true, repeat: -1, ease: 'sine.inOut' });
-      }
-      // proceso icons pop
-      gsap.utils.toArray('.proceso__icon').forEach((el: any, i) => {
-        gsap.from(el, { scale: 0.6, opacity: 0, duration: 1, ease: 'elastic.out(1,0.5)', delay: i * 0.1, scrollTrigger: { trigger: el, start: 'top 85%' } });
-      });
-
-      // ---------- CTA magnetic button ----------
-      const magWrap = document.querySelector('.magnetic-wrap') as HTMLElement;
-      const magBtn = magWrap?.querySelector('.btn') as HTMLElement;
-      if (magWrap && magBtn && !isTouch) {
-        let raf2 = 0; let mx2 = 0, my2 = 0, bx2 = 0, by2 = 0;
-        w.addEventListener('mousemove', (e: MouseEvent) => {
-          const r = magWrap.getBoundingClientRect();
-          const cxr = r.left + r.width / 2, cyr = r.top + r.height / 2;
-          const dist = Math.hypot(e.clientX - cxr, e.clientY - cyr);
-          if (dist < 160) {
-            mx2 = (e.clientX - cxr) * 0.4; my2 = (e.clientY - cyr) * 0.4;
-          } else { mx2 = 0; my2 = 0; }
-        });
-        const mag = () => {
-          bx2 += (mx2 - bx2) * 0.18; by2 += (my2 - by2) * 0.18;
-          magBtn.style.transform = `translate(${bx2}px,${by2}px)`;
-          raf2 = requestAnimationFrame(mag);
-        };
-        mag();
-      }
-
-      // ---------- Footer sprinkle ----------
-      wireNewsletter(false, gsap);
-
-      // ---------- Footer drip top wobble ----------
-      const fdrip = document.querySelector('#footerDripPath') as any;
-      if (fdrip) {
-        const a = fdrip.getAttribute('d');
-        const b = 'M0,0 L1440,0 L1440,100 C1320,100 1280,52 1200,100 C1120,100 1080,46 1000,100 C920,100 880,54 800,100 C720,100 680,48 600,100 C520,100 480,52 400,100 C320,100 280,46 200,100 C120,100 80,54 0,100 L0,0 Z';
-        gsap.to(fdrip, { attr: { d: b }, duration: 9, ease: 'sine.inOut', yoyo: true, repeat: -1 });
-      }
-
-      // hero scroll drop
-      const scrollDrop = document.querySelector('.hero__scroll .drop') as HTMLElement;
-      if (scrollDrop) {
-        gsap.timeline({ repeat: -1 })
-          .fromTo(scrollDrop, { y: 0, opacity: 0.9, scaleY: 0.7 }, { y: 18, opacity: 1, scaleY: 1.3, duration: 1.1, ease: 'power1.in' })
-          .to(scrollDrop, { y: 30, opacity: 0, scaleY: 0.5, duration: 0.5, ease: 'power2.in' })
-          .set(scrollDrop, { y: 0, opacity: 0 });
-      }
-
-      // ---------- Hero floating bubbles (balance + ambient) ----------
-      const bubbleColors = ['var(--fresa)', 'var(--vainilla)', 'var(--pistache)', 'var(--mango)'];
-      const bubbleField = document.querySelector('.hero__bubbles');
-      if (bubbleField && !isTouch) {
-        const bubbles = Array.from(bubbleField.querySelectorAll('.hero__bubble'));
-        bubbles.forEach((b, i) => {
-          gsap.to(b, {
-            y: () => '+=' + (30 + Math.random() * 40),
-            x: () => '+=' + (Math.random() * 30 - 15),
-            duration: 5 + Math.random() * 4,
-            ease: 'sine.inOut',
-            yoyo: true,
-            repeat: -1,
-          });
-          gsap.from(b, { opacity: 0, scale: 0.6, duration: 1.2, ease: 'elastic.out(1,0.6)', delay: 3 + i * 0.3 });
-        });
-      }
-
-      // ---------- Scroll progress drip ----------
-      const dripFill = document.querySelector('.scroll-drip__fill') as HTMLElement;
-      const dripHead = document.querySelector('.scroll-drip__head') as HTMLElement;
-      if (dripFill && dripHead) {
-        const updateDrip = () => {
-          const st = document.documentElement.scrollTop;
-          const max = document.documentElement.scrollHeight - w.innerHeight;
-          const p = max > 0 ? Math.min(1, Math.max(0, st / max)) : 0;
-          dripFill.style.height = (p * 100) + '%';
-          dripHead.style.opacity = p > 0.02 && p < 0.98 ? '1' : '0';
-        };
-        updateDrip();
-        w.addEventListener('scroll', updateDrip, { passive: true });
-      }
-
-      // ---------- Floating order bubble (appear after hero, hide at footer) ----------
-      const floatOrder = document.querySelector('.float-order') as HTMLElement;
-      if (floatOrder) {
-        ScrollTrigger.create({
-          trigger: '.hero', start: 'bottom 80%',
-          onEnter: () => floatOrder.classList.add('is-visible'),
-          onLeaveBack: () => floatOrder.classList.remove('is-visible'),
-        });
-        // hide when footer is in view (don't cover newsletter)
-        ScrollTrigger.create({
-          trigger: '.footer', start: 'top 90%',
-          onEnter: () => floatOrder.classList.remove('is-visible'),
-          onLeaveBack: () => floatOrder.classList.add('is-visible'),
-        });
-        // hover swell on the scoop
-        const scoopEl = floatOrder.querySelector('.float-order__scoop') as HTMLElement;
-        floatOrder.addEventListener('mouseenter', () => {
-          gsap.to(scoopEl, { scale: 1.12, duration: 0.5, ease: 'elastic.out(1,0.5)', transformOrigin: 'center bottom' });
-        });
-        floatOrder.addEventListener('mouseleave', () => {
-          gsap.to(scoopEl, { scale: 1, duration: 0.6, ease: 'elastic.out(1,0.4)' });
-        });
-        floatOrder.addEventListener('click', () => {
-          gsap.timeline()
-            .to(scoopEl, { scaleY: 0.82, scaleX: 1.08, duration: 0.12, ease: 'power2.out' })
-            .to(scoopEl, { scaleY: 1, scaleX: 1, duration: 0.6, ease: 'elastic.out(1,0.4)' });
-        });
-      }
-
-      // ---------- Testimonios marquee ----------
-      const track = document.querySelector('.testi__track') as HTMLElement;
-      if (track) {
-        // duplicate content for seamless loop
-        track.innerHTML += track.innerHTML;
-        const distance = track.scrollWidth / 2;
-        gsap.to(track, {
-          x: -distance, duration: 38, ease: 'none', repeat: -1,
-        });
-        // pause on hover
-        const marquee = document.querySelector('.testi__marquee') as HTMLElement;
-        marquee.addEventListener('mouseenter', () => gsap.to(track, { timeScale: 0.15, duration: 0.6 }));
-        marquee.addEventListener('mouseleave', () => gsap.to(track, { timeScale: 1, duration: 0.6 }));
-      }
-
-      // ---------- Galeria lightbox (with prev/next nav) ----------
-      const lightbox = document.querySelector('.lightbox') as HTMLElement;
-      const lbImg = lightbox?.querySelector('.lightbox__img') as HTMLImageElement;
-      const lbCap = lightbox?.querySelector('.lightbox__cap') as HTMLElement;
-      const lbCount = lightbox?.querySelector('.lightbox__count') as HTMLElement;
-      const lbPrev = lightbox?.querySelector('.lightbox__nav--prev') as HTMLElement;
-      const lbNext = lightbox?.querySelector('.lightbox__nav--next') as HTMLElement;
-      if (lightbox && lbImg && lbCap) {
-        const galItems = Array.from(document.querySelectorAll('.gal__item')) as HTMLElement[];
-        let lbIndex = 0;
-        const showAt = (i: number) => {
-          lbIndex = (i + galItems.length) % galItems.length;
-          const img = galItems[lbIndex].querySelector('img');
-          const cap = galItems[lbIndex].querySelector('.gal__cap');
-          if (img) { lbImg.src = img.src; lbImg.alt = img.alt; }
-          if (cap) lbCap.textContent = cap.textContent || '';
-          if (lbCount) lbCount.textContent = `${lbIndex + 1} / ${galItems.length}`;
-          if (lbPrev && lbNext) {
-            lbPrev.style.display = galItems.length > 1 ? 'flex' : 'none';
-            lbNext.style.display = galItems.length > 1 ? 'flex' : 'none';
-          }
-        };
-        const openLightbox = (i: number) => {
-          showAt(i);
-          lightbox.classList.add('is-open');
-          document.body.style.overflow = 'hidden';
-          if (lenis) lenis.stop();
-        };
-        const closeLightbox = () => {
-          lightbox.classList.remove('is-open');
-          document.body.style.overflow = '';
-          if (lenis) lenis.start();
-        };
-        galItems.forEach((item, i) => {
-          item.addEventListener('click', () => openLightbox(i));
-          item.setAttribute('role', 'button');
-          item.setAttribute('tabindex', '0');
-          item.addEventListener('keydown', (e: KeyboardEvent) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openLightbox(i); } });
-        });
-        lightbox.querySelector('.lightbox__close')?.addEventListener('click', closeLightbox);
-        lbPrev?.addEventListener('click', (e: MouseEvent) => { e.stopPropagation(); showAt(lbIndex - 1); });
-        lbNext?.addEventListener('click', (e: MouseEvent) => { e.stopPropagation(); showAt(lbIndex + 1); });
-        lightbox.addEventListener('click', (e: MouseEvent) => { if (e.target === lightbox || (e.target as HTMLElement).classList.contains('lightbox__inner')) closeLightbox(); });
-        document.addEventListener('keydown', (e: KeyboardEvent) => {
-          if (!lightbox.classList.contains('is-open')) return;
-          if (e.key === 'Escape') closeLightbox();
-          else if (e.key === 'ArrowLeft') showAt(lbIndex - 1);
-          else if (e.key === 'ArrowRight') showAt(lbIndex + 1);
-        });
-      }
-
-      // ---------- Flavor details modal ----------
-      const flavorModal = document.querySelector('.flavor-modal') as HTMLElement;
-      const flavorDetails: Record<string, { name: string; price: string; desc: string; origin: string; texture: string; pairing: string; color: string }> = {
-        'Fresa': { name: 'Fresa', price: '$65 el litro', desc: 'Fresas de Zamora, Michoacán — el corazón fresa de México. Las escogemos en su punto, las maceramos sin prisas y las batimos con crema fresca. Sin colorantes: el rosa es de la fruta de verdad.', origin: 'Zamora, Mich', texture: 'Sedosa, con trocitos', pairing: 'Marida con <b>cheesecake</b> o un bochito de <b>prosecco</b>.', color: '#FFB3C7' },
-        'Vainilla de Papantla': { name: 'Vainilla de Papantla', price: '$72 el litro', desc: 'Vainilla veracruzana curada a mano por la misma familia desde hace 40 años. Las puntitos negros que ves son las semillas de verdad. Floral, sedosa, con un aroma que te regresa al mercado.', origin: 'Papantla, Ver', texture: 'Cremosa, lisa', pairing: 'Perfecta con <b>pastel de elote</b> o café de olla.', color: '#FFE8B8' },
-        'Pistache': { name: 'Pistache', price: '$85 el litro', desc: 'Pistaches tostados al comal y molidos al momento. Ningún helado de bodega le llega: el verde es natural, el sabor es profundo. Cremoso de verdad, no de cartón.', origin: 'Importado, tostado en casa', texture: 'Densa, con granillo', pairing: 'Brilla con <b>chocolate amargo</b> o unas nueces.', color: '#B8E0C8' },
-        'Chocolate Oaxaqueño': { name: 'Chocolate Oaxaqueño', price: '$78 el litro', desc: 'Cacao de Oaxaca, tableta molida en metate. Intenso, con cuerpo y un dejo de canela que abraza. El chocolate de mesa que tomabas de chiquito, ahora en helado.', origin: 'Oaxaca', texture: 'Recia, aterciopelada', pairing: 'Pareja ideal de <b>churros</b> o pan de muerto.', color: '#E9C9A8' },
-        'Mango con Chile': { name: 'Mango con Chile', price: '$70 el litro', desc: 'Mango manila bien maduro y un besito de chamoy con polvo de chile de árbol. Pica poquito, justo. Dulce, ácido y picosito en cada cucharada — así sabe el verano mexicano.', origin: 'Guerrero', texture: 'Refrescante, con notas', pairing: 'Pruébalo con <b>tajín</b> extra o en paleta.', color: '#FFD27A' },
-        'Cajeta': { name: 'Cajeta', price: '$74 el litro', desc: 'Leche de cabra de Celaya, cocida a fuego lento durante horas hasta que se vuelve caramelo. Sabe a rancho, a leña, a memoria. Este es nuestro sabor del mes con <b>-15% de descuento</b>.', origin: 'Celaya, Gto', texture: 'Densa, sedosa, pegajosa', pairing: 'Divino sobre <b>plátano</b> o con nuez picada.', color: '#E6C39A' },
-      };
-      if (flavorModal) {
-        const fmName = flavorModal.querySelector('.flavor-modal__name') as HTMLElement;
-        const fmPrice = flavorModal.querySelector('.flavor-modal__price') as HTMLElement;
-        const fmDesc = flavorModal.querySelector('.flavor-modal__desc') as HTMLElement;
-        const fmOrigin = flavorModal.querySelector('.flavor-modal__origin') as HTMLElement;
-        const fmTexture = flavorModal.querySelector('.flavor-modal__texture') as HTMLElement;
-        const fmPairing = flavorModal.querySelector('.flavor-modal__pairing') as HTMLElement;
-        const fmHero = flavorModal.querySelector('.flavor-modal__hero') as HTMLElement;
-        const fmCta = flavorModal.querySelector('.flavor-modal__cta') as HTMLElement;
-        const openFlavorModal = (flavorName: string) => {
-          const d = flavorDetails[flavorName];
-          if (!d) return;
-          fmName.textContent = d.name;
-          fmPrice.textContent = d.price;
-          fmDesc.textContent = d.desc;
-          fmOrigin.textContent = d.origin;
-          fmTexture.textContent = d.texture;
-          fmPairing.innerHTML = '<b>Maridaje:</b> ' + d.pairing;
-          fmHero.style.background = `linear-gradient(160deg, ${d.color}, ${d.color})`;
-          fmCta.setAttribute('data-flavor-add', flavorName);
-          flavorModal.classList.add('is-open');
-          document.body.style.overflow = 'hidden';
-          if (lenis) lenis.stop();
-        };
-        const closeFlavorModal = () => {
-          flavorModal.classList.remove('is-open');
-          document.body.style.overflow = '';
-          if (lenis) lenis.start();
-        };
-        document.querySelectorAll('[data-flavor-btn]').forEach((btn) => {
-          btn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            const name = (btn as HTMLElement).dataset.flavorBtn || '';
-            openFlavorModal(name);
-          });
-        });
-        flavorModal.querySelector('.flavor-modal__close')?.addEventListener('click', closeFlavorModal);
-        flavorModal.addEventListener('click', (e: MouseEvent) => { if (e.target === flavorModal) closeFlavorModal(); });
-        document.addEventListener('keydown', (e: KeyboardEvent) => { if (e.key === 'Escape' && flavorModal.classList.contains('is-open')) closeFlavorModal(); });
-        // modal CTA: add to cart + close + open cart
-        fmCta?.addEventListener('click', (e) => {
-          e.preventDefault();
-          const flavorName = fmCta.getAttribute('data-flavor-add');
-          if (flavorName) {
-            closeFlavorModal();
-            setTimeout(() => {
-              const card = document.querySelector(`[data-flavor="${flavorName}"]`) as HTMLElement;
-              if (card) { card.click(); }
-              setTimeout(() => openCart(), 900);
-            }, 300);
-          }
-        });
-      }
-
-      // ---------- FAQ accordion ----------
-      document.querySelectorAll('.faq__item').forEach((item) => {
-        const q = item.querySelector('.faq__q') as HTMLElement;
-        q.addEventListener('click', () => {
-          const wasOpen = item.classList.contains('is-open');
-          document.querySelectorAll('.faq__item').forEach((other) => {
-            if (other !== item) { other.classList.remove('is-open'); (other.querySelector('.faq__q') as HTMLElement)?.setAttribute('aria-expanded', 'false'); }
-          });
-          item.classList.toggle('is-open', !wasOpen);
-          q.setAttribute('aria-expanded', String(!wasOpen));
-        });
-      });
-
-      // ---------- Back to top ----------
-      const backTop = document.querySelector('.back-top') as HTMLElement;
-      if (backTop) {
-        ScrollTrigger.create({
-          trigger: '.hero', start: 'bottom 90%',
-          onEnter: () => backTop.classList.add('is-visible'),
-          onLeaveBack: () => backTop.classList.remove('is-visible'),
-        });
-        backTop.addEventListener('click', () => {
-          lenis.scrollTo(0, { duration: 1.6 });
-          gsap.timeline()
-            .to(backTop.querySelector('.back-top__drop'), { scaleY: 0.82, scaleX: 1.08, duration: 0.12, ease: 'power2.out' })
-            .to(backTop.querySelector('.back-top__drop'), { scaleY: 1, scaleX: 1, duration: 0.6, ease: 'elastic.out(1,0.4)' });
-        });
-      }
-
-      // ---------- Nav cart count badge (synced via renderCart -> syncNavCount) ----------
-
-      // Refresh after load
-      w.addEventListener('load', () => ScrollTrigger.refresh());
-      gsap.delayedCall(4, () => ScrollTrigger.refresh());
-    }
-
-    function wireDripUnderlines(gsap?: any) {
-      document.querySelectorAll('.drip-link').forEach((el) => {
-        const path = el.querySelector('svg path') as any;
-        if (!path) return;
-        try {
-          const len = path.getTotalLength();
-          path.style.strokeDasharray = String(len);
-          path.style.strokeDashoffset = String(len);
-          el.addEventListener('mouseenter', () => {
-            if (gsap) gsap.to(path, { strokeDashoffset: 0, duration: 0.8, ease: 'power3.out' });
-            else { path.style.transition = 'stroke-dashoffset 0.8s cubic-bezier(0.25,0.8,0.25,1)'; path.style.strokeDashoffset = '0'; }
-          });
-          el.addEventListener('mouseleave', () => {
-            if (gsap) gsap.to(path, { strokeDashoffset: len, duration: 0.6, ease: 'power2.in' });
-            else path.style.strokeDashoffset = String(len);
-          });
-        } catch (e) { /* getTotalLength may fail in some setups */ }
-      });
-    }
-
-    function wireNewsletter(reduced: boolean, gsap?: any) {
-      const form = document.querySelector('.news__field') as HTMLElement | null;
-      const input = form?.querySelector('input') as HTMLInputElement;
-      const btn = form?.querySelector('button') as HTMLElement;
-      const msg = document.querySelector('.news__msg') as HTMLElement;
-      const stage = document.querySelector('.sprinkle-stage') as HTMLElement;
-      if (!form || !input || !btn || !msg) return;
-      const submit = () => {
-        const val = input.value.trim();
-        if (!val || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(val)) {
-          msg.textContent = 'Ups, ese correo parece medio derretido. ¿Lo revisas?';
-          msg.style.color = '#FFB3C7';
-          return;
-        }
-        msg.textContent = '¡Gracia! Te avisamos en cuanto salga un sabor nuevo. 🍦';
-        msg.style.color = '#FFE8B8';
-        input.value = '';
-        // sprinkle burst
-        if (stage) {
-          const colors = ['#FFB3C7', '#FFE8B8', '#B8E0C8', '#E8557A', '#FFD27A', '#C98A4B'];
-          const r = btn.getBoundingClientRect();
-          const sr = stage.getBoundingClientRect();
-          const ox = r.left + r.width / 2 - sr.left;
-          const oy = r.top + r.height / 2 - sr.top;
-          for (let i = 0; i < 26; i++) {
-            const s = document.createElement('div');
-            s.className = 'sprinkle';
-            s.style.background = colors[i % colors.length];
-            s.style.left = ox + 'px';
-            s.style.top = oy + 'px';
-            s.style.transform = `rotate(${Math.random() * 360}deg)`;
-            stage.appendChild(s);
-            const ang = Math.random() * Math.PI - Math.PI;
-            const dist = 40 + Math.random() * 110;
-            const tx = Math.cos(ang) * dist;
-            const ty = Math.sin(ang) * dist - 40;
-            if (reduced || !gsap) {
-              s.style.transition = 'transform 0.9s cubic-bezier(0.2,0.7,0.3,1),opacity 0.9s';
-              requestAnimationFrame(() => { s.style.transform = `translate(${tx}px,${ty + 120}px) rotate(${Math.random()*360}deg)`; s.style.opacity = '0'; });
-              setTimeout(() => s.remove(), 950);
-            } else {
-              gsap.to(s, { x: tx, y: ty + 120, rotation: Math.random() * 540, duration: 0.9, ease: 'power2.out' });
-              gsap.to(s, { y: '+=140', opacity: 0, duration: 0.8, ease: 'power1.in', delay: 0.45 });
-              gsap.to(s, { opacity: 0, duration: 0.4, delay: 1.1, onComplete: () => s.remove() });
-            }
-          }
-        }
-      };
-      btn.addEventListener('click', (e) => { e.preventDefault(); submit(); });
-      input.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); submit(); } });
-    }
+    });
+    return () => window.cancelAnimationFrame(frame);
   }, []);
 
-  return (
-    <>
-      <link rel="preconnect" href="https://fonts.googleapis.com" />
-      <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-      <link
-        href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;500;600;700;800&family=Outfit:wght@300;400;500;600;700&display=swap"
-        rel="stylesheet"
-      />
-      <style dangerouslySetInnerHTML={{ __html: CSS }} />
+  useEffect(() => {
+    if (!cartReady) return;
+    window.localStorage.setItem('helado-nube-cart-v2', JSON.stringify(cart));
+  }, [cart, cartReady]);
 
-      {/* ===== FAQ structured data (schema.org FAQPage for SEO rich snippets) ===== */}
+  useEffect(() => {
+    if (!recentlyAdded) return;
+    const timer = window.setTimeout(() => setRecentlyAdded(null), 2200);
+    return () => window.clearTimeout(timer);
+  }, [recentlyAdded]);
+
+  useEffect(() => {
+    if (!cartOpen && !menuOpen) return;
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key === 'Escape') {
+        setCartOpen(false);
+        setMenuOpen(false);
+      }
+
+      if (event.key !== 'Tab' || !cartOpen || !drawerRef.current) return;
+      const focusable = Array.from(
+        drawerRef.current.querySelectorAll<HTMLElement>(
+          'button:not([disabled]), a[href], input:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+        ),
+      );
+      if (!focusable.length) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    }
+
+    document.addEventListener('keydown', onKeyDown);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.removeEventListener('keydown', onKeyDown);
+    };
+  }, [cartOpen, menuOpen]);
+
+  const cartItems = useMemo(
+    () =>
+      FLAVORS.flatMap((flavor) => {
+        const quantity = cart[flavor.id] ?? 0;
+        return quantity > 0 ? [{ ...flavor, quantity }] : [];
+      }),
+    [cart],
+  );
+
+  const itemCount = cartItems.reduce((total, item) => total + item.quantity, 0);
+  const cartTotal = cartItems.reduce((total, item) => total + item.quantity * item.price, 0);
+  const orderMessage = [
+    'Hola, Helado Nube. Quiero confirmar este pedido:',
+    '',
+    ...cartItems.map((item) => `${item.quantity} × ${item.name} (1 L) — ${money.format(item.quantity * item.price)}`),
+    '',
+    `Total estimado: ${money.format(cartTotal)} MXN`,
+    '',
+    '¿Me ayudan a confirmar disponibilidad, entrega y forma de pago?',
+  ].join('\n');
+
+  function addFlavor(flavor: Flavor) {
+    setCart((current) => ({ ...current, [flavor.id]: (current[flavor.id] ?? 0) + 1 }));
+    setRecentlyAdded(flavor.name);
+  }
+
+  function updateQuantity(id: string, quantity: number) {
+    setCart((current) => {
+      const next = { ...current };
+      if (quantity <= 0) delete next[id];
+      else next[id] = quantity;
+      return next;
+    });
+  }
+
+  function openCart() {
+    returnFocusRef.current = document.activeElement as HTMLElement;
+    setCartOpen(true);
+    window.requestAnimationFrame(() => closeCartRef.current?.focus());
+  }
+
+  function closeCart() {
+    setCartOpen(false);
+    window.requestAnimationFrame(() => returnFocusRef.current?.focus());
+  }
+
+  const structuredData = {
+    '@context': 'https://schema.org',
+    '@type': 'ItemList',
+    name: 'Sabores de Helado Nube',
+    itemListElement: FLAVORS.map((flavor, index) => ({
+      '@type': 'ListItem',
+      position: index + 1,
+      item: {
+        '@type': 'Product',
+        name: flavor.name,
+        description: flavor.description,
+        image: flavor.image,
+        brand: { '@type': 'Brand', name: 'Helado Nube' },
+        offers: {
+          '@type': 'Offer',
+          price: flavor.price,
+          priceCurrency: 'MXN',
+          availability: 'https://schema.org/LimitedAvailability',
+        },
+      },
+    })),
+  };
+
+  return (
+    <main className="min-h-[100dvh] overflow-x-clip bg-[#f5efe5] text-[#211a17]">
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify({
-            '@context': 'https://schema.org',
-            '@type': 'FAQPage',
-            mainEntity: [
-              { '@type': 'Question', name: '¿Hasta dónde llevan?', acceptedAnswer: { '@type': 'Answer', text: 'Por ahora enviamos en toda la CDMX y zona metropolitana. Próximamente Pátzcuaro y Morelia. El envío sale sin costo en pedidos mayores a $200; abajo de eso, $40 de corrido.' } },
-              { '@type': 'Question', name: '¿Cómo conservo el helado si no me lo como todo?', acceptedAnswer: { '@type': 'Answer', text: 'Tapa bien, mételo al congelador y cómelo en menos de una semana. Como no lleva estabilizantes químicos, si se congela duro se deja reposar 5 minutitos fuera antes de servir.' } },
-              { '@type': 'Question', name: '¿Tienen opciones veganas o sin lactosa?', acceptedAnswer: { '@type': 'Answer', text: '¡Sí! El de mango con chile y el de fresa los hacemos con base de coco. Marca "vegano" en las notas del pedido y te los mandamos así. Sin lactosa, sin leche, puro sabor.' } },
-              { '@type': 'Question', name: '¿Puedo pedir para evento o boda?', acceptedAnswer: { '@type': 'Answer', text: 'Claro que sí. Hemos puesto carritos de helado en bodas, cumpleaños y fiestas de quince. Escríbenos por WhatsApp con tu fecha y número de invitados y te mandamos propuesta.' } },
-              { '@type': 'Question', name: '¿Cuánto dura el helado en el camino?', acceptedAnswer: { '@type': 'Answer', text: 'Lo llevamos en hieleras con gel refrigerante. Aguanta perfecto hasta 2 horas desde que sale de nuestra nevera. En CDMX casi siempre llega en 40 minutos. Si llega derretido, te lo cambiamos sin chistar.' } },
-              { '@type': 'Question', name: '¿Aceptan pago contra entrega?', acceptedAnswer: { '@type': 'Answer', text: 'Sí: efectivo, transferencia y tarjetas al recibir. También puedes pagar por WhatsApp con Stripe si prefieres.' } },
-            ],
-          }),
-        }}
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
       />
+      <a
+        href="#contenido"
+        className="fixed left-4 top-4 z-[100] -translate-y-24 bg-[#211a17] px-4 py-3 text-sm font-semibold text-[#f8f1e8] transition-transform focus:translate-y-0"
+      >
+        Ir al contenido
+      </a>
 
-      {/* ===== SVG FILTERS (defined once) ===== */}
-      <svg width="0" height="0" aria-hidden="true" style={{ position: 'absolute' }}>
-        <defs>
-          <filter id="goo" x="-50%" y="-50%" width="200%" height="200%">
-            <feGaussianBlur in="SourceGraphic" stdDeviation="8" result="blur" />
-            <feColorMatrix in="blur" mode="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 19 -9" result="goo" />
-            <feBlend in="SourceGraphic" in2="goo" />
-          </filter>
-          <filter id="goo-strong" x="-50%" y="-50%" width="200%" height="200%">
-            <feGaussianBlur in="SourceGraphic" stdDeviation="12" result="blur" />
-            <feColorMatrix in="blur" mode="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 20 -10" result="goo" />
-            <feBlend in="SourceGraphic" in2="goo" />
-          </filter>
-          <filter id="melt-displace" x="-30%" y="-30%" width="160%" height="160%">
-            <feTurbulence type="fractalNoise" baseFrequency="0.012 0.025" numOctaves="2" seed="3" result="turb" />
-            <feDisplacementMap in="SourceGraphic" in2="turb" scale="0" result="disp" />
-          </filter>
-          <filter id="grain" x="0" y="0" width="100%" height="100%">
-            <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" stitchTiles="stitch" />
-            <feColorMatrix type="saturate" values="0" />
-          </filter>
-          <clipPath id="preDrip" clipPathUnits="objectBoundingBox">
-            <path d="M0,0 L1,0 L1,0.96 C0.9,0.99 0.82,0.92 0.74,0.97 C0.66,1.01 0.58,0.93 0.5,0.98 C0.42,1.02 0.34,0.93 0.26,0.97 C0.18,1.01 0.1,0.94 0,0.97 Z" />
-          </clipPath>
-        </defs>
-      </svg>
-
-      <div className="grain" aria-hidden="true" />
-
-      {/* ===== SKIP TO CONTENT ===== */}
-      <a className="skip-link" href="#top">Saltar al contenido</a>
-
-      {/* ===== SCROLL PROGRESS DRIP ===== */}
-      <div className="scroll-drip" aria-hidden="true">
-        <div className="scroll-drip__track">
-          <div className="scroll-drip__fill" />
+      <div className="relative z-40 bg-[#76283c] px-5 py-2.5 text-[#fff8f1]">
+        <div className="mx-auto flex max-w-[1400px] items-center justify-center gap-3 text-center text-[11px] font-semibold uppercase tracking-[0.18em] sm:text-xs">
+          <span>Edición de temporada</span>
+          <span className="h-1 w-1 rounded-full bg-[#fff8f1]/45" />
+          <a href="#sabores" className="underline decoration-[#fff8f1]/40 underline-offset-4 hover:decoration-[#fff8f1]">
+            Cajeta de Celaya · 15% menos
+          </a>
         </div>
-        <div className="scroll-drip__head" />
       </div>
 
-      {/* ===== CUSTOM CURSOR ===== */}
-      <div className="cursor-goo" aria-hidden="true">
-        <div className="blob" />
-        <div className="dot" />
-      </div>
+      <header className="sticky top-0 z-50 border-b border-[#211a17]/10 bg-[#f5efe5]/90 backdrop-blur-xl">
+        <div className="mx-auto flex h-[76px] max-w-[1400px] items-center justify-between px-5 sm:px-8 lg:px-12">
+          <a href="#inicio" className="group flex items-center gap-3" aria-label="Helado Nube, inicio">
+            <Image src="/logo.svg" alt="" width={42} height={42} className="transition-transform duration-500 group-hover:-rotate-6" />
+            <span className="leading-none">
+              <span className="block text-[10px] font-semibold uppercase tracking-[0.24em] text-[#76283c]">Casa artesanal</span>
+              <span className="font-display mt-1 block text-xl font-semibold tracking-[-0.03em]">Helado Nube</span>
+            </span>
+          </a>
 
-      {/* ===== PRELOADER ===== */}
-      <div className="preloader" role="status" aria-live="polite" aria-label="Cargando Helado Nube">
-        <div className="preloader__goo">
-          {/* cone */}
-          <svg className="preloader__cone" viewBox="0 0 120 140" aria-hidden="true">
-            <defs>
-              <pattern id="wafflePL" width="14" height="14" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
-                <rect width="14" height="14" fill="#E8B06A" />
-                <line x1="0" y1="0" x2="14" y2="0" stroke="#C98A4B" strokeWidth="2" />
-                <line x1="0" y1="0" x2="0" y2="14" stroke="#C98A4B" strokeWidth="2" />
-              </pattern>
-            </defs>
-            <path d="M20,10 L100,10 L60,138 Z" fill="url(#wafflePL)" stroke="#B5783B" strokeWidth="2" />
-            <path d="M20,10 L100,10 L60,138 Z" fill="rgba(59,35,24,0.12)" />
-          </svg>
-          {/* scoop */}
-          <div className="preloader__scoop" style={{ filter: 'url(#goo)' }}>
-            <svg viewBox="0 0 200 160" aria-hidden="true" style={{ width: '100%', height: '100%' }}>
-              <ellipse cx="100" cy="80" rx="86" ry="72" fill="#FFB3C7" />
-              <ellipse cx="70" cy="55" rx="30" ry="20" fill="rgba(255,255,255,0.55)" />
-              <circle className="sag-drip" cx="100" cy="150" r="14" fill="#FFB3C7" style={{ transformOrigin: '100px 140px' }} />
-            </svg>
+          <nav className="hidden items-center gap-8 lg:flex" aria-label="Navegación principal">
+            {[
+              ['Sabores', '#sabores'],
+              ['Nuestra casa', '#historia'],
+              ['El proceso', '#proceso'],
+              ['Preguntas', '#preguntas'],
+            ].map(([label, href]) => (
+              <a
+                key={href}
+                href={href}
+                className="text-sm font-medium text-[#211a17]/70 transition-colors hover:text-[#76283c]"
+              >
+                {label}
+              </a>
+            ))}
+          </nav>
+
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={openCart}
+              className="group relative inline-flex min-h-11 items-center gap-2 rounded-full border border-[#211a17]/15 px-4 text-sm font-semibold transition-colors hover:border-[#76283c] hover:bg-[#76283c] hover:text-white active:scale-[0.98]"
+              aria-label={`Abrir pedido, ${itemCount} productos`}
+            >
+              <ShoppingBag className="h-4 w-4" strokeWidth={1.8} />
+              <span className="hidden sm:inline">Mi pedido</span>
+              <span className="inline-grid min-h-5 min-w-5 place-items-center rounded-full bg-[#76283c] px-1 text-[10px] text-white transition-colors group-hover:bg-white group-hover:text-[#76283c]">
+                {itemCount}
+              </span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setMenuOpen((open) => !open)}
+              className="inline-grid h-11 w-11 place-items-center rounded-full border border-[#211a17]/15 lg:hidden"
+              aria-label={menuOpen ? 'Cerrar menú' : 'Abrir menú'}
+              aria-expanded={menuOpen}
+            >
+              {menuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            </button>
           </div>
         </div>
-        <div className="preloader__pct">0</div>
-      </div>
 
-      {/* ===== NAV ===== */}
-      <header className="nav">
-        <a className="nav__brand drip-link" href="#top" aria-label="Helado Nube, inicio">
-          <span className="dot-mark" />
-          Helado Nube
-        </a>
-        <nav className="nav__links" aria-label="Principal">
-          <a className="drip-link" href="#sabores">Sabores</a>
-          <a className="drip-link" href="#galeria">Galería</a>
-          <a className="drip-link" href="#historia">Historia</a>
-          <a className="drip-link" href="#proceso">Proceso</a>
-          <a className="drip-link" href="#faq">FAQ</a>
-          <a className="btn" href="#cta-final" style={{ padding: '0.7rem 1.4rem', fontSize: '0.95rem' }} data-cursor>
-            <span className="btn__label">Ordenar</span>
-            <span className="nav__cart-count" aria-hidden="true">0</span>
-            <span className="btn__drips"><i /><i /><i /></span>
-          </a>
-        </nav>
+        <div
+          className={`absolute inset-x-0 top-full overflow-hidden border-b border-[#211a17]/10 bg-[#f5efe5] transition-[max-height,opacity] duration-500 lg:hidden ${
+            menuOpen ? 'max-h-96 opacity-100' : 'pointer-events-none max-h-0 opacity-0'
+          }`}
+        >
+          <nav className="grid gap-1 px-5 py-5" aria-label="Navegación móvil">
+            {[
+              ['Sabores', '#sabores'],
+              ['Nuestra casa', '#historia'],
+              ['El proceso', '#proceso'],
+              ['Preguntas', '#preguntas'],
+            ].map(([label, href], index) => (
+              <a
+                key={href}
+                href={href}
+                onClick={() => setMenuOpen(false)}
+                className="font-display flex min-h-14 items-center justify-between border-b border-[#211a17]/10 text-2xl"
+              >
+                {label}
+                <span className="font-sans text-[10px] font-semibold tracking-[0.2em] text-[#76283c]">0{index + 1}</span>
+              </a>
+            ))}
+          </nav>
+        </div>
       </header>
 
-      {/* ===== PROMO BANNER (flavor of the month + countdown) ===== */}
-      <div className="promo" role="region" aria-label="Promoción del mes">
-        <div className="promo__bar">
-          <span className="promo__pill">Sabor del mes</span>
-          <span>Cajeta de Celaya con un</span>
-          <span className="promo__flavor">-15% de descuento</span>
-          <span className="promo__sep">·</span>
-          <span className="promo__countdown" aria-label="Tiempo restante de la promoción">
-            <span className="promo__cd-unit"><b id="promo-d">0</b><small>d</small></span>
-            <span className="promo__cd-sep">:</span>
-            <span className="promo__cd-unit"><b id="promo-h">0</b><small>h</small></span>
-            <span className="promo__cd-sep">:</span>
-            <span className="promo__cd-unit"><b id="promo-m">0</b><small>m</small></span>
-            <span className="promo__cd-sep">:</span>
-            <span className="promo__cd-unit"><b id="promo-s">0</b><small>s</small></span>
-          </span>
-          <a className="promo__cta" href="#sabores">¡Pídelo ya!</a>
-          <button className="promo__share" aria-label="Compartir promoción" data-cursor>
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92-1.31-2.92-2.92-2.92z"/></svg>
-          </button>
-        </div>
-        <div className="promo__drip" aria-hidden="true">
-          <svg viewBox="0 0 1440 18" preserveAspectRatio="none">
-            <path d="M0,0 L1440,0 L1440,8 C1380,16 1320,4 1260,10 C1200,16 1140,6 1080,11 C1020,16 960,5 900,10 C840,15 780,5 720,11 C660,17 600,5 540,10 C480,15 420,5 360,11 C300,17 240,5 180,10 C120,15 60,5 0,9 Z" />
-          </svg>
-        </div>
-      </div>
-
-      <main id="top">
-        {/* ===== HERO ===== */}
-        <section className="hero wrap" aria-labelledby="hero-title">
-          <h1 id="hero-title" className="sr-only">Helado Nube</h1>
-          {/* Floating flavor bubbles — balance the right side & add ambient melt life */}
-          <div className="hero__bubbles" aria-hidden="true">
-            <span className="hero__bubble" style={{ width: 64, height: 64, top: '8%', right: '4%', background: 'var(--fresa)' }} />
-            <span className="hero__bubble" style={{ width: 38, height: 38, top: '24%', right: '22%', background: 'var(--vainilla)' }} />
-            <span className="hero__bubble" style={{ width: 52, height: 52, top: '52%', right: '10%', background: 'var(--pistache)' }} />
-            <span className="hero__bubble" style={{ width: 30, height: 30, top: '68%', right: '28%', background: 'var(--mango)' }} />
-            <span className="hero__bubble" style={{ width: 26, height: 26, top: '38%', right: '36%', background: 'var(--fresa)' }} />
-          </div>
-          <div className="hero__accent-drip" aria-hidden="true">
-            <svg viewBox="0 0 90 120">
-              <path d="M45,0 C60,20 70,30 65,50 C60,70 70,80 55,100 C48,110 50,118 45,120 C40,118 42,110 35,100 C20,80 30,70 25,50 C20,30 30,20 45,0 Z" fill="var(--fresa)" opacity="0.6" />
-              <circle cx="45" cy="118" r="6" fill="var(--fresa-deep)" />
-            </svg>
-          </div>
-          <span className="hero__eyebrow">
-            <span className="pip" /> Helado artesanal · Hecho en México
-          </span>
-          <div className="hero__title-wrap">
-            <div className="hero__title" aria-hidden="true">
-              <svg viewBox="0 0 1200 280" preserveAspectRatio="xMidYMid meet">
-                <g className="goo-text">
-                  <text x="600" y="205" textAnchor="middle" fontSize="260" letterSpacing="-6">HELADO</text>
-                  <circle className="drip-circle" cx="180" cy="210" r="6" fill="var(--chocolate)" />
-                  <circle className="drip-circle" cx="430" cy="212" r="5" fill="var(--chocolate)" />
-                  <circle className="drip-circle" cx="760" cy="208" r="7" fill="var(--chocolate)" />
-                  <circle className="drip-circle" cx="1010" cy="212" r="5" fill="var(--chocolate)" />
-                </g>
-              </svg>
-            </div>
-            <div className="hero__title" aria-hidden="true" style={{ marginTop: '-2rem' }}>
-              <svg viewBox="0 0 1200 220" preserveAspectRatio="xMidYMid meet">
-                <g className="goo-text">
-                  <text x="600" y="175" textAnchor="middle" fontSize="190" letterSpacing="-2">NUBE</text>
-                  <circle className="drip-circle" cx="320" cy="180" r="6" fill="var(--chocolate)" />
-                  <circle className="drip-circle" cx="620" cy="182" r="7" fill="var(--chocolate)" />
-                  <circle className="drip-circle" cx="880" cy="178" r="5" fill="var(--chocolate)" />
-                </g>
-              </svg>
-            </div>
-          </div>
-          <p className="hero__sub">
-            Helado artesanal hecho a mano, lento y con nube. Cada bola se derrite despacito,
-            como debe ser. Sabor de mercado, textura de abuela.
-          </p>
-          <div className="hero__ctas">
-            <a className="btn" href="#cta-final">
-              <span className="btn__label">Ordenar ahora</span>
-              <span className="btn__drips"><i /><i /><i /></span>
-            </a>
-            <a className="btn btn--ghost" href="#sabores">
-              <span className="btn__label">Ver sabores</span>
-              <span className="btn__drips"><i /><i /><i /></span>
-            </a>
-          </div>
-          <div className="hero__trust reveal">
-            <span className="hero__trust-avatars">
-              <img src="/img/avatars/mariana.png" alt="" loading="lazy" />
-              <img src="/img/avatars/refugio.png" alt="" loading="lazy" />
-              <img src="/img/avatars/tonita.png" alt="" loading="lazy" />
-              <img src="/img/avatars/diego.png" alt="" loading="lazy" />
-            </span>
-            <span className="hero__trust-stars">
-              <span className="stars">★★★★★</span>
-              <b>4.9</b>
-            </span>
-            <span className="hero__trust-sep" />
-            <span className="hero__trust-text"><b>1,200+</b> clientes felices en CDMX</span>
-          </div>
-
-          {/* Decorative cone */}
-          <div className="hero__cone" aria-hidden="true">
-            <svg viewBox="0 0 260 420">
-              <defs>
-                <linearGradient id="coneGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0" stopColor="#F0C074" />
-                  <stop offset="1" stopColor="#C98A4B" />
-                </linearGradient>
-                <linearGradient id="scoop1" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0" stopColor="#FFD9E3" />
-                  <stop offset="1" stopColor="#FFB3C7" />
-                </linearGradient>
-                <linearGradient id="scoop2" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0" stopColor="#FFF1CF" />
-                  <stop offset="1" stopColor="#FFE8B8" />
-                </linearGradient>
-                <linearGradient id="scoop3" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0" stopColor="#D6F2E1" />
-                  <stop offset="1" stopColor="#B8E0C8" />
-                </linearGradient>
-                <pattern id="waffle" width="16" height="16" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
-                  <rect width="16" height="16" fill="url(#coneGrad)" />
-                  <line x1="0" y1="0" x2="16" y2="0" stroke="#B5783B" strokeWidth="2.5" />
-                  <line x1="0" y1="0" x2="0" y2="16" stroke="#B5783B" strokeWidth="2.5" />
-                </pattern>
-              </defs>
-              {/* cone */}
-              <path d="M70,150 L190,150 L130,405 Z" fill="url(#waffle)" stroke="#A86A30" strokeWidth="2" />
-              <path d="M70,150 L190,150 L130,405 Z" fill="rgba(59,35,24,0.1)" />
-              {/* drips on cone */}
-              <path d="M78,152 q-6,30 4,46 q8,12 0,30" fill="none" stroke="#FFB3C7" strokeWidth="10" strokeLinecap="round" opacity="0.9" />
-              <path d="M150,152 q8,24 -2,40 q-8,14 0,28" fill="none" stroke="#FFE8B8" strokeWidth="9" strokeLinecap="round" opacity="0.9" />
-              {/* scoops stacked */}
-              <ellipse cx="100" cy="120" rx="52" ry="44" fill="url(#scoop3)" />
-              <ellipse cx="160" cy="100" rx="50" ry="42" fill="url(#scoop2)" />
-              <ellipse cx="130" cy="60" rx="58" ry="48" fill="url(#scoop1)" />
-              {/* highlights */}
-              <ellipse cx="112" cy="44" rx="18" ry="12" fill="rgba(255,255,255,0.6)" />
-              <ellipse cx="148" cy="88" rx="12" ry="8" fill="rgba(255,255,255,0.5)" />
-              <ellipse cx="88" cy="108" rx="10" ry="7" fill="rgba(255,255,255,0.5)" />
-              {/* cherry */}
-              <circle cx="132" cy="22" r="11" fill="#E8557A" />
-              <path d="M132,12 q4,-10 12,-10" fill="none" stroke="#6FB489" strokeWidth="3" strokeLinecap="round" />
-            </svg>
-          </div>
-
-          <div className="hero__scroll" aria-hidden="true">
-            <span>Desliza</span>
-            <span className="capsule"><span className="drop" /></span>
-          </div>
-        </section>
-
-        {/* ===== DIVIDER hero -> sabores (animated morph) ===== */}
-        <div className="drip-divider" aria-hidden="true">
-          <svg viewBox="0 0 1440 100" preserveAspectRatio="none">
-            <path id="dividerMorphPath" d="M0,0 L1440,0 L1440,60 C1320,90 1200,40 1080,68 C960,96 840,36 720,66 C600,96 480,30 360,62 C240,94 120,34 0,66 Z" fill="var(--fresa)" />
-          </svg>
-        </div>
-
-        {/* ===== SABORES ===== */}
-        <section id="sabores" className="section" aria-labelledby="sabores-title">
-          <div className="wrap">
-            <span className="section__eyebrow reveal">La carta</span>
-            <h2 id="sabores-title" className="section__title reveal">Sabores que se derriten en la mirada</h2>
-            <p className="section__sub reveal">Seis recetas de pueblo, hechas con fruta de mercado y mucho cariño. Pasa el cursor: la página sabe a lo que miras.</p>
-            <div className="sabores__grid">
-              <article className="flavor reveal" style={{ ['--fc' as any]: 'var(--fresa)' }} data-cursor data-flavor="Fresa">
-                <div className="flavor__glare" />
-                <button className="flavor__info" aria-label="Ver detalles de Fresa" data-flavor-btn="Fresa">i</button>
-                <div className="flavor__scoop"><div className="ball" /><div className="drip" /></div>
-                <h3 className="flavor__name">Fresa</h3>
-                <p className="flavor__desc">Fresas de Zamora, sin colorantes. Dulce que tiñe.</p>
-                <span className="flavor__price">$65 el litro</span>
-              </article>
-              <article className="flavor reveal" style={{ ['--fc' as any]: 'var(--vainilla)' }} data-cursor data-flavor="Vainilla de Papantla">
-                <div className="flavor__glare" />
-                <button className="flavor__info" aria-label="Ver detalles de Vainilla de Papantla" data-flavor-btn="Vainilla de Papantla">i</button>
-                <div className="flavor__scoop"><div className="ball" /><div className="drip" /></div>
-                <h3 className="flavor__name">Vainilla de Papantla</h3>
-                <p className="flavor__desc">Vainilla veracruzana curada a mano. Floral y sedosa.</p>
-                <span className="flavor__price">$72 el litro</span>
-              </article>
-              <article className="flavor reveal" style={{ ['--fc' as any]: 'var(--pistache)' }} data-cursor data-flavor="Pistache">
-                <div className="flavor__glare" />
-                <button className="flavor__info" aria-label="Ver detalles de Pistache" data-flavor-btn="Pistache">i</button>
-                <div className="flavor__scoop"><div className="ball" /><div className="drip" /></div>
-                <h3 className="flavor__name">Pistache</h3>
-                <p className="flavor__desc">Pistaches tostados al comal. Verde hoja, boca cremosa.</p>
-                <span className="flavor__price">$85 el litro</span>
-              </article>
-              <article className="flavor reveal" style={{ ['--fc' as any]: '#E9C9A8' }} data-cursor data-flavor="Chocolate Oaxaqueño">
-                <div className="flavor__glare" />
-                <button className="flavor__info" aria-label="Ver detalles de Chocolate Oaxaqueño" data-flavor-btn="Chocolate Oaxaqueño">i</button>
-                <div className="flavor__scoop"><div className="ball" /><div className="drip" /></div>
-                <h3 className="flavor__name">Chocolate Oaxaqueño</h3>
-                <p className="flavor__desc">Cacao de Oaxaca, tableta molida. Intenso y abrazador.</p>
-                <span className="flavor__price">$78 el litro</span>
-              </article>
-              <article className="flavor reveal" style={{ ['--fc' as any]: 'var(--mango)' }} data-cursor data-flavor="Mango con Chile">
-                <div className="flavor__glare" />
-                <button className="flavor__info" aria-label="Ver detalles de Mango con Chile" data-flavor-btn="Mango con Chile">i</button>
-                <div className="flavor__scoop"><div className="ball" /><div className="drip" /></div>
-                <h3 className="flavor__name">Mango con Chile</h3>
-                <p className="flavor__desc">Mango manila y un besito de chamoy. Pica y abraza.</p>
-                <span className="flavor__price">$70 el litro</span>
-              </article>
-              <article className="flavor reveal" style={{ ['--fc' as any]: '#E6C39A' }} data-cursor data-flavor="Cajeta">
-                <div className="flavor__glare" />
-                <button className="flavor__info" aria-label="Ver detalles de Cajeta" data-flavor-btn="Cajeta">i</button>
-                <div className="flavor__scoop"><div className="ball" /><div className="drip" /></div>
-                <h3 className="flavor__name">Cajeta</h3>
-                <p className="flavor__desc">Leche de cabra de Celaya, a fuego lento. Caramelo de rancho.</p>
-                <span className="flavor__price">$74 el litro</span>
-              </article>
-            </div>
-          </div>
-        </section>
-
-        {/* ===== DIVIDER sabores -> galeria ===== */}
-        <div className="drip-divider" aria-hidden="true" style={{ height: 'clamp(40px,6vw,80px)' }}>
-          <svg viewBox="0 0 1440 80" preserveAspectRatio="none">
-            <path d="M0,0 L1440,0 L1440,30 C1320,60 1200,12 1080,40 C960,68 840,8 720,38 C600,68 480,10 360,40 C240,70 120,14 0,42 Z" fill="var(--crema)" />
-          </svg>
-        </div>
-
-        {/* ===== GALERIA ===== */}
-        <section id="galeria" aria-labelledby="gal-title">
-          <div className="gal__head">
-            <span className="section__eyebrow reveal">Pura crema, pura antojo</span>
-            <h2 id="gal-title" className="section__title reveal" style={{ fontSize: 'clamp(2rem,5vw,3.6rem)' }}>La galería que babrea</h2>
-            <p className="section__sub reveal" style={{ margin: '0 auto' }}>Fotitos de nuestra cocina y nuestro mercado. Si se te hace agua la boca, vamos bien.</p>
-          </div>
-          <div className="gal__grid">
-            <figure className="gal__item gal__item--wide gal__item--tall reveal">
-              <img src="/img/gallery-1.png" alt="Bochas de helado artesanal en colores pastel servidas en superficie cremosa" loading="lazy" />
-              <figcaption className="gal__cap">Surtido del día, hecho a mano</figcaption>
-            </figure>
-            <figure className="gal__item reveal">
-              <img src="/img/gallery-2.png" alt="Helado de mango con chile, amarillo brillante con polvo de chile" loading="lazy" />
-              <figcaption className="gal__cap">Mango con chile</figcaption>
-            </figure>
-            <figure className="gal__item reveal">
-              <img src="/img/gallery-3.png" alt="Helado de chocolate oscuro derritiéndose con salsa de chocolate" loading="lazy" />
-              <figcaption className="gal__cap">Chocolate Oaxaqueño</figcaption>
-            </figure>
-            <figure className="gal__item reveal">
-              <img src="/img/gallery-4.png" alt="Helado de cajeta en vaso con salsa de caramelo dorada" loading="lazy" />
-              <figcaption className="gal__cap">Cajeta de Celaya</figcaption>
-            </figure>
-            <figure className="gal__item gal__item--wide reveal">
-              <img src="/img/historia-2.png" alt="Sirviendo helado de vainilla con cuchara, cremoso" loading="lazy" />
-              <figcaption className="gal__cap">Vainilla de Papantla, recién servida</figcaption>
-            </figure>
-          </div>
-        </section>
-
-        {/* ===== DIVIDER galeria -> historia ===== */}
-        <div className="drip-divider" aria-hidden="true" style={{ height: 'clamp(40px,6vw,80px)' }}>
-          <svg viewBox="0 0 1440 80" preserveAspectRatio="none">
-            <path d="M0,0 L1440,0 L1440,30 C1320,60 1200,12 1080,40 C960,68 840,8 720,38 C600,68 480,10 360,40 C240,70 120,14 0,42 Z" fill="var(--vainilla)" />
-          </svg>
-        </div>
-
-        {/* ===== HISTORIA ===== */}
-        <section id="historia" className="section" aria-labelledby="historia-title">
-          <div className="wrap historia__grid">
-            <div className="historia__visual media-clip">
-              <div className="historia__scene" data-scene="0">
-                <img src="/img/historia-1.png" alt="Bochas de helado artesanal de fresa en bowl de barro, con fresas frescas" loading="lazy" />
+      <div id="contenido">
+        <section id="inicio" className="scroll-mt-28">
+          <div className="mx-auto grid min-h-[calc(100dvh-116px)] max-w-[1400px] grid-cols-1 items-center gap-12 px-5 py-12 sm:px-8 sm:py-16 lg:grid-cols-12 lg:gap-10 lg:px-12 lg:py-20">
+            <div className="hero-enter lg:col-span-5 lg:pr-4">
+              <p className="mb-7 flex items-center gap-3 text-xs font-semibold uppercase tracking-[0.2em] text-[#76283c]">
+                <span className="h-px w-9 bg-[#76283c]" />
+                Heladería artesanal · CDMX
+              </p>
+              <h1 className="font-display max-w-[9.5ch] text-[clamp(3.9rem,7vw,7.1rem)] font-medium leading-[0.86] tracking-[-0.06em]">
+                El lujo está en hacerlo <em className="font-normal text-[#76283c]">despacio.</em>
+              </h1>
+              <p className="mt-8 max-w-[52ch] text-base leading-7 text-[#211a17]/68 sm:text-lg sm:leading-8">
+                Helado artesanal con ingredientes de origen, batido en lotes pequeños y servido con la calma que merece algo memorable.
+              </p>
+              <div className="mt-9 flex flex-col gap-3 sm:flex-row">
+                <a
+                  href="#sabores"
+                  className="group inline-flex min-h-13 items-center justify-center gap-3 rounded-full bg-[#76283c] px-6 text-sm font-semibold text-white shadow-[0_18px_40px_-24px_rgba(118,40,60,0.8)] transition-transform hover:-translate-y-0.5 active:translate-y-0"
+                >
+                  Elegir sabores
+                  <ArrowDownRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5 group-hover:translate-y-0.5" />
+                </a>
+                <a
+                  href="#historia"
+                  className="inline-flex min-h-13 items-center justify-center gap-3 rounded-full border border-[#211a17]/20 px-6 text-sm font-semibold transition-colors hover:border-[#211a17] hover:bg-[#211a17] hover:text-white active:scale-[0.98]"
+                >
+                  Conocer la casa
+                </a>
               </div>
-              <div className="historia__scene" data-scene="1">
-                <img src="/img/historia-2.png" alt="Helado de vainilla con sus puntitos de vainilla, sirviéndose con cuchara" loading="lazy" />
-              </div>
-              <div className="historia__scene" data-scene="2">
-                <img src="/img/historia-3.png" alt="Cono de helado de pistache con pistaches molidos, en un mercado soleado" loading="lazy" />
-              </div>
+              <dl className="mt-11 grid grid-cols-3 border-y border-[#211a17]/15 py-5">
+                {[
+                  ['Lotes', 'pequeños'],
+                  ['Fruta', 'de temporada'],
+                  ['Entrega', 'refrigerada'],
+                ].map(([term, detail]) => (
+                  <div key={term} className="border-r border-[#211a17]/12 px-3 first:pl-0 last:border-0 last:pr-0">
+                    <dt className="text-[10px] font-bold uppercase tracking-[0.17em] text-[#76283c]">{term}</dt>
+                    <dd className="mt-1 text-xs font-medium text-[#211a17]/70 sm:text-sm">{detail}</dd>
+                  </div>
+                ))}
+              </dl>
             </div>
-            <div className="historia__text">
-              <span className="section__eyebrow reveal">Nuestra historia</span>
-              <h2 id="historia-title" className="section__title reveal">Tres generaciones batiendo despacio</h2>
-              <p className="lead">Empezó con doña Lucha, en un carrito de paletas por las calles de Pátzcuaro, allá por 1962.</p>
-              <p className="reveal">Hoy seguimos con su recetario manchado de vainilla. Sin máquina industrial, sin prisa: cada tina se bate a mano y se congela con nube, como ella enseñó.</p>
-              <p className="reveal">La fruta la escogemos en el mercado tempranito, cuando huele a campo y no a bodega. Por eso nuestro helado sabe a lugar, no a empaque.</p>
-              <p className="reveal">Si algún día lo pruebas y se te escapa una sonrisa cremosita, ya hicimos nuestro trabajo.</p>
-              <p className="historia__sig">— La familia Nube 🍦</p>
-            </div>
-          </div>
-        </section>
 
-        {/* ===== DIVIDER historia -> proceso ===== */}
-        <div className="drip-divider" aria-hidden="true" style={{ height: 'clamp(40px,6vw,80px)' }}>
-          <svg viewBox="0 0 1440 80" preserveAspectRatio="none">
-            <path d="M0,0 L1440,0 L1440,20 C1320,55 1200,8 1080,36 C960,64 840,6 720,34 C600,62 480,8 360,36 C240,64 120,10 0,38 Z" fill="var(--pistache)" />
-          </svg>
-        </div>
-
-        {/* ===== PROCESO ===== */}
-        <section id="proceso" className="section" aria-labelledby="proceso-title">
-          <div className="wrap">
-            <span className="section__eyebrow reveal">Paso a paso</span>
-            <h2 id="proceso-title" className="section__title reveal">El proceso, despacio y con nube</h2>
-            <p className="section__sub reveal">Tres pasos que no se apuran. Cada uno le mete aire, sabor y cremosidad.</p>
-            <div className="proceso__steps">
-              <div className="proceso__line" aria-hidden="true">
-                <svg viewBox="0 0 1440 40" preserveAspectRatio="none">
-                  <path className="track" d="M60,20 L1380,20" />
-                  <g className="goo-line">
-                    <circle id="progresoBlob" cx="60" cy="20" r="18" className="blob-travel" />
-                  </g>
-                </svg>
-              </div>
-              <div className="proceso__step reveal">
-                <div className="proceso__icon">
-                  <svg viewBox="0 0 100 100" aria-hidden="true">
-                    <circle cx="50" cy="42" r="26" fill="#E8557A" />
-                    <path d="M44,42 q6,-8 12,0" fill="none" stroke="#3B2318" strokeWidth="3" strokeLinecap="round" />
-                    <path d="M30,70 q20,18 40,0" fill="#B8E0C8" stroke="#6FB489" strokeWidth="2" />
-                    <path d="M22,80 L78,80 L70,96 L30,96 Z" fill="#FFE8B8" stroke="#E0B864" strokeWidth="2" />
-                  </svg>
-                </div>
-                <span className="proceso__num">01</span>
-                <h3 className="proceso__h">Elegimos la fruta</h3>
-                <p className="proceso__p">Vamos al mercado tempranito. Olemos, apretamos, probamos. Solo entra la que huele a su tierra.</p>
-              </div>
-              <div className="proceso__step reveal">
-                <div className="proceso__icon">
-                  <svg viewBox="0 0 100 100" aria-hidden="true">
-                    <ellipse cx="50" cy="55" rx="34" ry="26" fill="#FFE8B8" />
-                    <path d="M30,45 q20,-14 40,0" fill="none" stroke="#E0B864" strokeWidth="3" strokeLinecap="round" />
-                    <path d="M28,60 q22,12 44,0" fill="none" stroke="#C98A4B" strokeWidth="3" strokeLinecap="round" />
-                    <circle cx="50" cy="30" r="7" fill="#E8557A" />
-                  </svg>
-                </div>
-                <span className="proceso__num">02</span>
-                <h3 className="proceso__h">Batimos despacio</h3>
-                <p className="proceso__p">Sin prisa, con paciencia de abuela. A fuego bajito y cuchara de palo, hasta que brilla.</p>
-              </div>
-              <div className="proceso__step reveal">
-                <div className="proceso__icon">
-                  <svg viewBox="0 0 100 100" aria-hidden="true">
-                    <path d="M30,30 L70,30 L70,70 q0,14 -20,14 q-20,0 -20,-14 Z" fill="#B8E0C8" stroke="#6FB489" strokeWidth="2" />
-                    <circle cx="42" cy="45" r="4" fill="rgba(255,255,255,0.8)" />
-                    <circle cx="58" cy="55" r="3" fill="rgba(255,255,255,0.7)" />
-                    <circle cx="48" cy="62" r="3" fill="rgba(255,255,255,0.7)" />
-                    <path d="M50,18 q0,-8 6,-10" fill="none" stroke="#6FB489" strokeWidth="2" strokeLinecap="round" />
-                  </svg>
-                </div>
-                <span className="proceso__num">03</span>
-                <h3 className="proceso__h">Congelamos con nube</h3>
-                <p className="proceso__p">Le metemos aire hasta que esponja. Así queda suave: se derrite en la boca, no en la mano.</p>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* ===== DIVIDER proceso -> testimonios ===== */}
-        <div className="drip-divider" aria-hidden="true" style={{ height: 'clamp(40px,6vw,80px)' }}>
-          <svg viewBox="0 0 1440 80" preserveAspectRatio="none">
-            <path d="M0,0 L1440,0 L1440,24 C1320,58 1200,10 1080,38 C960,66 840,8 720,36 C600,64 480,10 360,38 C240,66 120,12 0,40 Z" fill="var(--crema)" />
-          </svg>
-        </div>
-
-        {/* ===== TESTIMONIOS ===== */}
-        <section id="testimonios" className="section" aria-labelledby="testi-title">
-          <div className="wrap">
-            <div className="testi__head">
-              <span className="section__eyebrow reveal">La gente ya se derritió</span>
-              <h2 id="testi-title" className="section__title reveal" style={{ fontSize: 'clamp(2rem,5vw,3.6rem)' }}>Lo que dice quien ya probó</h2>
-              <p className="section__sub reveal" style={{ margin: '0 auto' }}>Reseñas reales de clientes que pidieron y se les aflojó la sonrisa.</p>
-            </div>
-          </div>
-          <div className="testi__marquee" aria-label="Testimonios de clientes">
-            <div className="testi__track">
-              <article className="testi__card" style={{ ['--tc' as any]: 'var(--fresa)' }}>
-                <div className="testi__avatar">
-                  <div className="testi__avatar-goo"><div className="head"><img src="/img/avatars/mariana.png" alt="Mariana G." loading="lazy" /></div><div className="drip" /></div>
+            <div className="hero-enter hero-enter-delay relative lg:col-span-7">
+              <div className="relative aspect-[4/4.7] overflow-hidden rounded-[2rem] bg-[#d9c7b4] sm:aspect-[16/12] lg:aspect-[7/6] lg:rounded-[2.6rem]">
+                <Image
+                  src="/img/hero-vip.webp"
+                  alt="Cono editorial con helado artesanal de vainilla, fresa y pistache"
+                  fill
+                  priority
+                  sizes="(max-width: 1024px) 100vw, 58vw"
+                  className="object-cover object-[58%_center] transition-transform duration-[1400ms] hover:scale-[1.025]"
+                />
+                <div className="absolute inset-0 bg-linear-to-t from-[#211a17]/28 via-transparent to-transparent" />
+                <div className="absolute inset-x-5 bottom-5 flex items-end justify-between gap-5 text-white sm:inset-x-7 sm:bottom-7">
                   <div>
-                    <div className="testi__who">Mariana G.</div>
-                    <div className="testi__where">Roma Norte, CDMX</div>
+                    <span className="text-[10px] font-semibold uppercase tracking-[0.22em] text-white/70">La selección de la casa</span>
+                    <p className="font-display mt-1 text-2xl leading-none sm:text-3xl">Tres sabores, una pausa.</p>
+                  </div>
+                  <span className="grid h-12 w-12 shrink-0 place-items-center rounded-full border border-white/30 bg-white/10 backdrop-blur-md">
+                    <ArrowDownRight className="h-5 w-5" />
+                  </span>
+                </div>
+              </div>
+              <div className="absolute -bottom-5 -left-4 hidden w-44 rounded-2xl border border-white/50 bg-[#fffaf4]/88 p-4 shadow-[0_22px_60px_-36px_rgba(33,26,23,0.45)] backdrop-blur-lg sm:block lg:-left-8">
+                <span className="text-[9px] font-bold uppercase tracking-[0.2em] text-[#76283c]">Sabor del mes</span>
+                <p className="font-display mt-2 text-xl leading-5">Cajeta de Celaya</p>
+                <p className="mt-2 text-[11px] leading-4 text-[#211a17]/60">Cocida lentamente, hasta dorar.</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <div className="overflow-hidden border-y border-[#211a17]/10 bg-[#eee3d5] py-4" aria-hidden="true">
+          <div className="marquee-track flex w-max items-center text-[11px] font-semibold uppercase tracking-[0.22em] text-[#211a17]/58">
+            {[0, 1].map((copy) => (
+              <div key={copy} className="flex items-center">
+                {['Vainilla de Papantla', 'Pistache tostado', 'Cacao de Oaxaca', 'Fresa de Zamora', 'Mango Manila', 'Cajeta de Celaya'].map((item) => (
+                  <span key={`${copy}-${item}`} className="flex items-center whitespace-nowrap">
+                    <span className="mx-7 h-1.5 w-1.5 rounded-full bg-[#76283c]" />
+                    {item}
+                  </span>
+                ))}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <section id="sabores" className="scroll-mt-24 py-24 sm:py-32">
+          <div className="mx-auto max-w-[1400px] px-5 sm:px-8 lg:px-12">
+            <div className="grid gap-10 lg:grid-cols-12 lg:gap-8">
+              <div className="lg:col-span-4">
+                <div className="lg:sticky lg:top-32">
+                  <p className="text-xs font-bold uppercase tracking-[0.22em] text-[#76283c]">La carta</p>
+                  <h2 className="font-display mt-5 max-w-[9ch] text-5xl font-medium leading-[0.93] tracking-[-0.045em] sm:text-6xl">
+                    Seis sabores con lugar de origen.
+                  </h2>
+                  <p className="mt-6 max-w-[38ch] text-sm leading-7 text-[#211a17]/62 sm:text-base">
+                    Cada receta empieza en el ingrediente. La disponibilidad cambia con el mercado y la temporada.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={openCart}
+                    className="mt-8 inline-flex min-h-12 items-center gap-3 border-b border-[#211a17] text-sm font-bold transition-colors hover:border-[#76283c] hover:text-[#76283c]"
+                  >
+                    Ver mi pedido
+                    <span className="grid h-6 min-w-6 place-items-center rounded-full bg-[#211a17] px-1.5 text-[10px] text-white">{itemCount}</span>
+                  </button>
+                </div>
+              </div>
+
+              <div className="lg:col-span-8">
+                <div className="border-b border-[#211a17]/15">
+                  {FLAVORS.map((flavor, index) => (
+                    <article
+                      key={flavor.id}
+                      className="group grid grid-cols-[92px_minmax(0,1fr)] gap-x-4 gap-y-5 border-t border-[#211a17]/15 py-6 sm:grid-cols-[128px_minmax(0,1fr)] sm:gap-x-6 sm:py-8 lg:grid-cols-[150px_minmax(0,1fr)_100px_142px] lg:items-center lg:gap-7"
+                    >
+                      <div className="relative aspect-square overflow-hidden rounded-full bg-[#e5d8ca]">
+                        <Image
+                          src={flavor.image}
+                          alt={flavor.imageAlt}
+                          fill
+                          sizes="150px"
+                          className="object-cover transition-transform duration-700 group-hover:scale-105"
+                        />
+                        <span className="absolute left-2 top-2 grid h-7 w-7 place-items-center rounded-full border border-white/30 bg-[#211a17]/45 text-[9px] font-semibold text-white backdrop-blur-sm">
+                          {String(index + 1).padStart(2, '0')}
+                        </span>
+                      </div>
+                      <div className="self-center">
+                        <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-[#76283c] sm:text-[10px]">{flavor.eyebrow}</p>
+                        <h3 className="font-display mt-2 text-[1.75rem] font-medium leading-none tracking-[-0.035em] sm:text-[2.15rem]">{flavor.name}</h3>
+                        <p className="mt-3 hidden max-w-[46ch] text-sm leading-6 text-[#211a17]/60 sm:block">{flavor.description}</p>
+                        <p className="mt-3 flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#211a17]/45">
+                          <span className="h-1 w-1 rounded-full bg-[#76283c]" />
+                          {flavor.origin}
+                        </p>
+                      </div>
+                      <div className="col-start-2 lg:col-auto lg:text-right">
+                        <p className="font-display text-2xl leading-none">{money.format(flavor.price)}</p>
+                        <p className="mt-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#211a17]/45">1 litro · MXN</p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => addFlavor(flavor)}
+                        className="col-start-2 inline-flex min-h-11 items-center justify-center gap-2 rounded-full border border-[#211a17]/20 px-5 text-xs font-bold uppercase tracking-[0.08em] transition-colors hover:border-[#76283c] hover:bg-[#76283c] hover:text-white active:scale-[0.98] lg:col-auto"
+                      >
+                        <Plus className="h-4 w-4" strokeWidth={1.8} />
+                        Añadir
+                      </button>
+                    </article>
+                  ))}
+                </div>
+                <p className="mt-5 text-xs leading-5 text-[#211a17]/48">
+                  Precios estimados por litro. Cajeta aplica con 15% de descuento al confirmar disponibilidad durante la temporada.
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section id="historia" className="scroll-mt-24 bg-[#211a17] py-24 text-[#f8f1e8] sm:py-32">
+          <div className="mx-auto max-w-[1400px] px-5 sm:px-8 lg:px-12">
+            <div className="grid items-center gap-14 lg:grid-cols-12 lg:gap-16">
+              <div className="relative lg:col-span-6">
+                <div className="relative aspect-[4/5] max-h-[760px] overflow-hidden rounded-[2rem] bg-[#55483e]">
+                  <Image
+                    src="/img/historia-2.png"
+                    alt="Textura del helado artesanal de la casa al momento de servir"
+                    fill
+                    sizes="(max-width: 1024px) 100vw, 50vw"
+                    className="object-cover"
+                  />
+                  <div className="absolute inset-0 bg-linear-to-t from-[#211a17]/45 via-transparent to-transparent" />
+                  <p className="absolute bottom-6 left-6 right-6 text-[10px] font-semibold uppercase tracking-[0.2em] text-white/75 sm:bottom-8 sm:left-8">
+                    Batido lento · Textura suave · Servicio al momento
+                  </p>
+                </div>
+                <div className="absolute -bottom-8 -right-3 hidden w-[42%] overflow-hidden rounded-[1.4rem] border-[6px] border-[#211a17] sm:block lg:-right-9">
+                  <div className="relative aspect-square">
+                    <Image src="/img/gallery-1.png" alt="Selección de sabores artesanales Helado Nube" fill sizes="260px" className="object-cover" />
                   </div>
                 </div>
-                <p className="testi__quote">El de fresa sabe a mi infancia, pero más rico. Llegó frío y con una nota escrita a mano. Ya pedí tres veces.</p>
-                <div className="testi__rating-row">
-                  <span className="testi__stars">★★★★★</span>
-                  <span className="testi__flavor-tag">Fresa</span>
+              </div>
+
+              <div className="lg:col-span-5 lg:col-start-8">
+                <p className="text-xs font-bold uppercase tracking-[0.22em] text-[#dba0ae]">Nuestra historia</p>
+                <h2 className="font-display mt-5 max-w-[10ch] text-5xl font-medium leading-[0.92] tracking-[-0.045em] sm:text-6xl">
+                  Una receta con memoria desde 1962.
+                </h2>
+                <p className="font-display mt-8 text-2xl font-normal italic leading-8 text-[#ead8cb]">
+                  “Empezó con doña Lucha y un carrito de paletas por las calles de Pátzcuaro.”
+                </p>
+                <div className="mt-8 space-y-5 text-sm leading-7 text-[#f8f1e8]/62 sm:text-base">
+                  <p>
+                    Hoy seguimos con su recetario manchado de vainilla. Elegimos la fruta temprano, batimos sin prisa y dejamos que cada sabor hable del lugar de donde viene.
+                  </p>
+                  <p>
+                    No buscamos que todo sepa igual. Buscamos el punto exacto en que la fresa todavía sabe a fresa y el cacao conserva su carácter.
+                  </p>
                 </div>
-              </article>
-              <article className="testi__card" style={{ ['--tc' as any]: 'var(--pistache)' }}>
-                <div className="testi__avatar">
-                  <div className="testi__avatar-goo"><div className="head"><img src="/img/avatars/refugio.png" alt="Don Refugio" loading="lazy" /></div><div className="drip" /></div>
-                  <div>
-                    <div className="testi__who">Don Refugio</div>
-                    <div className="testi__where">Coyoacán, CDMX</div>
-                  </div>
+                <div className="mt-10 flex items-center gap-4 border-t border-white/15 pt-6">
+                  <span className="font-display text-3xl italic text-[#dba0ae]">Nube</span>
+                  <span className="h-px w-10 bg-white/20" />
+                  <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-white/45">Tres generaciones · México</span>
                 </div>
-                <p className="testi__quote">El pistache molido a mano se siente. Ningún helado de bodega le llega. Cremoso de verdad, no de cartón.</p>
-                <div className="testi__rating-row">
-                  <span className="testi__stars">★★★★★</span>
-                  <span className="testi__flavor-tag">Pistache</span>
-                </div>
-              </article>
-              <article className="testi__card" style={{ ['--tc' as any]: 'var(--vainilla)' }}>
-                <div className="testi__avatar">
-                  <div className="testi__avatar-goo"><div className="head"><img src="/img/avatars/tonita.png" alt="La Toñita" loading="lazy" /></div><div className="drip" /></div>
-                  <div>
-                    <div className="testi__who">La Toñita</div>
-                    <div className="testi__where">Pátzcuaro, Mich</div>
-                  </div>
-                </div>
-                <p className="testi__quote">La vainilla me regresó al mercado de chiquita. Huele a Papantla de verdad. Hasta mi abuela lo aprobó.</p>
-                <div className="testi__rating-row">
-                  <span className="testi__stars">★★★★★</span>
-                  <span className="testi__flavor-tag">Vainilla</span>
-                </div>
-              </article>
-              <article className="testi__card" style={{ ['--tc' as any]: 'var(--mango)' }}>
-                <div className="testi__avatar">
-                  <div className="testi__avatar-goo"><div className="head"><img src="/img/avatars/diego.png" alt="Diego R." loading="lazy" /></div><div className="drip" /></div>
-                  <div>
-                    <div className="testi__who">Diego R.</div>
-                    <div className="testi__where">Condesa, CDMX</div>
-                  </div>
-                </div>
-                <p className="testi__quote">El mango con chile pica poquito, justo. Mi novia y yo nos lo acabamos en el parque. Repetiremos.</p>
-                <div className="testi__rating-row">
-                  <span className="testi__stars">★★★★☆</span>
-                  <span className="testi__flavor-tag">Mango con Chile</span>
-                </div>
-              </article>
-              <article className="testi__card" style={{ ['--tc' as any]: '#E9C9A8' }}>
-                <div className="testi__avatar">
-                  <div className="testi__avatar-goo"><div className="head"><img src="/img/avatars/lalo.png" alt="Chef Lalo" loading="lazy" /></div><div className="drip" /></div>
-                  <div>
-                    <div className="testi__who">Chef Lalo</div>
-                    <div className="testi__where">Polanco, CDMX</div>
-                  </div>
-                </div>
-                <p className="testi__quote">El chocolate oaxaqueño lo pongo en mi postre del menú. Intenso, con cuerpo. Ya es ingrediente de casa.</p>
-                <div className="testi__rating-row">
-                  <span className="testi__stars">★★★★★</span>
-                  <span className="testi__flavor-tag">Chocolate</span>
-                </div>
-              </article>
-              <article className="testi__card" style={{ ['--tc' as any]: '#E6C39A' }}>
-                <div className="testi__avatar">
-                  <div className="testi__avatar-goo"><div className="head"><img src="/img/avatars/chelo.png" alt="Doña Chelo" loading="lazy" /></div><div className="drip" /></div>
-                  <div>
-                    <div className="testi__who">Doña Chelo</div>
-                    <div className="testi__where">Del Valle, CDMX</div>
-                  </div>
-                </div>
-                <p className="testi__quote">La cajeta sabe a rancho, a leña lenta. Me acordé de mi abuelo cajetero. Esto sí es helado con memoria.</p>
-                <div className="testi__rating-row">
-                  <span className="testi__stars">★★★★★</span>
-                  <span className="testi__flavor-tag">Cajeta</span>
-                </div>
-              </article>
+              </div>
             </div>
           </div>
         </section>
 
-        {/* ===== DIVIDER testimonios -> faq ===== */}
-        <div className="drip-divider" aria-hidden="true" style={{ height: 'clamp(40px,6vw,80px)' }}>
-          <svg viewBox="0 0 1440 80" preserveAspectRatio="none">
-            <path d="M0,0 L1440,0 L1440,24 C1320,58 1200,10 1080,38 C960,66 840,8 720,36 C600,64 480,10 360,38 C240,66 120,12 0,40 Z" fill="var(--vainilla)" />
-          </svg>
-        </div>
+        <section id="proceso" className="scroll-mt-24 py-24 sm:py-32">
+          <div className="mx-auto max-w-[1400px] px-5 sm:px-8 lg:px-12">
+            <div className="grid gap-12 lg:grid-cols-12 lg:gap-10">
+              <div className="lg:col-span-5">
+                <p className="text-xs font-bold uppercase tracking-[0.22em] text-[#76283c]">El proceso</p>
+                <h2 className="font-display mt-5 max-w-[9ch] text-5xl font-medium leading-[0.92] tracking-[-0.045em] sm:text-6xl">
+                  Lo premium también se puede explicar.
+                </h2>
+                <p className="mt-6 max-w-[43ch] text-sm leading-7 text-[#211a17]/62 sm:text-base">
+                  Nada de misterio: buena materia prima, tiempo y una cadena de frío cuidada hasta tu puerta.
+                </p>
+              </div>
 
-        {/* ===== FAQ ===== */}
-        <section id="faq" aria-labelledby="faq-title">
-          <div className="wrap">
-            <div className="faq__head">
-              <span className="section__eyebrow reveal">¿Te quedó duda?</span>
-              <h2 id="faq-title" className="section__title reveal" style={{ fontSize: 'clamp(2rem,5vw,3.6rem)' }}>Preguntas que se derriten</h2>
-              <p className="section__sub reveal" style={{ margin: '0 auto' }}>Lo que más nos preguntan antes de pedir. Si falta algo, escríbenos.</p>
+              <div className="lg:col-span-7">
+                <div className="divide-y divide-[#211a17]/15 border-y border-[#211a17]/15">
+                  {[
+                    {
+                      icon: Leaf,
+                      number: '01',
+                      title: 'Elegimos por temporada',
+                      text: 'Compramos fruta por aroma y madurez; no por uniformidad. Por eso la carta puede cambiar.',
+                    },
+                    {
+                      icon: Clock3,
+                      number: '02',
+                      title: 'Batimos en lotes pequeños',
+                      text: 'Trabajamos cada mezcla lentamente para cuidar el cuerpo, el aroma y una textura limpia.',
+                    },
+                    {
+                      icon: Snowflake,
+                      number: '03',
+                      title: 'Cuidamos el frío',
+                      text: 'Empacamos cada pedido para que llegue listo para servir, con instrucciones simples de conservación.',
+                    },
+                  ].map((step) => (
+                    <article key={step.number} className="group grid gap-5 py-8 sm:grid-cols-[64px_minmax(0,1fr)_auto] sm:items-start sm:gap-6 sm:py-10">
+                      <span className="grid h-14 w-14 place-items-center rounded-full border border-[#211a17]/15 transition-colors group-hover:border-[#76283c] group-hover:bg-[#76283c] group-hover:text-white">
+                        <step.icon className="h-5 w-5" strokeWidth={1.5} />
+                      </span>
+                      <div>
+                        <h3 className="font-display text-3xl font-medium tracking-[-0.035em]">{step.title}</h3>
+                        <p className="mt-3 max-w-[50ch] text-sm leading-6 text-[#211a17]/58">{step.text}</p>
+                      </div>
+                      <span className="text-[10px] font-bold tracking-[0.2em] text-[#76283c]">{step.number}</span>
+                    </article>
+                  ))}
+                </div>
+              </div>
             </div>
-            <div className="faq__list">
-              <div className="faq__item reveal">
-                <button className="faq__q" aria-expanded="false">¿Hasta dónde llevan? <span className="faq__q-icon">+</span></button>
-                <div className="faq__a"><p>Por ahora enviamos en toda la CDMX y zona metropolitana. Próximamente Pátzcuaro y Morelia. El envío sale sin costo en pedidos mayores a $200; abajo de eso, $40 de corrido.</p></div>
-              </div>
-              <div className="faq__item reveal">
-                <button className="faq__q" aria-expanded="false">¿Cómo conservo el helado si no me lo como todo? <span className="faq__q-icon">+</span></button>
-                <div className="faq__a"><p>Tapa bien, mételo al congelador y cómelo en menos de una semana. Como no lleva estabilizantes químicos, si se congela duro se deja reposar 5 minutitos fuera antes de servir. Así regresa a su textura cremosa.</p></div>
-              </div>
-              <div className="faq__item reveal">
-                <button className="faq__q" aria-expanded="false">¿Tienen opciones veganas o sin lactosa? <span className="faq__q-icon">+</span></button>
-                <div className="faq__a"><p>¡Sí! El de mango con chíchago y el de fresa los hacemos con base de coco. Marca "vegano" en las notas del pedido y te los mandamos así. Sin lactosa, sin leche, puro sabor.</p></div>
-              </div>
-              <div className="faq__item reveal">
-                <button className="faq__q" aria-expanded="false">¿Puedo pedir para evento o boda? <span className="faq__q-icon">+</span></button>
-                <div className="faq__a"><p>Claro que sí, esa es nuestra debilidad. Hamos puesto carritos de helado en bodas, cumpleaños y fiestas de quince. Escríbenos por WhatsApp con tu fecha y número de invitados y te mandamos propuesta.</p></div>
-              </div>
-              <div className="faq__item reveal">
-                <button className="faq__q" aria-expanded="false">¿Cuánto dura el helado en el camino? <span className="faq__q-icon">+</span></button>
-                <div className="faq__a"><p>Lo llevamos en hieleras con gel refrigerante. Aguantando perfecto hasta 2 horas desde que sale de nuestra nevera. En CDMX casi siempre llega en 40 minutos. Si llega derretido (casi nunca), te lo cambiamos sin chistar.</p></div>
-              </div>
-              <div className="faq__item reveal">
-                <button className="faq__q" aria-expanded="false">¿Aceptan pago contra entrega? <span className="faq__q-icon">+</span></button>
-                <div className="faq__a"><p>Sí: efectivo, transferencia y tarjetas al recibir. También puedes pagar por WhatsApp con Stripe si prefieres. Tú escoges cómo, nosotros ya lo armamos.</p></div>
-              </div>
-            </div>
-            <p className="faq__contact reveal">¿No se derritió tu duda? <a href="#cta-final">Escríbenos por WhatsApp</a> — te respondemos cremosito.</p>
           </div>
         </section>
 
-        {/* ===== CTA FINAL ===== */}
-        <section id="cta-final" aria-labelledby="cta-title">
-          <div className="wrap" style={{ textAlign: 'center' }}>
-            <span className="section__eyebrow reveal" style={{ color: 'var(--chocolate)', opacity: 0.7 }}>El último antojo</span>
-            <h2 id="cta-title" className="cta-final__title reveal">¿Se te antoja?</h2>
-            <p className="cta-final__sub reveal">Pide tu helado hoy y te lo llevamos cremosito. Frío de Nevera, calor de hogar.</p>
-            <div className="magnetic-wrap reveal">
-              <a className="btn btn--chocolate" href="#sabores" style={{ fontSize: '1.25rem', padding: '1.3rem 3rem' }}>
-                <span className="btn__label">Ordenar ahora</span>
-                <span className="btn__drips"><i /><i /><i /></span>
+        <section className="pb-24 sm:pb-32" aria-labelledby="momentos-title">
+          <div className="mx-auto max-w-[1400px] px-5 sm:px-8 lg:px-12">
+            <div className="mb-10 flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-[0.22em] text-[#76283c]">La mesa Nube</p>
+                <h2 id="momentos-title" className="font-display mt-4 text-4xl font-medium tracking-[-0.04em] sm:text-5xl">Hecho para mirar de cerca.</h2>
+              </div>
+              <p className="max-w-[38ch] text-sm leading-6 text-[#211a17]/55">Textura, ingrediente y servicio. Tres formas de reconocer un helado bien hecho.</p>
+            </div>
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-12 md:grid-rows-2">
+              <figure className="group relative min-h-[420px] overflow-hidden rounded-[1.6rem] md:col-span-7 md:row-span-2 md:min-h-[680px]">
+                <Image src="/img/gallery-3.png" alt="Textura de helado de chocolate oaxaqueño" fill sizes="(max-width: 768px) 100vw, 58vw" className="object-cover transition-transform duration-1000 group-hover:scale-[1.03]" />
+                <figcaption className="absolute inset-x-5 bottom-5 text-[10px] font-bold uppercase tracking-[0.2em] text-white sm:inset-x-7 sm:bottom-7">Cacao · Oaxaca</figcaption>
+              </figure>
+              <figure className="group relative min-h-[300px] overflow-hidden rounded-[1.6rem] md:col-span-5 md:min-h-0">
+                <Image src="/img/historia-3.png" alt="Cono artesanal de pistache" fill sizes="(max-width: 768px) 100vw, 42vw" className="object-cover transition-transform duration-1000 group-hover:scale-[1.03]" />
+                <figcaption className="absolute inset-x-5 bottom-5 text-[10px] font-bold uppercase tracking-[0.2em] text-white sm:inset-x-7">Pistache · Tostado al comal</figcaption>
+              </figure>
+              <figure className="group relative min-h-[300px] overflow-hidden rounded-[1.6rem] md:col-span-5 md:min-h-0">
+                <Image src="/img/gallery-2.png" alt="Helado artesanal de mango" fill sizes="(max-width: 768px) 100vw, 42vw" className="object-cover transition-transform duration-1000 group-hover:scale-[1.03]" />
+                <figcaption className="absolute inset-x-5 bottom-5 text-[10px] font-bold uppercase tracking-[0.2em] text-[#211a17]/70 sm:inset-x-7">Mango Manila · Fruta de temporada</figcaption>
+              </figure>
+            </div>
+          </div>
+        </section>
+
+        <section className="bg-[#76283c] py-20 text-white sm:py-24">
+          <div className="mx-auto grid max-w-[1400px] gap-10 px-5 sm:px-8 lg:grid-cols-12 lg:items-center lg:px-12">
+            <div className="lg:col-span-8">
+              <p className="text-xs font-bold uppercase tracking-[0.22em] text-white/55">Bodas · Celebraciones · Eventos de marca</p>
+              <h2 className="font-display mt-5 max-w-[13ch] text-5xl font-medium leading-[0.92] tracking-[-0.045em] sm:text-6xl">
+                Una mesa de helado que sí pertenece a la ocasión.
+              </h2>
+            </div>
+            <div className="lg:col-span-4 lg:pl-10">
+              <p className="text-sm leading-7 text-white/68">Curamos sabores, cantidades y servicio según tu evento. Cuéntanos fecha, zona y número de invitados.</p>
+              <a
+                href={getWhatsAppHref('Hola, Helado Nube. Quiero cotizar helado para un evento. Fecha: ____. Zona: ____. Invitados: ____.')}
+                target="_blank"
+                rel="noreferrer"
+                className="mt-7 inline-flex min-h-12 items-center gap-3 rounded-full bg-white px-6 text-sm font-bold text-[#76283c] transition-transform hover:-translate-y-0.5 active:translate-y-0"
+              >
+                Cotizar mi evento
+                <ArrowRight className="h-4 w-4" />
               </a>
             </div>
-            <p className="reveal" style={{ marginTop: '1.5rem', color: 'var(--chocolate)', opacity: 0.7, fontSize: '0.9rem' }}>
-              Envío sin costo en CDMX · Pago contra entrega · Helado que no llega derretido (casi)
-            </p>
           </div>
         </section>
-      </main>
 
-      {/* ===== FOOTER ===== */}
-      <footer className="footer">
-        <div className="footer__drip" aria-hidden="true">
-          <svg viewBox="0 0 1440 100" preserveAspectRatio="none">
-            <path id="footerDripPath" d="M0,0 L1440,0 L1440,100 C1320,100 1280,48 1200,100 C1120,100 1080,54 1000,100 C920,100 880,46 800,100 C720,100 680,52 600,100 C520,100 480,48 400,100 C320,100 280,54 200,100 C120,100 80,46 0,100 L0,0 Z" />
-          </svg>
-        </div>
-        <div className="wrap">
-          <div className="footer__grid">
-            <div>
-              <div className="footer__brand">Helado Nube</div>
-              <p className="footer__tag">Helado artesanal hecho a mano, lento y con nube. De Pátzcuaro para toda la mesa mexicana.</p>
-              <div className="footer__social">
-                <a href="#cta-final" aria-label="Instagram" data-cursor>
-                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.16c3.2 0 3.58.01 4.85.07 1.17.05 1.8.25 2.23.41.56.22.96.48 1.38.9.42.42.68.82.9 1.38.16.42.36 1.06.41 2.23.06 1.27.07 1.65.07 4.85s-.01 3.58-.07 4.85c-.05 1.17-.25 1.8-.41 2.23-.22.56-.48.96-.9 1.38-.42.42-.82.68-1.38.9-.42.16-1.06.36-2.23.41-1.27.06-1.65.07-4.85.07s-3.58-.01-4.85-.07c-1.17-.05-1.8-.25-2.23-.41-.56-.22-.96-.48-1.38-.9-.42-.42-.68-.82-.9-1.38-.16-.42-.36-1.06-.41-2.23C2.17 15.58 2.16 15.2 2.16 12s.01-3.58.07-4.85c.05-1.17.25-1.8.41-2.23.22-.56.48-.96.9-1.38.42-.42.82-.68 1.38-.9.42-.16 1.06-.36 2.23-.41C8.42 2.17 8.8 2.16 12 2.16M12 0C8.74 0 8.33.01 7.05.07 5.78.13 4.9.33 4.14.63c-.79.31-1.46.72-2.12 1.38C1.35 2.67.94 3.35.63 4.14.33 4.9.13 5.78.07 7.05.01 8.33 0 8.74 0 12s.01 3.67.07 4.95c.06 1.27.26 2.15.56 2.91.31.79.72 1.46 1.38 2.12.66.66 1.34 1.08 2.12 1.38.76.3 1.64.5 2.91.56C8.33 23.99 8.74 24 12 24s3.67-.01 4.95-.07c1.27-.06 2.15-.26 2.91-.56.79-.31 1.46-.72 2.12-1.38.66-.66 1.08-1.34 1.38-2.12.3-.76.5-1.64.56-2.91.06-1.28.07-1.69.07-4.95s-.01-3.67-.07-4.95c-.06-1.27-.26-2.15-.56-2.91-.31-.79-.72-1.46-1.38-2.12C21.33 1.35 20.65.94 19.86.63 19.1.33 18.22.13 16.95.07 15.67.01 15.26 0 12 0zm0 5.84A6.16 6.16 0 1 0 18.16 12 6.16 6.16 0 0 0 12 5.84M12 16a4 4 0 1 1 4-4 4 4 0 0 1-4 4m6.41-10.85a1.44 1.44 0 1 0 1.44 1.44 1.44 1.44 0 0 0-1.44-1.44z"/></svg>
-                </a>
-                <a href="#cta-final" aria-label="Facebook" data-cursor>
-                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M24 12.07C24 5.4 18.63 0 12 0S0 5.4 0 12.07C0 18.1 4.39 23.1 10.13 24v-8.44H7.08v-3.49h3.05V9.41c0-3.02 1.79-4.69 4.53-4.69 1.31 0 2.69.24 2.69.24v2.97h-1.52c-1.49 0-1.96.93-1.96 1.89v2.25h3.33l-.53 3.49h-2.8V24C19.61 23.1 24 18.1 24 12.07z"/></svg>
-                </a>
-                <a href="#cta-final" aria-label="TikTok" data-cursor>
-                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5.8 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1.84-.1z"/></svg>
-                </a>
-                <a href="#cta-final" aria-label="WhatsApp" data-cursor>
-                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M17.5 14.4c-.3-.1-1.7-.8-2-.9-.3-.1-.5-.1-.7.1-.2.3-.7.9-.9 1.1-.2.2-.3.2-.6.1-1.8-.9-3-1.6-4.2-3.6-.3-.5.3-.5.8-1.6.1-.2 0-.4 0-.5s-.7-1.7-1-2.3c-.3-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.8.4-.3.3-1 1-1 2.5s1.1 2.9 1.2 3.1c.2.2 2.1 3.3 5.2 4.6 1.9.8 2.7.9 3.6.8.6-.1 1.7-.7 2-1.4.2-.7.2-1.2.2-1.4-.1-.1-.3-.2-.6-.3M12 2a10 10 0 0 0-8.6 15l-1.4 5 5.1-1.3A10 10 0 1 0 12 2m0 18.2c-1.5 0-3-.4-4.3-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2"/></svg>
-                </a>
-              </div>
-              <div className="news">
-                <div className="news__field">
-                  <input type="email" placeholder="tu correo cremosito" aria-label="Correo electrónico" />
-                  <button type="button">Quiero saber</button>
-                </div>
-                <div className="sprinkle-stage" aria-hidden="true" />
-                <p className="news__msg" role="status" aria-live="polite" />
-              </div>
+        <section id="preguntas" className="scroll-mt-24 py-24 sm:py-32">
+          <div className="mx-auto grid max-w-[1400px] gap-12 px-5 sm:px-8 lg:grid-cols-12 lg:gap-16 lg:px-12">
+            <div className="lg:col-span-4">
+              <p className="text-xs font-bold uppercase tracking-[0.22em] text-[#76283c]">Antes de pedir</p>
+              <h2 className="font-display mt-5 text-5xl font-medium leading-[0.92] tracking-[-0.045em] sm:text-6xl">Todo claro desde el primer antojo.</h2>
+              <p className="mt-6 max-w-[38ch] text-sm leading-7 text-[#211a17]/60">Si tu pregunta no aparece aquí, inclúyela al compartir tu pedido.</p>
             </div>
-            <div>
-              <h4>Sabores</h4>
-              <ul>
-                <li><a className="drip-link" href="#sabores">Fresa</a></li>
-                <li><a className="drip-link" href="#sabores">Vainilla de Papantla</a></li>
-                <li><a className="drip-link" href="#sabores">Pistache</a></li>
-                <li><a className="drip-link" href="#sabores">Chocolate Oaxaqueño</a></li>
-                <li><a className="drip-link" href="#sabores">Mango con Chile</a></li>
-                <li><a className="drip-link" href="#sabores">Cajeta</a></li>
-              </ul>
-            </div>
-            <div>
-              <h4>Nube</h4>
-              <ul>
-                <li><a className="drip-link" href="#historia">Nuestra historia</a></li>
-                <li><a className="drip-link" href="#proceso">El proceso</a></li>
-                <li><a className="drip-link" href="#cta-final">Ordenar</a></li>
-                <li><a className="drip-link" href="#cta-final">Mayoreo</a></li>
-                <li><a className="drip-link" href="#cta-final">Eventos</a></li>
-              </ul>
+            <div className="border-b border-[#211a17]/15 lg:col-span-8">
+              {FAQS.map((faq, index) => {
+                const open = activeFaq === index;
+                return (
+                  <div key={faq.question} className="border-t border-[#211a17]/15">
+                    <button
+                      type="button"
+                      onClick={() => setActiveFaq(open ? null : index)}
+                      className="flex min-h-20 w-full items-center justify-between gap-6 py-5 text-left"
+                      aria-expanded={open}
+                      aria-controls={`faq-${index}`}
+                    >
+                      <span className="font-display text-2xl font-medium tracking-[-0.025em] sm:text-3xl">{faq.question}</span>
+                      <span className={`grid h-10 w-10 shrink-0 place-items-center rounded-full border border-[#211a17]/15 transition-transform duration-300 ${open ? 'rotate-180 bg-[#211a17] text-white' : ''}`}>
+                        <ChevronDown className="h-4 w-4" />
+                      </span>
+                    </button>
+                    <div id={`faq-${index}`} className={`grid transition-[grid-template-rows] duration-500 ${open ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`}>
+                      <div className="overflow-hidden">
+                        <p className="max-w-[62ch] pb-7 text-sm leading-7 text-[#211a17]/60 sm:text-base">{faq.answer}</p>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
-          <div className="footer__bottom">
-            <span>© {new Date().getFullYear()} Helado Nube. Hecho con crema y cariño en México. 🍦</span>
-            <span className="footer__legal">
-              <a href="#top">Aviso de privacidad</a>
-              <a href="#top">Términos</a>
-            </span>
+        </section>
+
+        <section className="px-5 pb-6 sm:px-8 lg:px-12">
+          <div className="relative mx-auto max-w-[1400px] overflow-hidden rounded-[2rem] bg-[#ded0c1] px-6 py-20 sm:px-12 sm:py-24 lg:px-20">
+            <div className="relative z-10 max-w-3xl">
+              <p className="text-xs font-bold uppercase tracking-[0.22em] text-[#76283c]">Tu próxima sobremesa</p>
+              <h2 className="font-display mt-5 text-5xl font-medium leading-[0.9] tracking-[-0.05em] sm:text-7xl">Elige el sabor. Nosotros cuidamos el frío.</h2>
+              <p className="mt-6 max-w-[52ch] text-sm leading-7 text-[#211a17]/64 sm:text-base">Arma tu selección y confirma por WhatsApp disponibilidad, cobertura y horario de entrega.</p>
+              <button
+                type="button"
+                onClick={openCart}
+                className="mt-8 inline-flex min-h-13 items-center gap-3 rounded-full bg-[#211a17] px-7 text-sm font-bold text-white transition-transform hover:-translate-y-0.5 active:translate-y-0"
+              >
+                Revisar mi pedido
+                <ShoppingBag className="h-4 w-4" />
+                <span className="rounded-full bg-white/14 px-2 py-0.5 text-[10px]">{itemCount}</span>
+              </button>
+            </div>
+            <div className="absolute -right-16 -top-20 h-72 w-72 rounded-full border border-[#76283c]/15 sm:h-[26rem] sm:w-[26rem]" aria-hidden="true" />
+            <div className="absolute -bottom-32 right-20 h-64 w-64 rounded-full bg-[#76283c]/8" aria-hidden="true" />
+          </div>
+        </section>
+      </div>
+
+      <footer className="bg-[#211a17] pb-28 pt-16 text-[#f8f1e8] sm:pb-10 sm:pt-20">
+        <div className="mx-auto max-w-[1400px] px-5 sm:px-8 lg:px-12">
+          <div className="grid gap-12 border-b border-white/12 pb-14 lg:grid-cols-12">
+            <div className="lg:col-span-5">
+              <a href="#inicio" className="flex items-center gap-3">
+                <Image src="/logo.svg" alt="" width={44} height={44} />
+                <span className="font-display text-3xl font-medium">Helado Nube</span>
+              </a>
+              <p className="mt-5 max-w-[36ch] text-sm leading-7 text-white/50">Helado artesanal mexicano, batido en lotes pequeños y entregado con cadena de frío cuidada.</p>
+            </div>
+            <div className="grid grid-cols-2 gap-8 lg:col-span-4 lg:col-start-9">
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#dba0ae]">Explorar</p>
+                <div className="mt-5 grid gap-3 text-sm text-white/60">
+                  <a href="#sabores" className="hover:text-white">Sabores</a>
+                  <a href="#historia" className="hover:text-white">Historia</a>
+                  <a href="#proceso" className="hover:text-white">Proceso</a>
+                </div>
+              </div>
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#dba0ae]">Pedir</p>
+                <div className="mt-5 grid gap-3 text-sm text-white/60">
+                  <button type="button" onClick={openCart} className="text-left hover:text-white">Mi pedido</button>
+                  <a href="#preguntas" className="hover:text-white">Preguntas</a>
+                  <a href={getWhatsAppHref('Hola, Helado Nube. Quiero información sobre sus sabores.')} target="_blank" rel="noreferrer" className="hover:text-white">WhatsApp</a>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div className="flex flex-col gap-3 pt-6 text-[10px] font-semibold uppercase tracking-[0.14em] text-white/35 sm:flex-row sm:items-center sm:justify-between">
+            <p>© {new Date().getFullYear()} Helado Nube · México</p>
+            <p>La disponibilidad y cobertura se confirman al ordenar.</p>
           </div>
         </div>
       </footer>
 
-      {/* ===== FLOATING ORDER BUBBLE (sticky conversion CTA + mini-cart) ===== */}
-      <a className="float-order" href="#cta-final" aria-label="Ordenar helado ahora" data-cursor>
-        <span className="float-order__pop" />
-        <span className="float-order__label">¡Pídelo cremosito!</span>
-        <div className="float-order__goo">
-          <div className="float-order__scoop">Ordenar</div>
-          <div className="float-order__drip" />
-          <span className="float-order__pulse" />
-        </div>
-        <span className="float-order__badge" aria-hidden="true">0</span>
-      </a>
-
-      {/* ===== CART POPOVER ===== */}
-      <div className="cart-overlay" aria-hidden="true" />
-      <aside className="cart" role="dialog" aria-label="Tu pedido" aria-modal="true">
-        <div className="cart__head">
-          <span className="cart__title">🍦 Tu pedido</span>
-          <div className="cart__head-actions">
-            <button className="cart__clear" aria-label="Vaciar carrito">Vaciar</button>
-            <button className="cart__close" aria-label="Cerrar carrito">×</button>
-          </div>
-        </div>
-        <div className="cart__body" />
-        <div className="cart__success">
-          <span className="cart__success-emoji">🍦</span>
-          <span className="cart__success-title">¡Pedido enviado!</span>
-          <div className="cart__success-summary" />
-          <p className="cart__success-text">Te esperamos en WhatsApp para confirmar tu helado cremosito. ¿Vaciamos el carrito o lo guardamos para repetir?</p>
-          <div className="cart__success-actions">
-            <button className="cart__success-btn cart__success-btn--clear" type="button">Vaciar carrito</button>
-            <button className="cart__success-btn cart__success-btn--keep" type="button">Guardarlo</button>
-          </div>
-        </div>
-        <div className="cart__checkout">
-          <div className="cart__summary" />
-          <div className="cart__field cart__field--name">
-            <label htmlFor="cart-name">Tu nombre</label>
-            <input id="cart-name" type="text" placeholder="¿Cómo te llamas, cremosito?" />
-          </div>
-          <div className="cart__field cart__field--phone">
-            <label htmlFor="cart-phone">Teléfono (WhatsApp)</label>
-            <input id="cart-phone" type="tel" placeholder="55 1234 5678" />
-          </div>
-          <div className="cart__field cart__field--addr">
-            <label htmlFor="cart-addr">Dirección de entrega</label>
-            <textarea id="cart-addr" placeholder="Calle, número, colonia, referencias..." />
-          </div>
-          <span className="cart__checkout-msg" role="status" aria-live="polite" />
-          <a className="btn cart__cta-whatsapp" href="#cta-final">
-            <span className="btn__label">Enviar por WhatsApp</span>
-            <span className="btn__drips"><i /><i /><i /></span>
-          </a>
-        </div>
-        <div className="cart__foot">
-          <div className="cart__total">
-            <span className="cart__total-label">Total estimado</span>
-            <span className="cart__total-val">$0 <small>MNX</small></span>
-          </div>
-          <div className="cart__discount">
-            <span className="cart__discount-label"><span className="tag">-15%</span> Sabor del mes</span>
-            <span className="cart__discount-val">-$0 <small>MNX</small></span>
-          </div>
-          <a className="btn cart__cta" href="#cta-final">
-            <span className="btn__label">Ver mi pedido</span>
-            <span className="btn__drips"><i /><i /><i /></span>
-          </a>
-        </div>
-      </aside>
-
-      {/* ===== RESTORE TOAST ===== */}
-      <div className="restore-toast" role="status" aria-live="polite">
-        <span>Tu pedido te espera: <span className="restore-toast__count">0</span> 🍦</span>
-        <button className="btn-mini btn-mini--open">Verlo</button>
-        <button className="btn-mini btn-mini--ghost" aria-label="Cerrar">×</button>
-      </div>
-
-      {/* ===== LIGHTBOX ===== */}
-      <div className="lightbox" role="dialog" aria-label="Vista ampliada" aria-modal="true">
-        <button className="lightbox__close" aria-label="Cerrar">×</button>
-        <span className="lightbox__count">1 / 5</span>
-        <button className="lightbox__nav lightbox__nav--prev" aria-label="Anterior">‹</button>
-        <button className="lightbox__nav lightbox__nav--next" aria-label="Siguiente">›</button>
-        <div className="lightbox__inner">
-          <img className="lightbox__img" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'/%3E" alt="" />
-          <div className="lightbox__cap" />
-        </div>
-      </div>
-
-      {/* ===== FLAVOR DETAILS MODAL ===== */}
-      <div className="flavor-modal" role="dialog" aria-label="Detalles del sabor" aria-modal="true">
-        <div className="flavor-modal__inner">
-          <div className="flavor-modal__hero">
-            <button className="flavor-modal__close" aria-label="Cerrar">×</button>
-            <div className="scoop-ill"><div className="ball" /><div className="drip" /></div>
-          </div>
-          <div className="flavor-modal__body">
-            <h3 className="flavor-modal__name" />
-            <span className="flavor-modal__price" />
-            <p className="flavor-modal__desc" />
-            <div className="flavor-modal__meta">
-              <div className="flavor-modal__meta-item">
-                <span className="flavor-modal__meta-label">Origen</span>
-                <span className="flavor-modal__meta-val flavor-modal__origin" />
-              </div>
-              <div className="flavor-modal__meta-item">
-                <span className="flavor-modal__meta-label">Textura</span>
-                <span className="flavor-modal__meta-val flavor-modal__texture" />
-              </div>
+      <div
+        className={`fixed inset-0 z-[80] transition-[visibility] ${cartOpen ? 'visible' : 'invisible'}`}
+        aria-hidden={!cartOpen}
+      >
+        <button
+          type="button"
+          className={`absolute inset-0 bg-[#211a17]/48 backdrop-blur-[2px] transition-opacity duration-500 ${cartOpen ? 'opacity-100' : 'opacity-0'}`}
+          onClick={closeCart}
+          aria-label="Cerrar pedido"
+          tabIndex={cartOpen ? 0 : -1}
+        />
+        <aside
+          ref={drawerRef}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="cart-title"
+          className={`absolute inset-y-0 right-0 flex w-full max-w-[520px] flex-col bg-[#faf5ed] shadow-[-28px_0_80px_-40px_rgba(33,26,23,0.5)] transition-transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+            cartOpen ? 'translate-x-0' : 'translate-x-full'
+          }`}
+        >
+          <div className="flex h-[82px] items-center justify-between border-b border-[#211a17]/12 px-5 sm:px-7">
+            <div>
+              <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-[#76283c]">Selección actual</p>
+              <h2 id="cart-title" className="font-display mt-1 text-2xl font-medium">Mi pedido</h2>
             </div>
-            <p className="flavor-modal__pairing" />
-            <a className="btn flavor-modal__cta" href="#cta-final">
-              <span className="btn__label">Agregar al pedido</span>
-              <span className="btn__drips"><i /><i /><i /></span>
-            </a>
+            <button
+              ref={closeCartRef}
+              type="button"
+              onClick={closeCart}
+              className="grid h-11 w-11 place-items-center rounded-full border border-[#211a17]/15 transition-colors hover:bg-[#211a17] hover:text-white"
+              aria-label="Cerrar pedido"
+            >
+              <X className="h-5 w-5" />
+            </button>
           </div>
-        </div>
+
+          <div className="flex-1 overflow-y-auto px-5 py-6 sm:px-7">
+            {cartItems.length === 0 ? (
+              <div className="grid min-h-full place-items-center py-16 text-center">
+                <div>
+                  <span className="mx-auto grid h-16 w-16 place-items-center rounded-full border border-[#211a17]/15 text-[#76283c]">
+                    <ShoppingBag className="h-6 w-6" strokeWidth={1.4} />
+                  </span>
+                  <h3 className="font-display mt-6 text-3xl font-medium">Tu selección está vacía.</h3>
+                  <p className="mx-auto mt-3 max-w-[30ch] text-sm leading-6 text-[#211a17]/55">Elige uno o varios sabores y vuelve cuando estés listo.</p>
+                  <button
+                    type="button"
+                    onClick={closeCart}
+                    className="mt-6 inline-flex min-h-11 items-center gap-2 border-b border-[#211a17] text-sm font-bold"
+                  >
+                    Explorar sabores
+                    <ArrowRight className="h-4 w-4" />
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="divide-y divide-[#211a17]/12 border-y border-[#211a17]/12">
+                {cartItems.map((item) => (
+                  <article key={item.id} className="grid grid-cols-[72px_1fr] gap-4 py-5">
+                    <div className="relative aspect-square overflow-hidden rounded-full bg-[#e5d8ca]">
+                      <Image src={item.image} alt="" fill sizes="72px" className="object-cover" />
+                    </div>
+                    <div className="min-w-0">
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <h3 className="font-display text-xl font-medium leading-5">{item.name}</h3>
+                          <p className="mt-1 text-[9px] font-semibold uppercase tracking-[0.14em] text-[#211a17]/45">1 litro · {money.format(item.price)}</p>
+                        </div>
+                        <p className="text-sm font-bold">{money.format(item.quantity * item.price)}</p>
+                      </div>
+                      <div className="mt-4 inline-flex items-center rounded-full border border-[#211a17]/15">
+                        <button
+                          type="button"
+                          onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                          className="grid h-10 w-10 place-items-center rounded-full hover:bg-[#211a17] hover:text-white"
+                          aria-label={`Quitar una unidad de ${item.name}`}
+                        >
+                          <Minus className="h-3.5 w-3.5" />
+                        </button>
+                        <span className="min-w-8 text-center text-xs font-bold" aria-live="polite">{item.quantity}</span>
+                        <button
+                          type="button"
+                          onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                          className="grid h-10 w-10 place-items-center rounded-full hover:bg-[#211a17] hover:text-white"
+                          aria-label={`Agregar una unidad de ${item.name}`}
+                        >
+                          <Plus className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {cartItems.length > 0 && (
+            <div className="border-t border-[#211a17]/12 bg-[#f4ecdf] px-5 py-6 sm:px-7">
+              <div className="flex items-end justify-between">
+                <div>
+                  <p className="text-[9px] font-bold uppercase tracking-[0.18em] text-[#211a17]/45">Total estimado</p>
+                  <p className="mt-1 text-xs text-[#211a17]/50">Entrega se confirma por zona</p>
+                </div>
+                <p className="font-display text-4xl font-medium tracking-[-0.04em]">{money.format(cartTotal)}</p>
+              </div>
+              <a
+                href={getWhatsAppHref(orderMessage)}
+                target="_blank"
+                rel="noreferrer"
+                className="mt-5 inline-flex min-h-14 w-full items-center justify-center gap-3 rounded-full bg-[#76283c] px-6 text-sm font-bold text-white transition-transform hover:-translate-y-0.5 active:translate-y-0"
+              >
+                {whatsappNumber ? 'Confirmar por WhatsApp' : 'Compartir pedido en WhatsApp'}
+                <ArrowRight className="h-4 w-4" />
+              </a>
+              <p className="mt-3 text-center text-[10px] leading-4 text-[#211a17]/45">No se cobra nada en este paso. Primero confirmamos disponibilidad, cobertura y horario.</p>
+            </div>
+          )}
+        </aside>
       </div>
 
-      {/* ===== BACK TO TOP (melting drip) ===== */}
-      <button className="back-top" aria-label="Volver arriba" data-cursor>
-        <div className="back-top__goo">
-          <div className="back-top__drop">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-              <path d="M12 19V5M5 12l7-7 7 7" />
-            </svg>
-          </div>
-          <div className="back-top__drip" />
-        </div>
-      </button>
-    </>
+      {itemCount > 0 && (
+        <button
+          type="button"
+          onClick={openCart}
+          className="fixed inset-x-4 bottom-[max(1rem,env(safe-area-inset-bottom))] z-[60] flex min-h-14 items-center justify-between rounded-full bg-[#211a17] px-5 text-white shadow-[0_20px_60px_-22px_rgba(33,26,23,0.8)] sm:hidden"
+          aria-label={`Continuar pedido con ${itemCount} productos por ${money.format(cartTotal)}`}
+        >
+          <span className="flex items-center gap-2 text-xs font-bold">
+            <ShoppingBag className="h-4 w-4" />
+            {itemCount} {itemCount === 1 ? 'producto' : 'productos'}
+          </span>
+          <span className="flex items-center gap-2 text-sm font-bold">
+            {money.format(cartTotal)}
+            <ArrowRight className="h-4 w-4" />
+          </span>
+        </button>
+      )}
+
+      <div
+        className={`pointer-events-none fixed bottom-6 left-1/2 z-[90] flex -translate-x-1/2 items-center gap-2 rounded-full bg-[#211a17] px-5 py-3 text-xs font-semibold text-white shadow-xl transition-all duration-500 ${
+          recentlyAdded ? 'translate-y-0 opacity-100' : 'translate-y-5 opacity-0'
+        }`}
+        role="status"
+        aria-live="polite"
+      >
+        <Check className="h-4 w-4 text-[#dba0ae]" />
+        {recentlyAdded ? `${recentlyAdded} se añadió a tu pedido` : ''}
+      </div>
+    </main>
   );
 }
