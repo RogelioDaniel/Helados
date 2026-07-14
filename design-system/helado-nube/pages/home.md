@@ -26,7 +26,7 @@
 
 ## Firma: La Mantecación
 
-La experiencia abre, una vez por sesión, con una superficie cremosa que mezcla vainilla, fresa y pistache. Three.js genera pliegues y surcos de helado mediante un único shader; al terminar la carga real, la masa se retira hacia arriba con un borde viscoso y revela la fotografía. El respaldo CSS aparece desde SSR, el cierre nunca espera al chunk de Three y existe un límite duro para no bloquear el contenido.
+La experiencia abre en cada carga completa, por petición explícita de marca, con una superficie cremosa que mezcla vainilla, fresa y pistache. No se guarda ninguna bandera en `sessionStorage`: cada recarga vuelve a presentar “La Mantecación”. Three.js genera pliegues y surcos de helado mediante un único shader; después de una contemplación mínima de 2.2 segundos, la masa se retira durante 1.68 segundos con un borde viscoso y revela la fotografía. El respaldo CSS aparece desde SSR, la salida fija una sola fuente visual para evitar saltos si el chunk 3D llega tarde y existe un límite duro para no bloquear el contenido.
 
 La huella del cucharón queda como gesto secundario y funcional: aparece sobre la fotografía de un sabor al enfocarlo y en la compresión breve del botón “Servir”. No se representa mediante órbitas, partículas ni objetos flotantes.
 
@@ -50,8 +50,8 @@ En móvil, copy y fotografía se separan para preservar legibilidad; la escena 3
 
 ## Movimiento
 
-- Feedback: `140ms`; UI: `240ms`; reveal: `520–800ms`; curva principal `cubic-bezier(.22,1,.36,1)`.
-- Un solo momento coreografiado principal: la introducción Three.js “La Mantecación”; se muestra como máximo una vez por sesión.
+- Feedback: `140ms`; UI: `240ms`; reveals secundarios: `520–800ms`; salida principal: `1680ms` con *smootherstep* para acelerar y asentarse sin un corte lineal.
+- Un solo momento coreografiado principal: la introducción Three.js “La Mantecación”; se reproduce en cada recarga completa y se omite únicamente por `prefers-reduced-motion` o `Save-Data`.
 - Las fotografías importantes se revelan como una cucharada circular; el cuerpo permanece estable y legible.
 - Al servir un sabor, una pequeña muestra del color correspondiente sube y vuelve al botón mientras el carrito se actualiza de inmediato.
 - La sección de eventos termina en un borde derretido sobrio y el carrito marca la cadena de frío con una línea de escarcha breve.

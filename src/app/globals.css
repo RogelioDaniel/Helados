@@ -167,7 +167,7 @@ html.cream-intro-active {
   inset: 0;
   overflow: hidden;
   pointer-events: auto;
-  animation: cream-intro-failsafe 1ms linear 3.6s forwards;
+  animation: cream-intro-failsafe 1ms linear 6.6s forwards;
 }
 
 .cream-intro-fallback,
@@ -186,8 +186,8 @@ html.cream-intro-active {
     radial-gradient(58% 58% at 62% 92%, rgb(120 145 112 / 0.28), transparent 68%),
     linear-gradient(125deg, #f7ead1 2%, #ead2b4 52%, #d9b5a6 100%);
   transition:
-    opacity 220ms ease,
-    transform 900ms cubic-bezier(0.16, 1, 0.3, 1);
+    opacity 420ms ease,
+    transform 1680ms cubic-bezier(0.65, 0, 0.35, 1);
   will-change: transform, opacity;
 }
 
@@ -221,7 +221,7 @@ html.cream-intro-active {
   z-index: 2;
   display: block;
   opacity: 0;
-  transition: opacity 220ms ease;
+  transition: opacity 420ms ease;
 }
 
 .cream-intro--webgl .cream-intro-canvas {
@@ -241,8 +241,8 @@ html.cream-intro-active {
   color: var(--nube-ink);
   text-shadow: 0 2px 22px rgb(255 253 248 / 0.78);
   transition:
-    opacity 260ms ease,
-    transform 460ms cubic-bezier(0.22, 1, 0.36, 1);
+    opacity 720ms cubic-bezier(0.4, 0, 0.2, 1),
+    transform 920ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .cream-intro-copy::before {
@@ -278,7 +278,7 @@ html.cream-intro-active {
 
 .cream-intro--leaving .cream-intro-copy {
   opacity: 0;
-  transform: translateY(-18px);
+  transform: translateY(-12px) scale(0.985);
 }
 
 .cream-intro--leaving:not(.cream-intro--webgl) .cream-intro-fallback {
@@ -288,6 +288,17 @@ html.cream-intro-active {
 .nube-hero {
   isolation: isolate;
   box-shadow: 0 28px 90px -58px rgb(42 25 19 / 0.65);
+  transform-origin: 50% 42%;
+  transition: transform 1780ms cubic-bezier(0.65, 0, 0.35, 1);
+}
+
+html.cream-intro-active:not(.cream-intro-revealing) .nube-hero {
+  transform: scale(1.018);
+}
+
+html.cream-intro-active:not(.cream-intro-revealing) .nube-hero-image,
+html.cream-intro-active:not(.cream-intro-revealing) .hero-copy {
+  animation-play-state: paused;
 }
 
 .nube-hero-image {

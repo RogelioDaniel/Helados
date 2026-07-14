@@ -101,6 +101,12 @@ const fragmentShader = /* glsl */ `
   }
 `;
 
+const REVEAL_DURATION_SECONDS = 1.68;
+
+function smootherStep(progress: number) {
+  return progress * progress * progress * (progress * (progress * 6 - 15) + 10);
+}
+
 export default function CreamIntroScene({
   leaving,
   onFirstFrame,
@@ -127,6 +133,7 @@ export default function CreamIntroScene({
     let firstFrame = true;
     let lastFrame = performance.now();
     let elapsed = 0;
+    let revealElapsed = 0;
     let reveal = leavingRef.current ? 1 : 0;
 
     const stop = () => {
@@ -180,14 +187,18 @@ export default function CreamIntroScene({
         if (disposed || !renderer || !material || !pageVisible) return;
 
         const delta = Math.min((now - lastFrame) / 1000, 0.08);
-        if (now - lastFrame < 1000 / 30) {
+        if (!leavingRef.current && now - lastFrame < 1000 / 30) {
           frame = window.requestAnimationFrame(render);
           return;
         }
 
         lastFrame = now;
         elapsed += delta;
-        if (leavingRef.current) reveal = Math.min(1, reveal + delta * 1.16);
+        if (leavingRef.current) {
+          revealElapsed = Math.min(REVEAL_DURATION_SECONDS, revealElapsed + delta);
+          const progress = revealElapsed / REVEAL_DURATION_SECONDS;
+          reveal = smootherStep(progress);
+        }
         material.uniforms.uTime.value = elapsed;
         material.uniforms.uReveal.value = reveal;
         renderer.render(scene, camera);

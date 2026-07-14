@@ -7,6 +7,7 @@ import {
   type ReactNode,
   useCallback,
   useEffect,
+  useRef,
   useState,
 } from 'react';
 
@@ -40,7 +41,9 @@ class CreamSceneBoundary extends Component<
   }
 }
 
-const INTRO_SESSION_KEY = 'helado-nube-cream-intro-v1';
+const MINIMUM_DISPLAY_MS = 2200;
+const EXIT_DURATION_MS = 1780;
+const HARD_DEADLINE_MS = 4200;
 
 function waitForImage(image: HTMLImageElement | null) {
   if (!image) return Promise.resolve();
@@ -51,21 +54,27 @@ export function CreamIntro() {
   const [phase, setPhase] = useState<IntroPhase>('loading');
   const [allowWebgl, setAllowWebgl] = useState(false);
   const [webglReady, setWebglReady] = useState(false);
+  const webglReadyRef = useRef(false);
+  const leavingRef = useRef(false);
 
-  const handleFirstFrame = useCallback(() => setWebglReady(true), []);
-  const handleSceneFailure = useCallback(() => setAllowWebgl(false), []);
+  const handleFirstFrame = useCallback(() => {
+    if (leavingRef.current) return;
+    webglReadyRef.current = true;
+    setWebglReady(true);
+  }, []);
+  const handleSceneFailure = useCallback(() => {
+    webglReadyRef.current = false;
+    setWebglReady(false);
+    setAllowWebgl(false);
+  }, []);
 
   useEffect(() => {
+    leavingRef.current = false;
+    webglReadyRef.current = false;
     const motionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
     const saveData = (navigator as NavigatorWithConnection).connection?.saveData === true;
-    let alreadySeen = false;
-    try {
-      alreadySeen = window.sessionStorage.getItem(INTRO_SESSION_KEY) === 'seen';
-    } catch {
-      alreadySeen = false;
-    }
 
-    if (motionQuery.matches || saveData || alreadySeen) {
+    if (motionQuery.matches || saveData) {
       const skipFrame = window.requestAnimationFrame(() => setPhase('done'));
       return () => window.cancelAnimationFrame(skipFrame);
     }
@@ -85,20 +94,26 @@ export function CreamIntro() {
 
     const restorePage = () => {
       root.classList.remove('cream-intro-active');
+      root.classList.remove('cream-intro-revealing');
       document.body.style.overflow = previousOverflow;
+    };
+
+    const finish = () => {
+      if (disposed) return;
+      leaving = true;
+      leavingRef.current = true;
+      restorePage();
+      setPhase('done');
     };
 
     const leave = () => {
       if (disposed || leaving) return;
       leaving = true;
-      restorePage();
-      try {
-        window.sessionStorage.setItem(INTRO_SESSION_KEY, 'seen');
-      } catch {
-        // Storage may be unavailable; the hard deadline still guarantees the exit.
-      }
+      leavingRef.current = true;
+      if (!webglReadyRef.current) setAllowWebgl(false);
+      root.classList.add('cream-intro-revealing');
       setPhase('leaving');
-      exitTimer = window.setTimeout(() => setPhase('done'), 980);
+      exitTimer = window.setTimeout(finish, EXIT_DURATION_MS);
     };
 
     const checkReadiness = () => {
@@ -108,9 +123,9 @@ export function CreamIntro() {
     const minimumTimer = window.setTimeout(() => {
       minimumReady = true;
       checkReadiness();
-    }, 780);
+    }, MINIMUM_DISPLAY_MS);
 
-    const hardDeadline = window.setTimeout(leave, 2600);
+    const hardDeadline = window.setTimeout(leave, HARD_DEADLINE_MS);
 
     let resolveWindowLoad: (() => void) | null = null;
     const handleWindowLoad = () => resolveWindowLoad?.();
@@ -130,10 +145,10 @@ export function CreamIntro() {
     });
 
     const handleMotionChange = () => {
-      if (motionQuery.matches) leave();
+      if (motionQuery.matches) finish();
     };
     const handleVisibility = () => {
-      if (document.hidden) leave();
+      if (document.hidden) finish();
     };
 
     motionQuery.addEventListener('change', handleMotionChange);
