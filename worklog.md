@@ -423,3 +423,69 @@ Unresolved Issues / Risks / Next-phase Priorities:
 3. FAQ could use schema.org FAQPage structured data for SEO/rich snippets. Low effort, future round.
 4. Cart could support "clear all" button. Minor.
 5. Could add a seasonal/flavor-of-the-month banner or a social Instagram feed. Future enhancement.
+
+---
+Task ID: cron-round-7
+Agent: webDevReview (cron)
+Task: Recurring QA + independently propose & implement new features / styling detail improvements.
+
+Work Log:
+- Read prior worklog (6 rounds complete); confirmed project stable (HTTP 200, lint 0 errors/1 font
+  warning, no runtime errors). Page has 9 sections + complete ordering loop + lightbox + FAQ.
+- agent-browser QA: preloader gone, all libs loaded, 6 flavor cards, 6 FAQ items, cart/back-top/
+  nav-cart-count all present. No errors. Cart quick-add still works (badge "1", nav count "1").
+- VLM review: no bugs; flagged "no promo banner" as the highest-impact missing conversion element.
+- Implemented 3 features (all melting-theme coherent):
+
+1. **Seasonal "Sabor del mes" promo banner with live countdown** (`.promo`): a chocolate-gradient
+   bar above the hero with a pulsing fresa "Sabor del mes" pill, "Cajeta de Celaya con un -15% de
+   descuento", a live DD:HH:MM:SS countdown (counts to end of current month, auto-rolls to next),
+   and a "¡Pídelo ya!" CTA. Melting drip SVG at the bottom edge. Cream-easing, tabular-nums,
+   responsive (wraps on mobile ≤560px). Countdown ticks every 1s via setInterval.
+   Verified: live (17d 05h, seconds incrementing) ✓; mobile 390px wraps ✓.
+   VLM: "polished, on-theme, adds urgency without being intrusive, no bugs".
+2. **Cart "Vaciar" (clear all) button** (worklog priority #4): a small pill button in the cart
+   header (next to close), only visible when cart has items (`.cart.has-items .cart__clear`).
+   Clicking empties the entire cart, re-renders, saves to localStorage, exits checkout if active.
+   Verified: add 2 flavors → 2 rows + clear visible → click → 0 rows + empty state + badge "0" ✓.
+   VLM: "visible, well-placed, polished, no bugs".
+3. **FAQ schema.org structured data** (worklog priority #3): injected a `<script type="application/
+   ld+json">` with a valid FAQPage schema (6 Question/Answer entities matching the visible FAQ).
+   Enables Google rich snippets / FAQ accordions in search results. Verified: JSON parses, type
+   "FAQPage", 6 questions ✓.
+
+Styling details:
+- `.promo__pill` reuses the `pipPulse` keyframe for a subtle breathing attention pulse.
+- `.cart__clear` has its own hover (background darken + scale 0.95) consistent with cream easing.
+- Cart `has-items` class toggled in renderCart to show/hide the clear button cleanly.
+
+Verification (agent-browser + VLM, post-changes):
+- DOM: .promo ✓, .promo__pill ✓, #promo-d/h/m/s ✓ (17d 05h live), .cart__clear ✓, FAQ schema ✓
+  (FAQPage, 6 questions, firstQ "¿Hasta dónde llevan?").
+- Countdown: seconds value changes after 2.2s wait ✓ (interval running).
+- Cart clear: 2 rows → click Vaciar → 0 rows + empty state + badge "0" ✓; clear button hidden when
+  empty (via has-items class) ✓.
+- Mobile 390×844: promo bar wraps (flex-wrap), width 390px, cd units visible ✓.
+- VLM promo: "polished, on-theme, adds urgency, no bugs". VLM cart: "Vaciar visible, well-placed,
+  polished, no bugs". VLM full-page: "10 sections (Header+promo, Hero, Sabores, Galería, Historia,
+  Proceso, Testimonios, FAQ, CTA, Footer), no broken/overlaps, cohesive, high production value".
+- `bun run lint` = 0 errors (1 acceptable font warning). HTTP 200. No runtime/console errors.
+
+Stage Summary:
+- New conversion layer: seasonal promo banner with live countdown creates urgency above the fold.
+- Cart is now fully manageable: add (quick-add flying scoop), qty ±, remove individual, AND clear all
+  — all persisted to localStorage with restore toast.
+- SEO boost: FAQ rich-snippet eligible via schema.org FAQPage structured data.
+- Page now has 10 visible blocks: Promo banner → Header → Hero → Sabores → Galería → Historia →
+  Proceso → Testimonios → FAQ → CTA final → Footer.
+
+Unresolved Issues / Risks / Next-phase Priorities:
+1. Image optimization: full-size PNGs still served (~100-160KB each). Next/Image + WebP would improve
+   LCP. Low priority for single landing page.
+2. Color-contrast audit (fresa-on-crema small text, promo countdown units) still pending formal
+   check — VLM noted countdown "could use better contrast for readability" (cream-on-chocolate is
+   okay but the cd-unit bg is low-opacity; could bump to 0.2). Minor.
+3. Promo discount isn't actually applied in the cart total (countdown is cosmetic). A future round
+   could auto-apply a -15% line item when Cajeta is in the cart during the promo window. Medium.
+4. Could add a social Instagram feed / UGC section. Future enhancement.
+5. Could add a "compartir" (share) button on the promo or flavors. Low priority.

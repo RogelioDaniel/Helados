@@ -169,6 +169,44 @@ body.cursor-down .cursor-goo .blob{transform:translate(-50%,-50%) scale(0.7)}
 .wrap{max-width:1280px;margin:0 auto;padding:0 clamp(1.2rem,5vw,3rem);position:relative}
 section{position:relative}
 
+/* ===== PROMO BANNER (flavor of the month + countdown) ===== */
+.promo{
+  position:relative;z-index:5;
+  background:linear-gradient(95deg,var(--chocolate) 0%,#5a3a28 100%);
+  color:var(--crema);overflow:hidden;
+}
+.promo__bar{
+  max-width:1280px;margin:0 auto;padding:0.7rem clamp(1.2rem,5vw,3rem);
+  display:flex;align-items:center;justify-content:center;gap:clamp(0.6rem,2vw,1.4rem);flex-wrap:wrap;
+  font-family:var(--display);font-weight:700;font-size:clamp(0.82rem,1.6vw,1rem);
+}
+.promo__pill{
+  background:var(--fresa);color:var(--chocolate);padding:0.25rem 0.7rem;border-radius:999px;
+  font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;font-weight:800;
+  animation:pipPulse 2.4s var(--ease-cream) infinite;
+}
+.promo__flavor{color:var(--vainilla)}
+.promo__sep{opacity:0.4}
+.promo__countdown{display:inline-flex;align-items:center;gap:0.35rem}
+.promo__cd-unit{
+  display:inline-flex;align-items:baseline;gap:0.1rem;
+  background:rgba(255,246,236,0.14);border-radius:8px;padding:0.15rem 0.45rem;
+  font-variant-numeric:tabular-nums;min-width:34px;justify-content:center;
+}
+.promo__cd-unit b{font-weight:800;font-size:1.05em}
+.promo__cd-unit small{font-size:0.62em;opacity:0.7;font-weight:600;text-transform:uppercase;letter-spacing:0.05em}
+.promo__cd-sep{opacity:0.5}
+.promo__cta{
+  color:var(--fresa);text-decoration:none;border-bottom:2px dotted var(--fresa);
+  padding-bottom:1px;transition:opacity 0.3s var(--ease-cream);white-space:nowrap;
+}
+.promo__cta:hover{opacity:0.75}
+/* melting drip at the bottom of the promo */
+.promo__drip{position:absolute;left:0;right:0;bottom:-1px;height:18px;pointer-events:none;z-index:1}
+.promo__drip svg{width:100%;height:100%;display:block;overflow:visible}
+.promo__drip path{fill:var(--chocolate)}
+@media (max-width:560px){.promo__bar{gap:0.5rem;font-size:0.78rem}.promo__cd-unit{min-width:30px;padding:0.12rem 0.35rem}.promo__cta{font-size:0.78rem}}
+
 /* ===== HERO ===== */
 .hero{
   min-height:100vh;display:flex;flex-direction:column;justify-content:center;
@@ -514,6 +552,15 @@ section{position:relative}
   color:var(--chocolate);display:flex;align-items:center;justify-content:space-between;gap:0.6rem;
 }
 .cart__title{font-family:var(--display);font-weight:800;font-size:1.25rem;display:flex;align-items:center;gap:0.5rem}
+.cart__head-actions{display:flex;align-items:center;gap:0.5rem}
+.cart__clear{
+  background:rgba(59,35,24,0.12);border:0;border-radius:999px;color:var(--chocolate);
+  font-family:var(--body);font-weight:600;font-size:0.74rem;padding:0.4rem 0.8rem;cursor:pointer;
+  transition:background 0.3s var(--ease-cream),transform 0.3s var(--ease-cream);
+  display:none;
+}
+.cart.has-items .cart__clear{display:inline-block}
+.cart__clear:hover{background:rgba(59,35,24,0.22);transform:scale(0.95)}
 .cart__close{
   width:34px;height:34px;border-radius:50%;border:0;background:rgba(255,255,255,0.5);
   cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--chocolate);
@@ -879,6 +926,30 @@ export default function Home() {
         onScroll();
       }
 
+      // ---------- Promo countdown (ends end of current month) ----------
+      const promoD = document.querySelector('#promo-d') as HTMLElement;
+      const promoH = document.querySelector('#promo-h') as HTMLElement;
+      const promoM = document.querySelector('#promo-m') as HTMLElement;
+      const promoS = document.querySelector('#promo-s') as HTMLElement;
+      if (promoD && promoH && promoM && promoS) {
+        const tick = () => {
+          const now = new Date();
+          // end of current month, then roll to next month if passed
+          let end = new Date(now.getFullYear(), now.getMonth() + 1, 1, 0, 0, 0);
+          let diff = Math.max(0, end.getTime() - now.getTime());
+          const d = Math.floor(diff / 86400000); diff -= d * 86400000;
+          const h = Math.floor(diff / 3600000); diff -= h * 3600000;
+          const m = Math.floor(diff / 60000); diff -= m * 60000;
+          const s = Math.floor(diff / 1000);
+          promoD.textContent = String(d);
+          promoH.textContent = String(h).padStart(2, '0');
+          promoM.textContent = String(m).padStart(2, '0');
+          promoS.textContent = String(s).padStart(2, '0');
+        };
+        tick();
+        setInterval(tick, 1000);
+      }
+
       // ---------- Cursor ----------
       if (!isTouch) {
         document.body.classList.add('has-cursor');
@@ -1098,6 +1169,7 @@ export default function Home() {
           cartBadge.textContent = String(count);
           if (count > 0) cartBadge.classList.add('is-active'); else cartBadge.classList.remove('is-active');
         }
+        if (cartEl) { if (count > 0) cartEl.classList.add('has-items'); else cartEl.classList.remove('has-items'); }
         if (cartTotalVal) cartTotalVal.innerHTML = formatTotal(total);
         // if cart empties, exit checkout view
         if (count === 0 && cartEl?.classList.contains('is-checkout')) exitCheckout();
@@ -1159,6 +1231,12 @@ export default function Home() {
       };
       if (cartOverlay) cartOverlay.addEventListener('click', closeCart);
       document.querySelector('.cart__close')?.addEventListener('click', closeCart);
+      // clear all button
+      document.querySelector('.cart__clear')?.addEventListener('click', () => {
+        Object.keys(cartItems).forEach((k) => delete cartItems[k]);
+        renderCart();
+        saveCart();
+      });
       // CTA button: toggles between "Ver mi pedido" (enter checkout) and "Volver" (exit)
       document.querySelector('.cart__cta')?.addEventListener('click', (e) => {
         e.preventDefault();
@@ -1615,6 +1693,25 @@ export default function Home() {
       />
       <style dangerouslySetInnerHTML={{ __html: CSS }} />
 
+      {/* ===== FAQ structured data (schema.org FAQPage for SEO rich snippets) ===== */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            '@context': 'https://schema.org',
+            '@type': 'FAQPage',
+            mainEntity: [
+              { '@type': 'Question', name: '¿Hasta dónde llevan?', acceptedAnswer: { '@type': 'Answer', text: 'Por ahora enviamos en toda la CDMX y zona metropolitana. Próximamente Pátzcuaro y Morelia. El envío sale sin costo en pedidos mayores a $200; abajo de eso, $40 de corrido.' } },
+              { '@type': 'Question', name: '¿Cómo conservo el helado si no me lo como todo?', acceptedAnswer: { '@type': 'Answer', text: 'Tapa bien, mételo al congelador y cómelo en menos de una semana. Como no lleva estabilizantes químicos, si se congela duro se deja reposar 5 minutitos fuera antes de servir.' } },
+              { '@type': 'Question', name: '¿Tienen opciones veganas o sin lactosa?', acceptedAnswer: { '@type': 'Answer', text: '¡Sí! El de mango con chile y el de fresa los hacemos con base de coco. Marca "vegano" en las notas del pedido y te los mandamos así. Sin lactosa, sin leche, puro sabor.' } },
+              { '@type': 'Question', name: '¿Puedo pedir para evento o boda?', acceptedAnswer: { '@type': 'Answer', text: 'Claro que sí. Hemos puesto carritos de helado en bodas, cumpleaños y fiestas de quince. Escríbenos por WhatsApp con tu fecha y número de invitados y te mandamos propuesta.' } },
+              { '@type': 'Question', name: '¿Cuánto dura el helado en el camino?', acceptedAnswer: { '@type': 'Answer', text: 'Lo llevamos en hieleras con gel refrigerante. Aguanta perfecto hasta 2 horas desde que sale de nuestra nevera. En CDMX casi siempre llega en 40 minutos. Si llega derretido, te lo cambiamos sin chistar.' } },
+              { '@type': 'Question', name: '¿Aceptan pago contra entrega?', acceptedAnswer: { '@type': 'Answer', text: 'Sí: efectivo, transferencia y tarjetas al recibir. También puedes pagar por WhatsApp con Stripe si prefieres.' } },
+            ],
+          }),
+        }}
+      />
+
       {/* ===== SVG FILTERS (defined once) ===== */}
       <svg width="0" height="0" aria-hidden="true" style={{ position: 'absolute' }}>
         <defs>
@@ -1707,6 +1804,31 @@ export default function Home() {
           </a>
         </nav>
       </header>
+
+      {/* ===== PROMO BANNER (flavor of the month + countdown) ===== */}
+      <div className="promo" role="region" aria-label="Promoción del mes">
+        <div className="promo__bar">
+          <span className="promo__pill">Sabor del mes</span>
+          <span>Cajeta de Celaya con un</span>
+          <span className="promo__flavor">-15% de descuento</span>
+          <span className="promo__sep">·</span>
+          <span className="promo__countdown" aria-label="Tiempo restante de la promoción">
+            <span className="promo__cd-unit"><b id="promo-d">0</b><small>d</small></span>
+            <span className="promo__cd-sep">:</span>
+            <span className="promo__cd-unit"><b id="promo-h">0</b><small>h</small></span>
+            <span className="promo__cd-sep">:</span>
+            <span className="promo__cd-unit"><b id="promo-m">0</b><small>m</small></span>
+            <span className="promo__cd-sep">:</span>
+            <span className="promo__cd-unit"><b id="promo-s">0</b><small>s</small></span>
+          </span>
+          <a className="promo__cta" href="#sabores">¡Pídelo ya!</a>
+        </div>
+        <div className="promo__drip" aria-hidden="true">
+          <svg viewBox="0 0 1440 18" preserveAspectRatio="none">
+            <path d="M0,0 L1440,0 L1440,8 C1380,16 1320,4 1260,10 C1200,16 1140,6 1080,11 C1020,16 960,5 900,10 C840,15 780,5 720,11 C660,17 600,5 540,10 C480,15 420,5 360,11 C300,17 240,5 180,10 C120,15 60,5 0,9 Z" />
+          </svg>
+        </div>
+      </div>
 
       <main id="top">
         {/* ===== HERO ===== */}
@@ -2256,7 +2378,10 @@ export default function Home() {
       <aside className="cart" role="dialog" aria-label="Tu pedido" aria-modal="true">
         <div className="cart__head">
           <span className="cart__title">🍦 Tu pedido</span>
-          <button className="cart__close" aria-label="Cerrar carrito">×</button>
+          <div className="cart__head-actions">
+            <button className="cart__clear" aria-label="Vaciar carrito">Vaciar</button>
+            <button className="cart__close" aria-label="Cerrar carrito">×</button>
+          </div>
         </div>
         <div className="cart__body" />
         <div className="cart__checkout">
