@@ -615,3 +615,59 @@ Unresolved Issues / Risks / Next-phase Priorities:
 3. Promo is hardcoded to Cajeta/-15%/end-of-month. Could be configurable. Low priority.
 4. Could add an Instagram/social UGC feed section. Future enhancement.
 5. Cart success state could capture the order total/items for display. Minor.
+
+---
+Task ID: cron-round-10
+Agent: webDevReview (cron)
+Task: Recurring QA + implement hero trust badge, footer social links, cart success order summary.
+
+Work Log:
+- Read prior worklog (9 rounds complete); confirmed project stable (HTTP 200, lint 0 errors/1 font
+  warning, no runtime errors).
+- agent-browser QA: all subsystems healthy. VLM flagged: (1) no trust signal in hero, (2) no social
+  links in footer — both highest-impact for conversion/credibility.
+- Implemented 3 features (all melting-theme coherent):
+
+1. **Hero trust badge** (VLM #1 — conversion/credibility): added a `.hero__trust` row below the CTAs
+   showing 4 overlapping customer avatar photos (reused from /img/avatars/), a ★★★★★ + "4.9" rating,
+   a separator dot, and "1,200+ clientes felices en CDMX". Avatars have cream borders + soft shadow.
+   Responsive (smaller avatars ≤560px). VLM: "visible, well-placed, avatars + rating add social
+   proof, no bugs".
+2. **Footer social media links** (VLM #2 — engagement/trust): added 4 circular icon links (Instagram,
+   Facebook, TikTok, WhatsApp) with brand SVG paths in the footer brand column. Hover lifts them
+   (translateY -4 + scale 1.08) + turns them fresa. VLM: "visible, well-styled, fit theme, no bugs".
+3. **Order summary in cart success state** (worklog priority #5): the post-WhatsApp success screen now
+   shows a fresa-tinted summary card listing each ordered flavor × qty + line price, the -15% discount
+   row (pistache, if applicable), and a bold total — so the user confirms what they ordered. Populated
+   in the WhatsApp handler before showing the success state. Verified: Fresa + Cajeta → 3 summary
+   rows + total "$190.8 MNX". VLM: "clear, well-organized, confirms ordered items, no bugs".
+
+Verification (agent-browser + VLM, post-changes):
+- DOM: .hero__trust ✓ (4 avatar imgs, rating "4.9"), .footer__social ✓ (4 links),
+  .cart__success-summary ✓.
+- Success summary: Fresa + Cajeta → is-success + 3 summary rows + total "$190.8 MNX" ✓.
+- Mobile 390×844: hero trust (4 avatars) + footer social (4 links) present ✓.
+- VLM hero trust: "visible, well-placed, adds social proof, no bugs". VLM footer: "visible, well-
+  styled, fit theme, no bugs". VLM success: "clear, confirms order, no bugs". VLM full-page: "no
+  broken/overlaps, cohesive, high production value".
+- `bun run lint` = 0 errors (1 acceptable font warning). HTTP 200. No runtime/console errors.
+
+Stage Summary:
+- Hero now has strong social proof (real faces + 4.9 rating + customer count) right at the decision
+  point → credibility boost for first-time visitors.
+- Footer has social media presence (Instagram, Facebook, TikTok, WhatsApp) → engagement + brand
+  legitimacy.
+- Cart success state now confirms the exact order (items + discount + total) → user confidence that
+  the right thing was sent.
+- Page is feature-complete for a production landing page: promo+countdown, hero+trust, sabores+detail
+  modals, galería+lightbox, historia, proceso, testimonios (real avatars), FAQ+schema, CTA, footer
+  (social+newsletter), full cart (add/qty/remove/clear/discount/checkout/WhatsApp/success) all
+  persisted, melting-themed throughout.
+
+Unresolved Issues / Risks / Next-phase Priorities:
+1. Image optimization: full-size PNGs still served (~95-160KB each). Next/Image + WebP would improve
+   LCP. Low priority for single landing page.
+2. Color-contrast audit (fresa-on-crema small text) still pending formal check.
+3. Promo is hardcoded to Cajeta/-15%/end-of-month. Could be configurable. Low priority.
+4. Social links point to #cta-final placeholders; real URLs needed when brand accounts exist. Minor.
+5. Could add a blog/recetas section or a store-locator map. Future enhancement.

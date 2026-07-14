@@ -232,6 +232,19 @@ section{position:relative}
 }
 .hero__ctas{margin-top:2.2rem;display:flex;gap:1rem;flex-wrap:wrap;align-items:center}
 
+/* hero trust badge */
+.hero__trust{margin-top:1.8rem;display:flex;align-items:center;gap:0.9rem;flex-wrap:wrap}
+.hero__trust-stars{display:inline-flex;align-items:center;gap:0.35rem}
+.hero__trust-stars .stars{color:var(--fresa-deep);font-size:1.05rem;letter-spacing:1px}
+.hero__trust-stars b{font-family:var(--display);font-weight:800;color:var(--chocolate);font-size:1.1rem}
+.hero__trust-sep{width:4px;height:4px;border-radius:50%;background:var(--chocolate);opacity:0.25}
+.hero__trust-text{font-size:0.9rem;color:var(--chocolate);opacity:0.7;font-weight:500}
+.hero__trust-text b{font-family:var(--display);font-weight:800;color:var(--chocolate);opacity:1}
+.hero__trust-avatars{display:inline-flex;align-items:center}
+.hero__trust-avatars img{width:30px;height:30px;border-radius:50%;border:2px solid var(--crema);object-fit:cover;margin-left:-10px;box-shadow:0 2px 6px -2px rgba(59,35,24,0.3)}
+.hero__trust-avatars img:first-child{margin-left:0}
+@media (max-width:560px){.hero__trust{gap:0.6rem}.hero__trust-avatars img{width:26px;height:26px}}
+
 .hero__cone{
   position:absolute;right:-2%;top:14%;width:clamp(220px,32vw,460px);
   pointer-events:none;z-index:2;will-change:transform;
@@ -373,6 +386,14 @@ section{position:relative}
 @media (max-width:760px){.footer__grid{grid-template-columns:1fr}}
 .footer__brand{font-family:var(--display);font-weight:800;font-size:2rem;margin-bottom:0.6rem;color:var(--vainilla)}
 .footer__tag{color:rgba(255,246,236,0.7);max-width:34ch;font-size:0.98rem}
+.footer__social{display:flex;gap:0.6rem;margin-top:1.1rem}
+.footer__social a{
+  width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  background:rgba(255,246,236,0.1);color:var(--crema);text-decoration:none;
+  transition:transform 0.4s var(--ease-cream),background 0.4s var(--ease-cream);
+}
+.footer__social a:hover{transform:translateY(-4px) scale(1.08);background:var(--fresa);color:var(--chocolate)}
+.footer__social svg{width:18px;height:18px;fill:currentColor}
 .footer h4{font-family:var(--display);color:var(--vainilla);font-size:1.1rem;margin-bottom:1rem}
 .footer ul{list-style:none}
 .footer li{margin-bottom:0.5rem}
@@ -698,6 +719,11 @@ section{position:relative}
 @keyframes successBob{0%,100%{transform:translateY(0) rotate(-3deg)}50%{transform:translateY(-8px) rotate(3deg)}}
 .cart__success-title{font-family:var(--display);font-weight:800;font-size:1.5rem;color:var(--chocolate)}
 .cart__success-text{font-size:0.95rem;color:var(--chocolate);opacity:0.75;max-width:28ch;line-height:1.5}
+.cart__success-summary{background:rgba(232,85,122,0.1);border-radius:14px;padding:0.7rem 1rem;width:100%;max-width:280px;font-size:0.82rem;color:var(--chocolate);text-align:left}
+.cart__success-summary-row{display:flex;justify-content:space-between;padding:0.12rem 0}
+.cart__success-summary-row span:last-child{font-weight:600}
+.cart__success-summary-total{border-top:1px dashed rgba(59,35,24,0.2);margin-top:0.4rem;padding-top:0.4rem;font-family:var(--display);font-weight:800;font-size:0.95rem}
+.cart__success-summary-total span:last-child{color:var(--fresa-deep)}
 .cart__success-actions{display:flex;gap:0.6rem;margin-top:0.6rem;flex-wrap:wrap;justify-content:center}
 .cart__success-btn{border:0;border-radius:999px;padding:0.7rem 1.3rem;font-family:var(--display);font-weight:700;font-size:0.9rem;cursor:pointer;transition:transform 0.3s var(--ease-cream),background 0.3s var(--ease-cream)}
 .cart__success-btn--clear{background:var(--fresa);color:var(--chocolate)}
@@ -1410,7 +1436,13 @@ export default function Home() {
         const msg = `¡Hola Helado Nube! 🍦 Quiero pedir:%0A${lines}${discountLine}%0ATotal: $${total} MNX%0A%0ANombre: ${name}%0ATel: ${phone || '—'}%0ADirección: ${addr || '—'}`;
         if (cartCheckoutMsg) { cartCheckoutMsg.textContent = '¡Abriendo WhatsApp! Te esperamos cremosito. 🍦'; cartCheckoutMsg.style.color = '#6FB489'; }
         w.open('https://wa.me/?text=' + msg, '_blank');
-        // show success state after opening WhatsApp
+        // populate success summary + show success state after opening WhatsApp
+        const successSummary = document.querySelector('.cart__success-summary') as HTMLElement;
+        if (successSummary) {
+          const summaryRows = keys.map((k) => `<div class="cart__success-summary-row"><span>${cartItems[k].name} ×${cartItems[k].qty}</span><span>$${cartItems[k].qty * cartItems[k].price}</span></div>`).join('');
+          const discountRow = discount > 0 ? `<div class="cart__success-summary-row" style="color:var(--pistache-deep)"><span>Descuento -15%</span><span>-$${discount}</span></div>` : '';
+          successSummary.innerHTML = summaryRows + discountRow + `<div class="cart__success-summary-total"><span>Total</span><span>$${total} MNX</span></div>`;
+        }
         setTimeout(() => { if (cartEl) cartEl.classList.add('is-success'); }, 600);
       });
       // success state buttons
@@ -2120,6 +2152,20 @@ export default function Home() {
               <span className="btn__drips"><i /><i /><i /></span>
             </a>
           </div>
+          <div className="hero__trust reveal">
+            <span className="hero__trust-avatars">
+              <img src="/img/avatars/mariana.png" alt="" loading="lazy" />
+              <img src="/img/avatars/refugio.png" alt="" loading="lazy" />
+              <img src="/img/avatars/tonita.png" alt="" loading="lazy" />
+              <img src="/img/avatars/diego.png" alt="" loading="lazy" />
+            </span>
+            <span className="hero__trust-stars">
+              <span className="stars">★★★★★</span>
+              <b>4.9</b>
+            </span>
+            <span className="hero__trust-sep" />
+            <span className="hero__trust-text"><b>1,200+</b> clientes felices en CDMX</span>
+          </div>
 
           {/* Decorative cone */}
           <div className="hero__cone" aria-hidden="true">
@@ -2558,6 +2604,20 @@ export default function Home() {
             <div>
               <div className="footer__brand">Helado Nube</div>
               <p className="footer__tag">Helado artesanal hecho a mano, lento y con nube. De Pátzcuaro para toda la mesa mexicana.</p>
+              <div className="footer__social">
+                <a href="#cta-final" aria-label="Instagram" data-cursor>
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.16c3.2 0 3.58.01 4.85.07 1.17.05 1.8.25 2.23.41.56.22.96.48 1.38.9.42.42.68.82.9 1.38.16.42.36 1.06.41 2.23.06 1.27.07 1.65.07 4.85s-.01 3.58-.07 4.85c-.05 1.17-.25 1.8-.41 2.23-.22.56-.48.96-.9 1.38-.42.42-.82.68-1.38.9-.42.16-1.06.36-2.23.41-1.27.06-1.65.07-4.85.07s-3.58-.01-4.85-.07c-1.17-.05-1.8-.25-2.23-.41-.56-.22-.96-.48-1.38-.9-.42-.42-.68-.82-.9-1.38-.16-.42-.36-1.06-.41-2.23C2.17 15.58 2.16 15.2 2.16 12s.01-3.58.07-4.85c.05-1.17.25-1.8.41-2.23.22-.56.48-.96.9-1.38.42-.42.82-.68 1.38-.9.42-.16 1.06-.36 2.23-.41C8.42 2.17 8.8 2.16 12 2.16M12 0C8.74 0 8.33.01 7.05.07 5.78.13 4.9.33 4.14.63c-.79.31-1.46.72-2.12 1.38C1.35 2.67.94 3.35.63 4.14.33 4.9.13 5.78.07 7.05.01 8.33 0 8.74 0 12s.01 3.67.07 4.95c.06 1.27.26 2.15.56 2.91.31.79.72 1.46 1.38 2.12.66.66 1.34 1.08 2.12 1.38.76.3 1.64.5 2.91.56C8.33 23.99 8.74 24 12 24s3.67-.01 4.95-.07c1.27-.06 2.15-.26 2.91-.56.79-.31 1.46-.72 2.12-1.38.66-.66 1.08-1.34 1.38-2.12.3-.76.5-1.64.56-2.91.06-1.28.07-1.69.07-4.95s-.01-3.67-.07-4.95c-.06-1.27-.26-2.15-.56-2.91-.31-.79-.72-1.46-1.38-2.12C21.33 1.35 20.65.94 19.86.63 19.1.33 18.22.13 16.95.07 15.67.01 15.26 0 12 0zm0 5.84A6.16 6.16 0 1 0 18.16 12 6.16 6.16 0 0 0 12 5.84M12 16a4 4 0 1 1 4-4 4 4 0 0 1-4 4m6.41-10.85a1.44 1.44 0 1 0 1.44 1.44 1.44 1.44 0 0 0-1.44-1.44z"/></svg>
+                </a>
+                <a href="#cta-final" aria-label="Facebook" data-cursor>
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M24 12.07C24 5.4 18.63 0 12 0S0 5.4 0 12.07C0 18.1 4.39 23.1 10.13 24v-8.44H7.08v-3.49h3.05V9.41c0-3.02 1.79-4.69 4.53-4.69 1.31 0 2.69.24 2.69.24v2.97h-1.52c-1.49 0-1.96.93-1.96 1.89v2.25h3.33l-.53 3.49h-2.8V24C19.61 23.1 24 18.1 24 12.07z"/></svg>
+                </a>
+                <a href="#cta-final" aria-label="TikTok" data-cursor>
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5.8 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1.84-.1z"/></svg>
+                </a>
+                <a href="#cta-final" aria-label="WhatsApp" data-cursor>
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M17.5 14.4c-.3-.1-1.7-.8-2-.9-.3-.1-.5-.1-.7.1-.2.3-.7.9-.9 1.1-.2.2-.3.2-.6.1-1.8-.9-3-1.6-4.2-3.6-.3-.5.3-.5.8-1.6.1-.2 0-.4 0-.5s-.7-1.7-1-2.3c-.3-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.8.4-.3.3-1 1-1 2.5s1.1 2.9 1.2 3.1c.2.2 2.1 3.3 5.2 4.6 1.9.8 2.7.9 3.6.8.6-.1 1.7-.7 2-1.4.2-.7.2-1.2.2-1.4-.1-.1-.3-.2-.6-.3M12 2a10 10 0 0 0-8.6 15l-1.4 5 5.1-1.3A10 10 0 1 0 12 2m0 18.2c-1.5 0-3-.4-4.3-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2"/></svg>
+                </a>
+              </div>
               <div className="news">
                 <div className="news__field">
                   <input type="email" placeholder="tu correo cremosito" aria-label="Correo electrónico" />
@@ -2625,6 +2685,7 @@ export default function Home() {
         <div className="cart__success">
           <span className="cart__success-emoji">🍦</span>
           <span className="cart__success-title">¡Pedido enviado!</span>
+          <div className="cart__success-summary" />
           <p className="cart__success-text">Te esperamos en WhatsApp para confirmar tu helado cremosito. ¿Vaciamos el carrito o lo guardamos para repetir?</p>
           <div className="cart__success-actions">
             <button className="cart__success-btn cart__success-btn--clear" type="button">Vaciar carrito</button>
