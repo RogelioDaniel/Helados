@@ -190,7 +190,7 @@ section{position:relative}
 .promo__countdown{display:inline-flex;align-items:center;gap:0.35rem}
 .promo__cd-unit{
   display:inline-flex;align-items:baseline;gap:0.1rem;
-  background:rgba(255,246,236,0.14);border-radius:8px;padding:0.15rem 0.45rem;
+  background:rgba(255,246,236,0.22);border-radius:8px;padding:0.15rem 0.45rem;
   font-variant-numeric:tabular-nums;min-width:34px;justify-content:center;
 }
 .promo__cd-unit b{font-weight:800;font-size:1.05em}
@@ -308,6 +308,16 @@ section{position:relative}
 .flavor__name{font-family:var(--display);font-weight:800;font-size:1.5rem;color:var(--chocolate);text-align:center}
 .flavor__desc{font-size:0.92rem;color:var(--chocolate);opacity:0.72;text-align:center;max-width:22ch}
 .flavor__price{font-family:var(--display);font-weight:700;color:var(--chocolate);font-size:1rem;margin-top:0.4rem;opacity:0.85}
+.flavor__info{
+  position:absolute;top:0.8rem;right:0.8rem;width:30px;height:30px;border-radius:50%;
+  border:0;background:rgba(59,35,24,0.18);color:var(--chocolate);font-family:var(--display);font-weight:800;
+  font-size:0.9rem;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;
+  opacity:0;transform:scale(0.7);transition:opacity 0.4s var(--ease-cream),transform 0.4s var(--ease-cream),background 0.3s var(--ease-cream);
+  z-index:2;
+}
+.flavor:hover .flavor__info,.flavor:focus-within .flavor__info{opacity:1;transform:scale(1)}
+.flavor__info:hover{background:rgba(59,35,24,0.35);color:var(--crema)}
+@media (max-width:760px){.flavor__info{opacity:1;transform:scale(1)}}
 
 /* ===== HISTORIA ===== */
 #historia{background:var(--vainilla)}
@@ -820,6 +830,69 @@ section{position:relative}
 }
 .nav__cart-count.is-active{transform:scale(1)}
 
+/* ===== CART DISCOUNT LINE ===== */
+.cart__discount{
+  display:none;justify-content:space-between;align-items:baseline;margin-top:0.4rem;padding-top:0.4rem;
+  border-top:1px dashed rgba(111,180,137,0.5);
+}
+.cart.has-discount .cart__discount{display:flex}
+.cart__discount-label{font-family:var(--body);font-weight:600;color:var(--pistache-deep);font-size:0.82rem;display:flex;align-items:center;gap:0.3rem}
+.cart__discount-label .tag{background:var(--pistache);color:var(--chocolate);font-family:var(--display);font-weight:800;font-size:0.68rem;padding:0.1rem 0.4rem;border-radius:999px;letter-spacing:0.02em}
+.cart__discount-val{font-family:var(--display);font-weight:800;color:var(--pistache-deep);font-size:1rem}
+.cart__total-val.has-discount{font-size:1.3rem}
+.cart__total-val .original{font-size:0.6em;text-decoration:line-through;opacity:0.5;font-weight:600;margin-right:0.3em}
+
+/* ===== SHARE BUTTON ===== */
+.promo__share{
+  background:rgba(255,246,236,0.15);border:0;border-radius:999px;color:var(--crema);
+  width:30px;height:30px;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;
+  transition:background 0.3s var(--ease-cream),transform 0.3s var(--ease-cream);
+}
+.promo__share:hover{background:rgba(255,246,236,0.28);transform:scale(1.1)}
+.promo__share svg{width:15px;height:15px;fill:currentColor}
+
+/* ===== FLAVOR DETAILS MODAL ===== */
+.flavor-modal{
+  position:fixed;inset:0;z-index:2500;background:rgba(59,35,24,0.6);
+  display:flex;align-items:center;justify-content:center;padding:clamp(1rem,4vw,2rem);
+  opacity:0;pointer-events:none;transition:opacity 0.5s var(--ease-cream);
+  backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);
+}
+.flavor-modal.is-open{opacity:1;pointer-events:auto}
+.flavor-modal__inner{
+  position:relative;width:min(440px,calc(100vw - 2rem));max-height:85vh;overflow-y:auto;
+  background:var(--crema);border-radius:36px 36px 28px 28px;
+  transform:scale(0.85) translateY(20px);opacity:0;
+  transition:transform 0.6s var(--ease-cream),opacity 0.5s var(--ease-cream);
+  box-shadow:0 30px 60px -20px rgba(59,35,24,0.5);
+}
+.flavor-modal.is-open .flavor-modal__inner{transform:scale(1) translateY(0);opacity:1}
+.flavor-modal__hero{
+  height:160px;display:flex;align-items:center;justify-content:center;position:relative;
+  border-radius:36px 36px 0 0;
+}
+.flavor-modal__hero .scoop-ill{width:120px;height:120px;filter:url(#goo);position:relative}
+.flavor-modal__hero .scoop-ill .ball{width:100%;height:88%;border-radius:50% 50% 48% 48% / 60% 60% 40% 40%;background:rgba(255,255,255,0.6);position:relative}
+.flavor-modal__hero .scoop-ill .ball::after{content:'';position:absolute;left:22%;top:18%;width:34%;height:30%;border-radius:50%;background:rgba(255,255,255,0.8);filter:blur(2px)}
+.flavor-modal__hero .scoop-ill .drip{position:absolute;left:50%;bottom:0;width:14px;height:14px;border-radius:50%;background:rgba(255,255,255,0.6);transform:translateX(-50%)}
+.flavor-modal__close{
+  position:absolute;top:0.8rem;right:0.8rem;z-index:2;width:34px;height:34px;border-radius:50%;
+  border:0;background:rgba(255,255,255,0.6);color:var(--chocolate);font-size:1.2rem;line-height:1;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;transition:transform 0.4s var(--ease-cream);
+}
+.flavor-modal__close:hover{transform:rotate(90deg) scale(1.08)}
+.flavor-modal__body{padding:1.4rem 1.6rem 1.8rem}
+.flavor-modal__name{font-family:var(--display);font-weight:800;font-size:1.8rem;color:var(--chocolate);line-height:1}
+.flavor-modal__price{font-family:var(--display);font-weight:700;color:var(--fresa-deep);font-size:1.1rem;margin-top:0.2rem}
+.flavor-modal__desc{font-size:0.98rem;color:var(--chocolate);opacity:0.8;margin-top:0.8rem;line-height:1.55}
+.flavor-modal__meta{margin-top:1.2rem;display:grid;grid-template-columns:1fr 1fr;gap:0.8rem}
+.flavor-modal__meta-item{background:rgba(59,35,24,0.06);border-radius:14px;padding:0.7rem 0.9rem}
+.flavor-modal__meta-label{font-family:var(--body);font-weight:600;font-size:0.72rem;color:var(--chocolate);opacity:0.6;text-transform:uppercase;letter-spacing:0.06em}
+.flavor-modal__meta-val{font-family:var(--display);font-weight:700;font-size:0.92rem;color:var(--chocolate);margin-top:0.15rem}
+.flavor-modal__pairing{margin-top:1rem;font-size:0.9rem;color:var(--chocolate);opacity:0.75;line-height:1.5}
+.flavor-modal__pairing b{color:var(--fresa-deep);font-family:var(--display)}
+.flavor-modal__cta{display:block;width:100%;margin-top:1.4rem;text-align:center}
+
 /* reduced motion */
 @media (prefers-reduced-motion:reduce){
   *{animation:none !important;transition:none !important}
@@ -949,6 +1022,29 @@ export default function Home() {
         tick();
         setInterval(tick, 1000);
       }
+
+      // ---------- Promo share button (Web Share API + clipboard fallback) ----------
+      document.querySelector('.promo__share')?.addEventListener('click', async () => {
+        const shareData = {
+          title: 'Helado Nube — Sabor del mes',
+          text: '¡Cajeta de Celaya con -15% en Helado Nube! Solo este mes. 🍦',
+          url: w.location.href,
+        };
+        try {
+          if (navigator.share) { await navigator.share(shareData); }
+          else { await navigator.clipboard.writeText(shareData.text + ' ' + shareData.url); showToastCopied(); }
+        } catch (e) { /* user cancelled share */ }
+      });
+      const showToastCopied = () => {
+        const t = document.querySelector('.restore-toast') as HTMLElement;
+        if (t) {
+          t.querySelector('span')!.innerHTML = '¡Copiado! Pégalo donde quieras 🍦';
+          t.querySelector('.btn-mini--open')?.remove();
+          t.querySelector('.btn-mini--ghost')?.remove();
+          t.classList.add('is-show');
+          setTimeout(() => { t.classList.remove('is-show'); w.location.reload(); }, 2000);
+        }
+      };
 
       // ---------- Cursor ----------
       if (!isTouch) {
@@ -1135,6 +1231,13 @@ export default function Home() {
         Fresa: 65, 'Vainilla de Papantla': 72, Pistache: 85,
         'Chocolate Oaxaqueño': 78, 'Mango con Chile': 70, Cajeta: 74,
       };
+      // promo: -15% on Cajeta (Sabor del mes)
+      const PROMO_FLAVOR = 'Cajeta';
+      const PROMO_RATE = 0.15;
+      const calcDiscount = () => {
+        if (cartItems[PROMO_FLAVOR]) return Math.round(cartItems[PROMO_FLAVOR].qty * cartItems[PROMO_FLAVOR].price * PROMO_RATE * 100) / 100;
+        return 0;
+      };
       const STORAGE_KEY = 'helado-nube-cart';
       const saveCart = () => {
         try { localStorage.setItem(STORAGE_KEY, JSON.stringify(cartItems)); } catch (e) {}
@@ -1164,19 +1267,35 @@ export default function Home() {
       const renderCart = () => {
         const keys = Object.keys(cartItems);
         const count = keys.reduce((s, k) => s + cartItems[k].qty, 0);
-        const total = keys.reduce((s, k) => s + cartItems[k].qty * cartItems[k].price, 0);
+        const subtotal = keys.reduce((s, k) => s + cartItems[k].qty * cartItems[k].price, 0);
+        const discount = calcDiscount();
+        const total = Math.round((subtotal - discount) * 100) / 100;
         if (cartBadge) {
           cartBadge.textContent = String(count);
           if (count > 0) cartBadge.classList.add('is-active'); else cartBadge.classList.remove('is-active');
         }
-        if (cartEl) { if (count > 0) cartEl.classList.add('has-items'); else cartEl.classList.remove('has-items'); }
-        if (cartTotalVal) cartTotalVal.innerHTML = formatTotal(total);
+        if (cartEl) {
+          if (count > 0) cartEl.classList.add('has-items'); else cartEl.classList.remove('has-items');
+          if (discount > 0) cartEl.classList.add('has-discount'); else cartEl.classList.remove('has-discount');
+        }
+        const cartDiscountVal = document.querySelector('.cart__discount-val') as HTMLElement;
+        if (cartDiscountVal) cartDiscountVal.innerHTML = '-$' + discount + ' <small>MNX</small>';
+        if (cartTotalVal) {
+          if (discount > 0) {
+            cartTotalVal.classList.add('has-discount');
+            cartTotalVal.innerHTML = '<span class="original">$' + subtotal + '</span>$' + total + ' <small>MNX</small>';
+          } else {
+            cartTotalVal.classList.remove('has-discount');
+            cartTotalVal.innerHTML = formatTotal(total);
+          }
+        }
         // if cart empties, exit checkout view
         if (count === 0 && cartEl?.classList.contains('is-checkout')) exitCheckout();
         // render summary (checkout step)
         if (cartSummary) {
           cartSummary.innerHTML = keys.length
-            ? keys.map((k) => `<div class="cart__summary-row"><span>${cartItems[k].name} ×${cartItems[k].qty}</span><span>$${cartItems[k].qty * cartItems[k].price}</span></div>`).join('')
+            ? keys.map((k) => `<div class="cart__summary-row"><span>${cartItems[k].name} ×${cartItems[k].qty}</span><span>$${cartItems[k].qty * cartItems[k].price}</span></div>`).join('') +
+              (discount > 0 ? `<div class="cart__summary-row" style="color:var(--pistache-deep);margin-top:0.3rem;padding-top:0.3rem;border-top:1px dashed rgba(111,180,137,0.5)"><span>Descuento Sabor del mes (-15%)</span><span>-$${discount}</span></div>` : '')
             : '';
         }
         if (!cartBody) { syncNavCount(); return; }
@@ -1253,9 +1372,12 @@ export default function Home() {
         if (!name) { if (cartCheckoutMsg) { cartCheckoutMsg.textContent = '¿Cómo te llamas, cremosito?'; cartCheckoutMsg.style.color = 'var(--fresa-deep)'; } return; }
         if (!phone && !addr) { if (cartCheckoutMsg) { cartCheckoutMsg.textContent = 'Necesitamos un teléfono o dirección para llevártelo.'; cartCheckoutMsg.style.color = 'var(--fresa-deep)'; } return; }
         const keys = Object.keys(cartItems);
-        const total = keys.reduce((s, k) => s + cartItems[k].qty * cartItems[k].price, 0);
+        const subtotal = keys.reduce((s, k) => s + cartItems[k].qty * cartItems[k].price, 0);
+        const discount = calcDiscount();
+        const total = Math.round((subtotal - discount) * 100) / 100;
         const lines = keys.map((k) => `• ${cartItems[k].name} ×${cartItems[k].qty} — $${cartItems[k].qty * cartItems[k].price}`).join('%0A');
-        const msg = `¡Hola Helado Nube! 🍦 Quiero pedir:%0A${lines}%0ATotal: $${total} MNX%0A%0ANombre: ${name}%0ATel: ${phone || '—'}%0ADirección: ${addr || '—'}`;
+        const discountLine = discount > 0 ? `%0ADescuento Sabor del mes (-15%): -$${discount}` : '';
+        const msg = `¡Hola Helado Nube! 🍦 Quiero pedir:%0A${lines}${discountLine}%0ATotal: $${total} MNX%0A%0ANombre: ${name}%0ATel: ${phone || '—'}%0ADirección: ${addr || '—'}`;
         if (cartCheckoutMsg) { cartCheckoutMsg.textContent = '¡Abriendo WhatsApp! Te esperamos cremosito. 🍦'; cartCheckoutMsg.style.color = '#6FB489'; }
         w.open('https://wa.me/?text=' + msg, '_blank');
       });
@@ -1574,6 +1696,70 @@ export default function Home() {
         });
       }
 
+      // ---------- Flavor details modal ----------
+      const flavorModal = document.querySelector('.flavor-modal') as HTMLElement;
+      const flavorDetails: Record<string, { name: string; price: string; desc: string; origin: string; texture: string; pairing: string; color: string }> = {
+        'Fresa': { name: 'Fresa', price: '$65 el litro', desc: 'Fresas de Zamora, Michoacán — el corazón fresa de México. Las escogemos en su punto, las maceramos sin prisas y las batimos con crema fresca. Sin colorantes: el rosa es de la fruta de verdad.', origin: 'Zamora, Mich', texture: 'Sedosa, con trocitos', pairing: 'Marida con <b>cheesecake</b> o un bochito de <b>prosecco</b>.', color: '#FFB3C7' },
+        'Vainilla de Papantla': { name: 'Vainilla de Papantla', price: '$72 el litro', desc: 'Vainilla veracruzana curada a mano por la misma familia desde hace 40 años. Las puntitos negros que ves son las semillas de verdad. Floral, sedosa, con un aroma que te regresa al mercado.', origin: 'Papantla, Ver', texture: 'Cremosa, lisa', pairing: 'Perfecta con <b>pastel de elote</b> o café de olla.', color: '#FFE8B8' },
+        'Pistache': { name: 'Pistache', price: '$85 el litro', desc: 'Pistaches tostados al comal y molidos al momento. Ningún helado de bodega le llega: el verde es natural, el sabor es profundo. Cremoso de verdad, no de cartón.', origin: 'Importado, tostado en casa', texture: 'Densa, con granillo', pairing: 'Brilla con <b>chocolate amargo</b> o unas nueces.', color: '#B8E0C8' },
+        'Chocolate Oaxaqueño': { name: 'Chocolate Oaxaqueño', price: '$78 el litro', desc: 'Cacao de Oaxaca, tableta molida en metate. Intenso, con cuerpo y un dejo de canela que abraza. El chocolate de mesa que tomabas de chiquito, ahora en helado.', origin: 'Oaxaca', texture: 'Recia, aterciopelada', pairing: 'Pareja ideal de <b>churros</b> o pan de muerto.', color: '#E9C9A8' },
+        'Mango con Chile': { name: 'Mango con Chile', price: '$70 el litro', desc: 'Mango manila bien maduro y un besito de chamoy con polvo de chile de árbol. Pica poquito, justo. Dulce, ácido y picosito en cada cucharada — así sabe el verano mexicano.', origin: 'Guerrero', texture: 'Refrescante, con notas', pairing: 'Pruébalo con <b>tajín</b> extra o en paleta.', color: '#FFD27A' },
+        'Cajeta': { name: 'Cajeta', price: '$74 el litro', desc: 'Leche de cabra de Celaya, cocida a fuego lento durante horas hasta que se vuelve caramelo. Sabe a rancho, a leña, a memoria. Este es nuestro sabor del mes con <b>-15% de descuento</b>.', origin: 'Celaya, Gto', texture: 'Densa, sedosa, pegajosa', pairing: 'Divino sobre <b>plátano</b> o con nuez picada.', color: '#E6C39A' },
+      };
+      if (flavorModal) {
+        const fmName = flavorModal.querySelector('.flavor-modal__name') as HTMLElement;
+        const fmPrice = flavorModal.querySelector('.flavor-modal__price') as HTMLElement;
+        const fmDesc = flavorModal.querySelector('.flavor-modal__desc') as HTMLElement;
+        const fmOrigin = flavorModal.querySelector('.flavor-modal__origin') as HTMLElement;
+        const fmTexture = flavorModal.querySelector('.flavor-modal__texture') as HTMLElement;
+        const fmPairing = flavorModal.querySelector('.flavor-modal__pairing') as HTMLElement;
+        const fmHero = flavorModal.querySelector('.flavor-modal__hero') as HTMLElement;
+        const fmCta = flavorModal.querySelector('.flavor-modal__cta') as HTMLElement;
+        const openFlavorModal = (flavorName: string) => {
+          const d = flavorDetails[flavorName];
+          if (!d) return;
+          fmName.textContent = d.name;
+          fmPrice.textContent = d.price;
+          fmDesc.textContent = d.desc;
+          fmOrigin.textContent = d.origin;
+          fmTexture.textContent = d.texture;
+          fmPairing.innerHTML = '<b>Maridaje:</b> ' + d.pairing;
+          fmHero.style.background = `linear-gradient(160deg, ${d.color}, ${d.color})`;
+          fmCta.setAttribute('data-flavor-add', flavorName);
+          flavorModal.classList.add('is-open');
+          document.body.style.overflow = 'hidden';
+          if (lenis) lenis.stop();
+        };
+        const closeFlavorModal = () => {
+          flavorModal.classList.remove('is-open');
+          document.body.style.overflow = '';
+          if (lenis) lenis.start();
+        };
+        document.querySelectorAll('[data-flavor-btn]').forEach((btn) => {
+          btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const name = (btn as HTMLElement).dataset.flavorBtn || '';
+            openFlavorModal(name);
+          });
+        });
+        flavorModal.querySelector('.flavor-modal__close')?.addEventListener('click', closeFlavorModal);
+        flavorModal.addEventListener('click', (e: MouseEvent) => { if (e.target === flavorModal) closeFlavorModal(); });
+        document.addEventListener('keydown', (e: KeyboardEvent) => { if (e.key === 'Escape' && flavorModal.classList.contains('is-open')) closeFlavorModal(); });
+        // modal CTA: add to cart + close + open cart
+        fmCta?.addEventListener('click', (e) => {
+          e.preventDefault();
+          const flavorName = fmCta.getAttribute('data-flavor-add');
+          if (flavorName) {
+            closeFlavorModal();
+            setTimeout(() => {
+              const card = document.querySelector(`[data-flavor="${flavorName}"]`) as HTMLElement;
+              if (card) { card.click(); }
+              setTimeout(() => openCart(), 900);
+            }, 300);
+          }
+        });
+      }
+
       // ---------- FAQ accordion ----------
       document.querySelectorAll('.faq__item').forEach((item) => {
         const q = item.querySelector('.faq__q') as HTMLElement;
@@ -1822,6 +2008,9 @@ export default function Home() {
             <span className="promo__cd-unit"><b id="promo-s">0</b><small>s</small></span>
           </span>
           <a className="promo__cta" href="#sabores">¡Pídelo ya!</a>
+          <button className="promo__share" aria-label="Compartir promoción" data-cursor>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92-1.31-2.92-2.92-2.92z"/></svg>
+          </button>
         </div>
         <div className="promo__drip" aria-hidden="true">
           <svg viewBox="0 0 1440 18" preserveAspectRatio="none">
@@ -1955,43 +2144,49 @@ export default function Home() {
             <h2 id="sabores-title" className="section__title reveal">Sabores que se derriten en la mirada</h2>
             <p className="section__sub reveal">Seis recetas de pueblo, hechas con fruta de mercado y mucho cariño. Pasa el cursor: la página sabe a lo que miras.</p>
             <div className="sabores__grid">
-              <article className="flavor reveal" style={{ ['--fc' as any]: 'var(--fresa)' }} data-cursor>
+              <article className="flavor reveal" style={{ ['--fc' as any]: 'var(--fresa)' }} data-cursor data-flavor="Fresa">
                 <div className="flavor__glare" />
+                <button className="flavor__info" aria-label="Ver detalles de Fresa" data-flavor-btn="Fresa">i</button>
                 <div className="flavor__scoop"><div className="ball" /><div className="drip" /></div>
                 <h3 className="flavor__name">Fresa</h3>
                 <p className="flavor__desc">Fresas de Zamora, sin colorantes. Dulce que tiñe.</p>
                 <span className="flavor__price">$65 el litro</span>
               </article>
-              <article className="flavor reveal" style={{ ['--fc' as any]: 'var(--vainilla)' }} data-cursor>
+              <article className="flavor reveal" style={{ ['--fc' as any]: 'var(--vainilla)' }} data-cursor data-flavor="Vainilla de Papantla">
                 <div className="flavor__glare" />
+                <button className="flavor__info" aria-label="Ver detalles de Vainilla de Papantla" data-flavor-btn="Vainilla de Papantla">i</button>
                 <div className="flavor__scoop"><div className="ball" /><div className="drip" /></div>
                 <h3 className="flavor__name">Vainilla de Papantla</h3>
                 <p className="flavor__desc">Vainilla veracruzana curada a mano. Floral y sedosa.</p>
                 <span className="flavor__price">$72 el litro</span>
               </article>
-              <article className="flavor reveal" style={{ ['--fc' as any]: 'var(--pistache)' }} data-cursor>
+              <article className="flavor reveal" style={{ ['--fc' as any]: 'var(--pistache)' }} data-cursor data-flavor="Pistache">
                 <div className="flavor__glare" />
+                <button className="flavor__info" aria-label="Ver detalles de Pistache" data-flavor-btn="Pistache">i</button>
                 <div className="flavor__scoop"><div className="ball" /><div className="drip" /></div>
                 <h3 className="flavor__name">Pistache</h3>
                 <p className="flavor__desc">Pistaches tostados al comal. Verde hoja, boca cremosa.</p>
                 <span className="flavor__price">$85 el litro</span>
               </article>
-              <article className="flavor reveal" style={{ ['--fc' as any]: '#E9C9A8' }} data-cursor>
+              <article className="flavor reveal" style={{ ['--fc' as any]: '#E9C9A8' }} data-cursor data-flavor="Chocolate Oaxaqueño">
                 <div className="flavor__glare" />
+                <button className="flavor__info" aria-label="Ver detalles de Chocolate Oaxaqueño" data-flavor-btn="Chocolate Oaxaqueño">i</button>
                 <div className="flavor__scoop"><div className="ball" /><div className="drip" /></div>
                 <h3 className="flavor__name">Chocolate Oaxaqueño</h3>
                 <p className="flavor__desc">Cacao de Oaxaca, tableta molida. Intenso y abrazador.</p>
                 <span className="flavor__price">$78 el litro</span>
               </article>
-              <article className="flavor reveal" style={{ ['--fc' as any]: 'var(--mango)' }} data-cursor>
+              <article className="flavor reveal" style={{ ['--fc' as any]: 'var(--mango)' }} data-cursor data-flavor="Mango con Chile">
                 <div className="flavor__glare" />
+                <button className="flavor__info" aria-label="Ver detalles de Mango con Chile" data-flavor-btn="Mango con Chile">i</button>
                 <div className="flavor__scoop"><div className="ball" /><div className="drip" /></div>
                 <h3 className="flavor__name">Mango con Chile</h3>
                 <p className="flavor__desc">Mango manila y un besito de chamoy. Pica y abraza.</p>
                 <span className="flavor__price">$70 el litro</span>
               </article>
-              <article className="flavor reveal" style={{ ['--fc' as any]: '#E6C39A' }} data-cursor>
+              <article className="flavor reveal" style={{ ['--fc' as any]: '#E6C39A' }} data-cursor data-flavor="Cajeta">
                 <div className="flavor__glare" />
+                <button className="flavor__info" aria-label="Ver detalles de Cajeta" data-flavor-btn="Cajeta">i</button>
                 <div className="flavor__scoop"><div className="ball" /><div className="drip" /></div>
                 <h3 className="flavor__name">Cajeta</h3>
                 <p className="flavor__desc">Leche de cabra de Celaya, a fuego lento. Caramelo de rancho.</p>
@@ -2409,6 +2604,10 @@ export default function Home() {
             <span className="cart__total-label">Total estimado</span>
             <span className="cart__total-val">$0 <small>MNX</small></span>
           </div>
+          <div className="cart__discount">
+            <span className="cart__discount-label"><span className="tag">-15%</span> Sabor del mes</span>
+            <span className="cart__discount-val">-$0 <small>MNX</small></span>
+          </div>
           <a className="btn cart__cta" href="#cta-final">
             <span className="btn__label">Ver mi pedido</span>
             <span className="btn__drips"><i /><i /><i /></span>
@@ -2432,6 +2631,36 @@ export default function Home() {
         <div className="lightbox__inner">
           <img className="lightbox__img" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'/%3E" alt="" />
           <div className="lightbox__cap" />
+        </div>
+      </div>
+
+      {/* ===== FLAVOR DETAILS MODAL ===== */}
+      <div className="flavor-modal" role="dialog" aria-label="Detalles del sabor" aria-modal="true">
+        <div className="flavor-modal__inner">
+          <div className="flavor-modal__hero">
+            <button className="flavor-modal__close" aria-label="Cerrar">×</button>
+            <div className="scoop-ill"><div className="ball" /><div className="drip" /></div>
+          </div>
+          <div className="flavor-modal__body">
+            <h3 className="flavor-modal__name" />
+            <span className="flavor-modal__price" />
+            <p className="flavor-modal__desc" />
+            <div className="flavor-modal__meta">
+              <div className="flavor-modal__meta-item">
+                <span className="flavor-modal__meta-label">Origen</span>
+                <span className="flavor-modal__meta-val flavor-modal__origin" />
+              </div>
+              <div className="flavor-modal__meta-item">
+                <span className="flavor-modal__meta-label">Textura</span>
+                <span className="flavor-modal__meta-val flavor-modal__texture" />
+              </div>
+            </div>
+            <p className="flavor-modal__pairing" />
+            <a className="btn flavor-modal__cta" href="#cta-final">
+              <span className="btn__label">Agregar al pedido</span>
+              <span className="btn__drips"><i /><i /><i /></span>
+            </a>
+          </div>
         </div>
       </div>
 

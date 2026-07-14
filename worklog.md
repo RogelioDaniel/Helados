@@ -489,3 +489,67 @@ Unresolved Issues / Risks / Next-phase Priorities:
    could auto-apply a -15% line item when Cajeta is in the cart during the promo window. Medium.
 4. Could add a social Instagram feed / UGC section. Future enhancement.
 5. Could add a "compartir" (share) button on the promo or flavors. Low priority.
+
+---
+Task ID: cron-round-8
+Agent: webDevReview (cron)
+Task: Recurring QA + implement promo discount, share, flavor details modal, styling polish.
+
+Work Log:
+- Read prior worklog (7 rounds complete); confirmed project stable (HTTP 200, lint 0 errors/1 font
+  warning, no runtime errors). Page has 10 blocks + complete ordering loop + lightbox + FAQ + promo.
+- agent-browser QA: all subsystems healthy. Found functional gap: Cajeta (promo flavor, $74) added to
+  cart but total showed $74 with NO discount — promo banner says -15% but cart didn't honor it.
+- VLM full-page review: no bugs; suggested more urgency/discount prominence (aligned with promo fix).
+- Implemented 3 features + styling polish (all melting-theme coherent):
+
+1. **Promo discount actually applied in cart** (worklog priority #3 — functional completeness):
+   Added `PROMO_FLAVOR='Cajeta'` + `PROMO_RATE=0.15` + `calcDiscount()`. In renderCart: computes
+   discount, toggles `has-discount` class, shows a pistache-green discount line ("[-15%] Sabor del
+   mes -$X MNX") in the cart footer, and shows the total with strikethrough original price + discounted
+   total. The checkout summary + WhatsApp message both include the discount line + discounted total.
+   Verified: 2 Cajeta × $74 = $148 → -$22.2 (15%) → $125.8 total with strikethrough ✓.
+2. **Share button on promo** (worklog priority #5 — social/viral): a share-icon button in the promo
+   bar that uses the Web Share API (`navigator.share`) on mobile/supporting browsers, falling back to
+   `navigator.clipboard.writeText` + a "¡Copiado!" toast on desktop. Shares "¡Cajeta de Celaya con
+   -15% en Helado Nube! Solo este mes. 🍦" + URL.
+3. **Flavor details modal** (new — deeper engagement): each flavor card now has an "i" info button
+   (top-right, appears on hover/focus, always visible on mobile). Clicking opens a gooey modal with:
+   flavor-colored hero (matching scoop illustration), name, price, long description (origin story),
+   origin + texture meta cards, a "Maridaje" (pairing) recommendation, and an "Agregar al pedido" CTA
+   that adds the flavor to cart + opens the cart. Close via × / backdrop / Escape. 6 flavor datasets
+   with real Mexican-Spanish copy. Verified: Fresa modal shows origin "Zamora, Mich", pairing
+   "cheesecake", closes cleanly ✓. Mobile 390px: modal 358px fits ✓.
+
+Styling polish:
+- Promo countdown contrast bumped (cd-unit bg opacity 0.14 → 0.22) per VLM's readability note.
+- Flavor info button with cream-easing hover/focus reveal, always visible on mobile (no hover).
+
+Verification (agent-browser + VLM, post-changes):
+- DOM: .promo__share ✓, .cart__discount ✓, .flavor-modal ✓, 6 .flavor__info ✓, 6 data-flavor ✓.
+- Promo discount: add Cajeta → has-discount ✓, discount "-$22.2 MNX", total "$148 $125.8 MNX"
+  (strikethrough original in DOM) ✓.
+- Flavor modal: click info → opens with Fresa / origin Zamora Mich / pairing cheesecake ✓; close ✓;
+  mobile fits ✓.
+- VLM modal: "polished, on-theme, info clear, no bugs". VLM discount: "-15% tag visible and clear".
+  VLM full-page: "no broken/overlaps, cohesive, high production value".
+- `bun run lint` = 0 errors (1 acceptable font warning). HTTP 200. No runtime/console errors.
+
+Stage Summary:
+- The promo banner now delivers REAL value: Cajeta in cart auto-gets -15%, shown as a pistache
+  discount line + strikethrough total, reflected in checkout summary + WhatsApp order message. This
+  closes the conversion loop from promo banner → cart → checkout.
+- Social sharing: promo share button (Web Share API + clipboard fallback) enables viral spread.
+- Deeper flavor engagement: 6 flavor detail modals with origin/texture/pairing stories + add-to-cart
+  CTA, turning flavor browsing into an educational, conversion-oriented experience.
+- Contrast polish on the countdown for readability.
+
+Unresolved Issues / Risks / Next-phase Priorities:
+1. Image optimization: full-size PNGs still served (~100-160KB each). Next/Image + WebP would improve
+   LCP. Low priority for single landing page.
+2. Color-contrast audit (fresa-on-crema small text) still pending formal check.
+3. Promo is hardcoded to Cajeta/-15%/end-of-month. A future round could make it configurable (CMS/
+   env) or rotate flavors automatically. Low priority.
+4. Could add an Instagram/social UGC feed section. Future enhancement.
+5. Cart could persist across the WhatsApp send (currently in-memory + localStorage; on successful
+   send could offer "vaciar carrito"). Minor.
