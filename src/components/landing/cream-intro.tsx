@@ -10,6 +10,9 @@ import {
   useRef,
   useState,
 } from 'react';
+import { creamBootstrapScript } from './cream-bootstrap-script';
+import { CREAM_INTRO_CANVAS_ID } from './cream-canvas-id';
+import { CreamIntroPoster } from './cream-intro-poster';
 
 const CreamIntroScene = dynamic(() => import('./cream-intro-scene'), {
   ssr: false,
@@ -52,10 +55,21 @@ function waitForImage(image: HTMLImageElement | null) {
   return image.decode?.().catch(() => undefined) ?? Promise.resolve();
 }
 
+type BootstrapCanvas = HTMLCanvasElement & {
+  __creamPrepaint?: { dispose: () => void };
+};
+
+function disposeBootstrapCanvas() {
+  const canvas = document.getElementById(CREAM_INTRO_CANVAS_ID) as BootstrapCanvas | null;
+  canvas?.__creamPrepaint?.dispose();
+  if (canvas) delete canvas.__creamPrepaint;
+}
+
 export function CreamIntro() {
   const [phase, setPhase] = useState<IntroPhase>('loading');
   const [allowWebgl, setAllowWebgl] = useState(false);
   const [webglReady, setWebglReady] = useState(false);
+  const [canvasFailed, setCanvasFailed] = useState(false);
   const webglReadyRef = useRef(false);
   const leavingRef = useRef(false);
   const registerWebglReadyRef = useRef<() => void>(() => undefined);
@@ -64,11 +78,14 @@ export function CreamIntro() {
   const handleFirstFrame = useCallback(() => {
     if (leavingRef.current) return;
     webglReadyRef.current = true;
+    setCanvasFailed(false);
     setWebglReady(true);
     registerWebglReadyRef.current();
   }, []);
   const handleSceneFailure = useCallback(() => {
     webglReadyRef.current = false;
+    disposeBootstrapCanvas();
+    setCanvasFailed(true);
     setWebglReady(false);
     setAllowWebgl(false);
     registerWebglFailureRef.current();
@@ -119,7 +136,11 @@ export function CreamIntro() {
       if (disposed || leaving) return;
       leaving = true;
       leavingRef.current = true;
-      if (!webglReadyRef.current) setAllowWebgl(false);
+      if (!webglReadyRef.current) {
+        disposeBootstrapCanvas();
+        setCanvasFailed(true);
+        setAllowWebgl(false);
+      }
       root.classList.add('cream-intro-revealing');
       setPhase('leaving');
       exitTimer = window.setTimeout(finish, EXIT_DURATION_MS);
@@ -160,6 +181,8 @@ export function CreamIntro() {
 
     const webglAcquisitionTimer = window.setTimeout(() => {
       if (webglReadyRef.current) return;
+      disposeBootstrapCanvas();
+      setCanvasFailed(true);
       setAllowWebgl(false);
       registerWebglFailure();
     }, WEBGL_ACQUISITION_MS);
@@ -206,6 +229,7 @@ export function CreamIntro() {
       window.removeEventListener('load', handleWindowLoad);
       registerWebglReadyRef.current = () => undefined;
       registerWebglFailureRef.current = () => undefined;
+      disposeBootstrapCanvas();
       restorePage();
     };
   }, []);
@@ -217,11 +241,22 @@ export function CreamIntro() {
       className={`cream-intro cream-intro--${phase} ${webglReady ? 'cream-intro--webgl' : ''}`}
       aria-hidden="true"
     >
-      <div className="cream-intro-fallback" />
+      <CreamIntroPoster />
+      <canvas
+        id={CREAM_INTRO_CANVAS_ID}
+        suppressHydrationWarning
+        className={`cream-intro-canvas ${canvasFailed ? 'cream-intro-canvas--failed' : ''}`}
+      />
+      <script
+        id="cream-intro-prepaint"
+        suppressHydrationWarning
+        dangerouslySetInnerHTML={{ __html: creamBootstrapScript }}
+      />
 
       {allowWebgl ? (
         <CreamSceneBoundary onFailure={handleSceneFailure}>
           <CreamIntroScene
+            canvasId={CREAM_INTRO_CANVAS_ID}
             leaving={phase === 'leaving'}
             onFirstFrame={handleFirstFrame}
             onFailure={handleSceneFailure}
