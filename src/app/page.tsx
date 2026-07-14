@@ -2,7 +2,6 @@
 
 import Image from 'next/image';
 import {
-  ArrowDownRight,
   ArrowRight,
   Check,
   ChevronDown,
@@ -16,6 +15,8 @@ import {
   X,
 } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { LuxuryEffects } from '@/components/landing/luxury-effects';
+import { LuxuryHero } from '@/components/landing/luxury-hero';
 
 type Flavor = {
   id: string;
@@ -270,6 +271,7 @@ export default function Home() {
 
   return (
     <main className="min-h-[100dvh] overflow-x-clip bg-[#f5efe5] text-[#211a17]">
+      <LuxuryEffects />
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
@@ -347,6 +349,8 @@ export default function Home() {
           className={`absolute inset-x-0 top-full overflow-hidden border-b border-[#211a17]/10 bg-[#f5efe5] transition-[max-height,opacity] duration-500 lg:hidden ${
             menuOpen ? 'max-h-96 opacity-100' : 'pointer-events-none max-h-0 opacity-0'
           }`}
+          aria-hidden={!menuOpen}
+          inert={!menuOpen}
         >
           <nav className="grid gap-1 px-5 py-5" aria-label="Navegación móvil">
             {[
@@ -359,6 +363,7 @@ export default function Home() {
                 key={href}
                 href={href}
                 onClick={() => setMenuOpen(false)}
+                tabIndex={menuOpen ? 0 : -1}
                 className="font-display flex min-h-14 items-center justify-between border-b border-[#211a17]/10 text-2xl"
               >
                 {label}
@@ -370,98 +375,28 @@ export default function Home() {
       </header>
 
       <div id="contenido">
-        <section id="inicio" className="scroll-mt-28">
-          <div className="mx-auto grid min-h-[calc(100dvh-116px)] max-w-[1400px] grid-cols-1 items-center gap-12 px-5 py-12 sm:px-8 sm:py-16 lg:grid-cols-12 lg:gap-10 lg:px-12 lg:py-20">
-            <div className="hero-enter lg:col-span-5 lg:pr-4">
-              <p className="mb-7 flex items-center gap-3 text-xs font-semibold uppercase tracking-[0.2em] text-[#76283c]">
-                <span className="h-px w-9 bg-[#76283c]" />
-                Heladería artesanal · CDMX
-              </p>
-              <h1 className="font-display max-w-[9.5ch] text-[clamp(3.9rem,7vw,7.1rem)] font-medium leading-[0.86] tracking-[-0.06em]">
-                El lujo está en hacerlo <em className="font-normal text-[#76283c]">despacio.</em>
-              </h1>
-              <p className="mt-8 max-w-[52ch] text-base leading-7 text-[#211a17]/68 sm:text-lg sm:leading-8">
-                Helado artesanal con ingredientes de origen, batido en lotes pequeños y servido con la calma que merece algo memorable.
-              </p>
-              <div className="mt-9 flex flex-col gap-3 sm:flex-row">
-                <a
-                  href="#sabores"
-                  className="group inline-flex min-h-13 items-center justify-center gap-3 rounded-full bg-[#76283c] px-6 text-sm font-semibold text-white shadow-[0_18px_40px_-24px_rgba(118,40,60,0.8)] transition-transform hover:-translate-y-0.5 active:translate-y-0"
-                >
-                  Elegir sabores
-                  <ArrowDownRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5 group-hover:translate-y-0.5" />
-                </a>
-                <a
-                  href="#historia"
-                  className="inline-flex min-h-13 items-center justify-center gap-3 rounded-full border border-[#211a17]/20 px-6 text-sm font-semibold transition-colors hover:border-[#211a17] hover:bg-[#211a17] hover:text-white active:scale-[0.98]"
-                >
-                  Conocer la casa
-                </a>
-              </div>
-              <dl className="mt-11 grid grid-cols-3 border-y border-[#211a17]/15 py-5">
-                {[
-                  ['Lotes', 'pequeños'],
-                  ['Fruta', 'de temporada'],
-                  ['Entrega', 'refrigerada'],
-                ].map(([term, detail]) => (
-                  <div key={term} className="border-r border-[#211a17]/12 px-3 first:pl-0 last:border-0 last:pr-0">
-                    <dt className="text-[10px] font-bold uppercase tracking-[0.17em] text-[#76283c]">{term}</dt>
-                    <dd className="mt-1 text-xs font-medium text-[#211a17]/70 sm:text-sm">{detail}</dd>
-                  </div>
-                ))}
-              </dl>
-            </div>
+        <LuxuryHero itemCount={itemCount} onOpenCart={openCart} />
 
-            <div className="hero-enter hero-enter-delay relative lg:col-span-7">
-              <div className="relative aspect-[4/4.7] overflow-hidden rounded-[2rem] bg-[#d9c7b4] sm:aspect-[16/12] lg:aspect-[7/6] lg:rounded-[2.6rem]">
-                <Image
-                  src="/img/hero-vip.webp"
-                  alt="Cono editorial con helado artesanal de vainilla, fresa y pistache"
-                  fill
-                  priority
-                  sizes="(max-width: 1024px) 100vw, 58vw"
-                  className="object-cover object-[58%_center] transition-transform duration-[1400ms] hover:scale-[1.025]"
-                />
-                <div className="absolute inset-0 bg-linear-to-t from-[#211a17]/28 via-transparent to-transparent" />
-                <div className="absolute inset-x-5 bottom-5 flex items-end justify-between gap-5 text-white sm:inset-x-7 sm:bottom-7">
-                  <div>
-                    <span className="text-[10px] font-semibold uppercase tracking-[0.22em] text-white/70">La selección de la casa</span>
-                    <p className="font-display mt-1 text-2xl leading-none sm:text-3xl">Tres sabores, una pausa.</p>
-                  </div>
-                  <span className="grid h-12 w-12 shrink-0 place-items-center rounded-full border border-white/30 bg-white/10 backdrop-blur-md">
-                    <ArrowDownRight className="h-5 w-5" />
-                  </span>
-                </div>
-              </div>
-              <div className="absolute -bottom-5 -left-4 hidden w-44 rounded-2xl border border-white/50 bg-[#fffaf4]/88 p-4 shadow-[0_22px_60px_-36px_rgba(33,26,23,0.45)] backdrop-blur-lg sm:block lg:-left-8">
-                <span className="text-[9px] font-bold uppercase tracking-[0.2em] text-[#76283c]">Sabor del mes</span>
-                <p className="font-display mt-2 text-xl leading-5">Cajeta de Celaya</p>
-                <p className="mt-2 text-[11px] leading-4 text-[#211a17]/60">Cocida lentamente, hasta dorar.</p>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <div className="overflow-hidden border-y border-[#211a17]/10 bg-[#eee3d5] py-4" aria-hidden="true">
-          <div className="marquee-track flex w-max items-center text-[11px] font-semibold uppercase tracking-[0.22em] text-[#211a17]/58">
-            {[0, 1].map((copy) => (
-              <div key={copy} className="flex items-center">
-                {['Vainilla de Papantla', 'Pistache tostado', 'Cacao de Oaxaca', 'Fresa de Zamora', 'Mango Manila', 'Cajeta de Celaya'].map((item) => (
-                  <span key={`${copy}-${item}`} className="flex items-center whitespace-nowrap">
-                    <span className="mx-7 h-1.5 w-1.5 rounded-full bg-[#76283c]" />
-                    {item}
-                  </span>
-                ))}
+        <div className="border-y border-[#211a17]/10 bg-[#eee3d5]" aria-label="Ingredientes de origen">
+          <dl className="ingredient-ledger mx-auto grid max-w-[1400px] grid-cols-1 px-5 sm:grid-cols-3 sm:px-8 lg:px-12">
+            {[
+              ['Papantla', 'Vainilla curada a mano'],
+              ['Zamora', 'Fresa de temporada'],
+              ['Oaxaca', 'Cacao tostado'],
+            ].map(([place, ingredient]) => (
+              <div key={place} className="flex items-center justify-between border-b border-[#211a17]/10 py-5 last:border-b-0 sm:border-b-0 sm:border-r sm:px-6 sm:first:pl-0 sm:last:border-r-0 sm:last:pr-0">
+                <dt className="text-[10px] font-bold uppercase tracking-[0.22em] text-[#76283c]">{place}</dt>
+                <dd className="font-display text-lg text-[#211a17]/72">{ingredient}</dd>
               </div>
             ))}
-          </div>
+          </dl>
         </div>
 
         <section id="sabores" className="scroll-mt-24 py-24 sm:py-32">
           <div className="mx-auto max-w-[1400px] px-5 sm:px-8 lg:px-12">
             <div className="grid gap-10 lg:grid-cols-12 lg:gap-8">
               <div className="lg:col-span-4">
-                <div className="lg:sticky lg:top-32">
+                <div className="lg:sticky lg:top-32" data-reveal="copy">
                   <p className="text-xs font-bold uppercase tracking-[0.22em] text-[#76283c]">La carta</p>
                   <h2 className="font-display mt-5 max-w-[9ch] text-5xl font-medium leading-[0.93] tracking-[-0.045em] sm:text-6xl">
                     Seis sabores con lugar de origen.
@@ -485,7 +420,9 @@ export default function Home() {
                   {FLAVORS.map((flavor, index) => (
                     <article
                       key={flavor.id}
-                      className="group grid grid-cols-[92px_minmax(0,1fr)] gap-x-4 gap-y-5 border-t border-[#211a17]/15 py-6 sm:grid-cols-[128px_minmax(0,1fr)] sm:gap-x-6 sm:py-8 lg:grid-cols-[150px_minmax(0,1fr)_100px_142px] lg:items-center lg:gap-7"
+                      className="flavor-row group grid grid-cols-[92px_minmax(0,1fr)] gap-x-4 gap-y-5 border-t border-[#211a17]/15 py-6 sm:grid-cols-[128px_minmax(0,1fr)] sm:gap-x-6 sm:py-8 lg:grid-cols-[150px_minmax(0,1fr)_100px_142px] lg:items-center lg:gap-7"
+                      data-flavor-row
+                      data-reveal="row"
                     >
                       <div className="relative aspect-square overflow-hidden rounded-full bg-[#e5d8ca]">
                         <Image
@@ -534,7 +471,7 @@ export default function Home() {
         <section id="historia" className="scroll-mt-24 bg-[#211a17] py-24 text-[#f8f1e8] sm:py-32">
           <div className="mx-auto max-w-[1400px] px-5 sm:px-8 lg:px-12">
             <div className="grid items-center gap-14 lg:grid-cols-12 lg:gap-16">
-              <div className="relative lg:col-span-6">
+              <div className="relative lg:col-span-6" data-reveal="image">
                 <div className="relative aspect-[4/5] max-h-[760px] overflow-hidden rounded-[2rem] bg-[#55483e]">
                   <Image
                     src="/img/historia-2.png"
@@ -555,7 +492,7 @@ export default function Home() {
                 </div>
               </div>
 
-              <div className="lg:col-span-5 lg:col-start-8">
+              <div className="lg:col-span-5 lg:col-start-8" data-reveal="copy">
                 <p className="text-xs font-bold uppercase tracking-[0.22em] text-[#dba0ae]">Nuestra historia</p>
                 <h2 className="font-display mt-5 max-w-[10ch] text-5xl font-medium leading-[0.92] tracking-[-0.045em] sm:text-6xl">
                   Una receta con memoria desde 1962.
@@ -584,7 +521,7 @@ export default function Home() {
         <section id="proceso" className="scroll-mt-24 py-24 sm:py-32">
           <div className="mx-auto max-w-[1400px] px-5 sm:px-8 lg:px-12">
             <div className="grid gap-12 lg:grid-cols-12 lg:gap-10">
-              <div className="lg:col-span-5">
+              <div className="lg:col-span-5" data-reveal="copy">
                 <p className="text-xs font-bold uppercase tracking-[0.22em] text-[#76283c]">El proceso</p>
                 <h2 className="font-display mt-5 max-w-[9ch] text-5xl font-medium leading-[0.92] tracking-[-0.045em] sm:text-6xl">
                   Lo premium también se puede explicar.
@@ -594,7 +531,7 @@ export default function Home() {
                 </p>
               </div>
 
-              <div className="lg:col-span-7">
+              <div className="lg:col-span-7" data-reveal="list">
                 <div className="divide-y divide-[#211a17]/15 border-y border-[#211a17]/15">
                   {[
                     {
@@ -635,7 +572,7 @@ export default function Home() {
 
         <section className="pb-24 sm:pb-32" aria-labelledby="momentos-title">
           <div className="mx-auto max-w-[1400px] px-5 sm:px-8 lg:px-12">
-            <div className="mb-10 flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
+            <div className="mb-10 flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between" data-reveal="copy">
               <div>
                 <p className="text-xs font-bold uppercase tracking-[0.22em] text-[#76283c]">La mesa Nube</p>
                 <h2 id="momentos-title" className="font-display mt-4 text-4xl font-medium tracking-[-0.04em] sm:text-5xl">Hecho para mirar de cerca.</h2>
@@ -643,15 +580,15 @@ export default function Home() {
               <p className="max-w-[38ch] text-sm leading-6 text-[#211a17]/55">Textura, ingrediente y servicio. Tres formas de reconocer un helado bien hecho.</p>
             </div>
             <div className="grid grid-cols-1 gap-4 md:grid-cols-12 md:grid-rows-2">
-              <figure className="group relative min-h-[420px] overflow-hidden rounded-[1.6rem] md:col-span-7 md:row-span-2 md:min-h-[680px]">
+              <figure className="gallery-frame group relative min-h-[420px] overflow-hidden rounded-[1.6rem] md:col-span-7 md:row-span-2 md:min-h-[680px]" data-reveal="image">
                 <Image src="/img/gallery-3.png" alt="Textura de helado de chocolate oaxaqueño" fill sizes="(max-width: 768px) 100vw, 58vw" className="object-cover transition-transform duration-1000 group-hover:scale-[1.03]" />
                 <figcaption className="absolute inset-x-5 bottom-5 text-[10px] font-bold uppercase tracking-[0.2em] text-white sm:inset-x-7 sm:bottom-7">Cacao · Oaxaca</figcaption>
               </figure>
-              <figure className="group relative min-h-[300px] overflow-hidden rounded-[1.6rem] md:col-span-5 md:min-h-0">
+              <figure className="gallery-frame group relative min-h-[300px] overflow-hidden rounded-[1.6rem] md:col-span-5 md:min-h-0" data-reveal="image">
                 <Image src="/img/historia-3.png" alt="Cono artesanal de pistache" fill sizes="(max-width: 768px) 100vw, 42vw" className="object-cover transition-transform duration-1000 group-hover:scale-[1.03]" />
                 <figcaption className="absolute inset-x-5 bottom-5 text-[10px] font-bold uppercase tracking-[0.2em] text-white sm:inset-x-7">Pistache · Tostado al comal</figcaption>
               </figure>
-              <figure className="group relative min-h-[300px] overflow-hidden rounded-[1.6rem] md:col-span-5 md:min-h-0">
+              <figure className="gallery-frame group relative min-h-[300px] overflow-hidden rounded-[1.6rem] md:col-span-5 md:min-h-0" data-reveal="image">
                 <Image src="/img/gallery-2.png" alt="Helado artesanal de mango" fill sizes="(max-width: 768px) 100vw, 42vw" className="object-cover transition-transform duration-1000 group-hover:scale-[1.03]" />
                 <figcaption className="absolute inset-x-5 bottom-5 text-[10px] font-bold uppercase tracking-[0.2em] text-[#211a17]/70 sm:inset-x-7">Mango Manila · Fruta de temporada</figcaption>
               </figure>
@@ -661,13 +598,13 @@ export default function Home() {
 
         <section className="bg-[#76283c] py-20 text-white sm:py-24">
           <div className="mx-auto grid max-w-[1400px] gap-10 px-5 sm:px-8 lg:grid-cols-12 lg:items-center lg:px-12">
-            <div className="lg:col-span-8">
+            <div className="lg:col-span-8" data-reveal="copy">
               <p className="text-xs font-bold uppercase tracking-[0.22em] text-white/55">Bodas · Celebraciones · Eventos de marca</p>
               <h2 className="font-display mt-5 max-w-[13ch] text-5xl font-medium leading-[0.92] tracking-[-0.045em] sm:text-6xl">
                 Una mesa de helado que sí pertenece a la ocasión.
               </h2>
             </div>
-            <div className="lg:col-span-4 lg:pl-10">
+            <div className="lg:col-span-4 lg:pl-10" data-reveal="copy">
               <p className="text-sm leading-7 text-white/68">Curamos sabores, cantidades y servicio según tu evento. Cuéntanos fecha, zona y número de invitados.</p>
               <a
                 href={getWhatsAppHref('Hola, Helado Nube. Quiero cotizar helado para un evento. Fecha: ____. Zona: ____. Invitados: ____.')}
@@ -684,12 +621,12 @@ export default function Home() {
 
         <section id="preguntas" className="scroll-mt-24 py-24 sm:py-32">
           <div className="mx-auto grid max-w-[1400px] gap-12 px-5 sm:px-8 lg:grid-cols-12 lg:gap-16 lg:px-12">
-            <div className="lg:col-span-4">
+            <div className="lg:col-span-4" data-reveal="copy">
               <p className="text-xs font-bold uppercase tracking-[0.22em] text-[#76283c]">Antes de pedir</p>
               <h2 className="font-display mt-5 text-5xl font-medium leading-[0.92] tracking-[-0.045em] sm:text-6xl">Todo claro desde el primer antojo.</h2>
               <p className="mt-6 max-w-[38ch] text-sm leading-7 text-[#211a17]/60">Si tu pregunta no aparece aquí, inclúyela al compartir tu pedido.</p>
             </div>
-            <div className="border-b border-[#211a17]/15 lg:col-span-8">
+            <div className="border-b border-[#211a17]/15 lg:col-span-8" data-reveal="list">
               {FAQS.map((faq, index) => {
                 const open = activeFaq === index;
                 return (
@@ -719,7 +656,7 @@ export default function Home() {
         </section>
 
         <section className="px-5 pb-6 sm:px-8 lg:px-12">
-          <div className="relative mx-auto max-w-[1400px] overflow-hidden rounded-[2rem] bg-[#ded0c1] px-6 py-20 sm:px-12 sm:py-24 lg:px-20">
+          <div className="closing-cta relative mx-auto max-w-[1400px] overflow-hidden rounded-[2rem] bg-[#ded0c1] px-6 py-20 sm:px-12 sm:py-24 lg:px-20" data-reveal="image">
             <div className="relative z-10 max-w-3xl">
               <p className="text-xs font-bold uppercase tracking-[0.22em] text-[#76283c]">Tu próxima sobremesa</p>
               <h2 className="font-display mt-5 text-5xl font-medium leading-[0.9] tracking-[-0.05em] sm:text-7xl">Elige el sabor. Nosotros cuidamos el frío.</h2>
