@@ -593,6 +593,61 @@ section{position:relative}
   box-shadow:0 6px 14px -4px rgba(0,0,0,0.4);transition:transform 0.4s var(--ease-cream);
 }
 .lightbox__close:hover{transform:rotate(90deg) scale(1.08)}
+.lightbox__nav{
+  position:absolute;top:50%;transform:translateY(-50%);z-index:2;
+  width:48px;height:48px;border-radius:50%;border:0;background:var(--crema);color:var(--chocolate);
+  font-size:1.4rem;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;
+  box-shadow:0 6px 14px -4px rgba(0,0,0,0.4);transition:transform 0.4s var(--ease-cream),background 0.4s var(--ease-cream);
+}
+.lightbox__nav:hover{transform:translateY(-50%) scale(1.12);background:var(--fresa)}
+.lightbox__nav--prev{left:clamp(0.5rem,3vw,2rem)}
+.lightbox__nav--next{right:clamp(0.5rem,3vw,2rem)}
+@media (max-width:600px){.lightbox__nav{width:40px;height:40px;font-size:1.2rem}}
+.lightbox__count{
+  position:absolute;top:1.2rem;left:50%;transform:translateX(-50%);z-index:2;
+  background:rgba(255,246,236,0.92);color:var(--chocolate);font-family:var(--display);font-weight:700;font-size:0.85rem;
+  padding:0.4rem 1rem;border-radius:999px;box-shadow:0 6px 14px -4px rgba(0,0,0,0.4);
+}
+
+/* ===== CART CHECKOUT STEP ===== */
+.cart__checkout{display:none;flex-direction:column;gap:0.7rem;padding:0.8rem 1rem 0.4rem}
+.cart.is-checkout .cart__body{display:none}
+.cart.is-checkout .cart__checkout{display:flex}
+.cart.is-checkout .cart__cta .btn__label::before{content:'← '}
+.cart__field{display:flex;flex-direction:column;gap:0.3rem}
+.cart__field label{font-family:var(--body);font-weight:600;font-size:0.8rem;color:var(--chocolate);opacity:0.8}
+.cart__field input,.cart__field textarea{
+  font-family:var(--body);font-size:0.95rem;color:var(--chocolate);
+  background:rgba(255,246,236,0.8);border:1.5px solid rgba(59,35,24,0.18);border-radius:14px;
+  padding:0.6rem 0.9rem;outline:none;transition:border-color 0.4s var(--ease-cream),box-shadow 0.4s var(--ease-cream);
+}
+.cart__field input:focus,.cart__field textarea:focus{border-color:var(--fresa-deep);box-shadow:0 0 0 3px rgba(232,85,122,0.18)}
+.cart__field textarea{resize:vertical;min-height:60px}
+.cart__summary{
+  background:rgba(232,85,122,0.1);border-radius:14px;padding:0.7rem 0.9rem;
+  font-size:0.85rem;color:var(--chocolate);max-height:120px;overflow-y:auto;
+}
+.cart__summary-row{display:flex;justify-content:space-between;padding:0.15rem 0}
+.cart__summary-row span:last-child{font-weight:600}
+.cart__checkout-msg{font-size:0.82rem;color:var(--fresa-deep);min-height:1.1em;font-weight:600;text-align:center}
+.cart__cta-whatsapp{background:linear-gradient(160deg,#B8E0C8,#6FB489);color:var(--chocolate);box-shadow:inset 0 2px 4px rgba(255,255,255,0.4),inset 0 -6px 10px rgba(59,35,24,0.12),0 12px 24px -10px rgba(111,180,137,0.55)}
+
+/* restore toast */
+.restore-toast{
+  position:fixed;left:50%;bottom:max(5.5rem,calc(env(safe-area-inset-bottom) + 5.5rem));transform:translateX(-50%) translateY(20px);
+  z-index:2100;background:var(--chocolate);color:var(--crema);font-family:var(--display);font-weight:700;font-size:0.92rem;
+  padding:0.8rem 1.3rem;border-radius:999px;box-shadow:0 12px 28px -10px rgba(59,35,24,0.6);
+  opacity:0;pointer-events:none;transition:opacity 0.5s var(--ease-cream),transform 0.5s var(--ease-cream);
+  display:flex;align-items:center;gap:0.6rem;max-width:calc(100vw - 2rem);
+}
+.restore-toast.is-show{opacity:1;transform:translateX(-50%) translateY(0);pointer-events:auto}
+.restore-toast .btn-mini{
+  background:var(--fresa);color:var(--chocolate);border:0;border-radius:999px;padding:0.35rem 0.9rem;
+  font-family:var(--display);font-weight:700;font-size:0.82rem;cursor:pointer;transition:transform 0.3s var(--ease-cream);
+}
+.restore-toast .btn-mini:hover{transform:scale(0.94)}
+.restore-toast .btn-mini--ghost{background:transparent;color:var(--crema);opacity:0.7}
+.restore-toast .btn-mini--ghost:hover{opacity:1}
 
 /* ===== STYLING DETAILS ===== */
 /* flavor price tag drip */
@@ -928,7 +983,7 @@ export default function Home() {
         Fresa: '#FFB3C7', 'Vainilla de Papantla': '#FFE8B8', Pistache: '#B8E0C8',
         'Chocolate Oaxaqueño': '#8a5a3c', 'Mango con Chile': '#FFD27A', Cajeta: '#C98A4B',
       };
-      // mini-cart state -> full cart with quantities + prices + total
+      // mini-cart state -> full cart with quantities + prices + total + localStorage + checkout
       const cartBadge = document.querySelector('.float-order__badge') as HTMLElement;
       const cartPop = document.querySelector('.float-order__pop') as HTMLElement;
       const floatOrderEl = document.querySelector('.float-order') as HTMLElement;
@@ -936,10 +991,31 @@ export default function Home() {
       const cartOverlay = document.querySelector('.cart-overlay') as HTMLElement;
       const cartBody = document.querySelector('.cart__body') as HTMLElement;
       const cartTotalVal = document.querySelector('.cart__total-val') as HTMLElement;
+      const cartCtaLabel = document.querySelector('.cart__cta .btn__label') as HTMLElement;
+      const cartCheckout = document.querySelector('.cart__checkout') as HTMLElement;
+      const cartSummary = document.querySelector('.cart__summary') as HTMLElement;
+      const cartCheckoutMsg = document.querySelector('.cart__checkout-msg') as HTMLElement;
       const cartItems: Record<string, { name: string; price: number; color: string; qty: number }> = {};
       const flavorPrice: Record<string, number> = {
         Fresa: 65, 'Vainilla de Papantla': 72, Pistache: 85,
         'Chocolate Oaxaqueño': 78, 'Mango con Chile': 70, Cajeta: 74,
+      };
+      const STORAGE_KEY = 'helado-nube-cart';
+      const saveCart = () => {
+        try { localStorage.setItem(STORAGE_KEY, JSON.stringify(cartItems)); } catch (e) {}
+      };
+      const loadCart = (): boolean => {
+        try {
+          const raw = localStorage.getItem(STORAGE_KEY);
+          if (!raw) return false;
+          const parsed = JSON.parse(raw);
+          if (parsed && typeof parsed === 'object') {
+            Object.keys(cartItems).forEach((k) => delete cartItems[k]);
+            Object.assign(cartItems, parsed);
+            return Object.keys(cartItems).reduce((s, k) => s + cartItems[k].qty, 0) > 0;
+          }
+        } catch (e) {}
+        return false;
       };
       const formatTotal = (n: number) => '$' + n + ' <small>MNX</small>';
       const renderCart = () => {
@@ -951,6 +1027,14 @@ export default function Home() {
           if (count > 0) cartBadge.classList.add('is-active'); else cartBadge.classList.remove('is-active');
         }
         if (cartTotalVal) cartTotalVal.innerHTML = formatTotal(total);
+        // if cart empties, exit checkout view
+        if (count === 0 && cartEl?.classList.contains('is-checkout')) exitCheckout();
+        // render summary (checkout step)
+        if (cartSummary) {
+          cartSummary.innerHTML = keys.length
+            ? keys.map((k) => `<div class="cart__summary-row"><span>${cartItems[k].name} ×${cartItems[k].qty}</span><span>$${cartItems[k].qty * cartItems[k].price}</span></div>`).join('')
+            : '';
+        }
         if (!cartBody) return;
         if (count === 0) {
           cartBody.innerHTML = '<div class="cart__empty"><span class="emoji">🍦</span>Tu carrito está derretido de vacío.<br/>¡Agrega un sabor!</div>';
@@ -975,24 +1059,53 @@ export default function Home() {
         // wire qty buttons
         cartBody.querySelectorAll('.cart__row').forEach((row) => {
           const key = (row as HTMLElement).dataset.key;
-          row.querySelector('.cart__inc')?.addEventListener('click', () => { if (cartItems[key]) { cartItems[key].qty += 1; renderCart(); } });
-          row.querySelector('.cart__dec')?.addEventListener('click', () => { if (cartItems[key]) { cartItems[key].qty -= 1; if (cartItems[key].qty <= 0) delete cartItems[key]; renderCart(); } });
-          row.querySelector('.cart__remove')?.addEventListener('click', () => { delete cartItems[key]; renderCart(); });
+          row.querySelector('.cart__inc')?.addEventListener('click', () => { if (cartItems[key]) { cartItems[key].qty += 1; renderCart(); saveCart(); } });
+          row.querySelector('.cart__dec')?.addEventListener('click', () => { if (cartItems[key]) { cartItems[key].qty -= 1; if (cartItems[key].qty <= 0) delete cartItems[key]; renderCart(); saveCart(); } });
+          row.querySelector('.cart__remove')?.addEventListener('click', () => { delete cartItems[key]; renderCart(); saveCart(); });
         });
+      };
+      // checkout step (form inside cart)
+      const enterCheckout = () => {
+        cartEl?.classList.add('is-checkout');
+        if (cartCtaLabel) cartCtaLabel.textContent = 'Volver';
+        if (cartCheckoutMsg) cartCheckoutMsg.textContent = '';
+      };
+      const exitCheckout = () => {
+        cartEl?.classList.remove('is-checkout');
+        if (cartCtaLabel) cartCtaLabel.textContent = 'Ver mi pedido';
       };
       const openCart = () => {
         if (cartEl) cartEl.classList.add('is-open');
         if (cartOverlay) cartOverlay.classList.add('is-open');
+        exitCheckout();
       };
       const closeCart = () => {
-        if (cartEl) cartEl.classList.remove('is-open');
+        if (cartEl) { cartEl.classList.remove('is-open'); exitCheckout(); }
         if (cartOverlay) cartOverlay.classList.remove('is-open');
       };
       if (cartOverlay) cartOverlay.addEventListener('click', closeCart);
       document.querySelector('.cart__close')?.addEventListener('click', closeCart);
-      document.querySelector('.cart__cta')?.addEventListener('click', () => {
-        closeCart();
-        lenis.scrollTo('#cta-final', { duration: 1.4 });
+      // CTA button: toggles between "Ver mi pedido" (enter checkout) and "Volver" (exit)
+      document.querySelector('.cart__cta')?.addEventListener('click', (e) => {
+        e.preventDefault();
+        if (cartEl?.classList.contains('is-checkout')) { exitCheckout(); return; }
+        const count = Object.keys(cartItems).reduce((s, k) => s + cartItems[k].qty, 0);
+        if (count > 0) enterCheckout();
+      });
+      // WhatsApp checkout submit
+      document.querySelector('.cart__cta-whatsapp')?.addEventListener('click', (e) => {
+        e.preventDefault();
+        const name = (document.querySelector('.cart__field--name input') as HTMLInputElement)?.value.trim();
+        const phone = (document.querySelector('.cart__field--phone input') as HTMLInputElement)?.value.trim();
+        const addr = (document.querySelector('.cart__field--addr textarea') as HTMLTextAreaElement)?.value.trim();
+        if (!name) { if (cartCheckoutMsg) { cartCheckoutMsg.textContent = '¿Cómo te llamas, cremosito?'; cartCheckoutMsg.style.color = 'var(--fresa-deep)'; } return; }
+        if (!phone && !addr) { if (cartCheckoutMsg) { cartCheckoutMsg.textContent = 'Necesitamos un teléfono o dirección para llevártelo.'; cartCheckoutMsg.style.color = 'var(--fresa-deep)'; } return; }
+        const keys = Object.keys(cartItems);
+        const total = keys.reduce((s, k) => s + cartItems[k].qty * cartItems[k].price, 0);
+        const lines = keys.map((k) => `• ${cartItems[k].name} ×${cartItems[k].qty} — $${cartItems[k].qty * cartItems[k].price}`).join('%0A');
+        const msg = `¡Hola Helado Nube! 🍦 Quiero pedir:%0A${lines}%0ATotal: $${total} MNX%0A%0ANombre: ${name}%0ATel: ${phone || '—'}%0ADirección: ${addr || '—'}`;
+        if (cartCheckoutMsg) { cartCheckoutMsg.textContent = '¡Abriendo WhatsApp! Te esperamos cremosito. 🍦'; cartCheckoutMsg.style.color = '#6FB489'; }
+        w.open('https://wa.me/?text=' + msg, '_blank');
       });
       // open cart when clicking the float-order bubble (instead of jumping straight to CTA)
       floatOrderEl?.addEventListener('click', (e) => {
@@ -1000,13 +1113,28 @@ export default function Home() {
         const count = Object.keys(cartItems).reduce((s, k) => s + cartItems[k].qty, 0);
         if (count > 0) openCart(); else lenis.scrollTo('#cta-final', { duration: 1.4 });
       });
+      // restore cart from localStorage on load
+      const hadCart = loadCart();
       renderCart();
+      if (hadCart) {
+        const toast = document.querySelector('.restore-toast') as HTMLElement;
+        if (toast) {
+          const count = Object.keys(cartItems).reduce((s, k) => s + cartItems[k].qty, 0);
+          toast.querySelector('.restore-toast__count')!.textContent = String(count);
+          toast.classList.add('is-show');
+          floatOrderEl?.classList.add('is-visible');
+          toast.querySelector('.btn-mini--open')?.addEventListener('click', () => { openCart(); toast.classList.remove('is-show'); });
+          toast.querySelector('.btn-mini--ghost')?.addEventListener('click', () => { toast.classList.remove('is-show'); });
+          setTimeout(() => toast.classList.remove('is-show'), 8000);
+        }
+      }
       const updateCart = (flavorName: string) => {
         const color = flavorColor[flavorName] || '#FFB3C7';
         const price = flavorPrice[flavorName] || 70;
         if (cartItems[flavorName]) cartItems[flavorName].qty += 1;
         else cartItems[flavorName] = { name: flavorName, price, color, qty: 1 };
         renderCart();
+        saveCart();
         if (cartBadge) {
           cartBadge.classList.remove('pulse');
           void cartBadge.offsetWidth; // reflow to restart animation
@@ -1243,14 +1371,30 @@ export default function Home() {
         marquee.addEventListener('mouseleave', () => gsap.to(track, { timeScale: 1, duration: 0.6 }));
       }
 
-      // ---------- Galeria lightbox ----------
+      // ---------- Galeria lightbox (with prev/next nav) ----------
       const lightbox = document.querySelector('.lightbox') as HTMLElement;
       const lbImg = lightbox?.querySelector('.lightbox__img') as HTMLImageElement;
       const lbCap = lightbox?.querySelector('.lightbox__cap') as HTMLElement;
+      const lbCount = lightbox?.querySelector('.lightbox__count') as HTMLElement;
+      const lbPrev = lightbox?.querySelector('.lightbox__nav--prev') as HTMLElement;
+      const lbNext = lightbox?.querySelector('.lightbox__nav--next') as HTMLElement;
       if (lightbox && lbImg && lbCap) {
-        const openLightbox = (src: string, cap: string) => {
-          lbImg.src = src;
-          lbCap.textContent = cap;
+        const galItems = Array.from(document.querySelectorAll('.gal__item')) as HTMLElement[];
+        let lbIndex = 0;
+        const showAt = (i: number) => {
+          lbIndex = (i + galItems.length) % galItems.length;
+          const img = galItems[lbIndex].querySelector('img');
+          const cap = galItems[lbIndex].querySelector('.gal__cap');
+          if (img) { lbImg.src = img.src; lbImg.alt = img.alt; }
+          if (cap) lbCap.textContent = cap.textContent || '';
+          if (lbCount) lbCount.textContent = `${lbIndex + 1} / ${galItems.length}`;
+          if (lbPrev && lbNext) {
+            lbPrev.style.display = galItems.length > 1 ? 'flex' : 'none';
+            lbNext.style.display = galItems.length > 1 ? 'flex' : 'none';
+          }
+        };
+        const openLightbox = (i: number) => {
+          showAt(i);
           lightbox.classList.add('is-open');
           document.body.style.overflow = 'hidden';
           if (lenis) lenis.stop();
@@ -1260,19 +1404,22 @@ export default function Home() {
           document.body.style.overflow = '';
           if (lenis) lenis.start();
         };
-        document.querySelectorAll('.gal__item').forEach((item) => {
-          const img = item.querySelector('img');
-          const cap = item.querySelector('.gal__cap');
-          item.addEventListener('click', () => {
-            if (img && cap) openLightbox(img.src, cap.textContent || '');
-          });
+        galItems.forEach((item, i) => {
+          item.addEventListener('click', () => openLightbox(i));
           item.setAttribute('role', 'button');
           item.setAttribute('tabindex', '0');
-          item.addEventListener('keydown', (e: KeyboardEvent) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); if (img && cap) openLightbox(img.src, cap.textContent || ''); } });
+          item.addEventListener('keydown', (e: KeyboardEvent) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openLightbox(i); } });
         });
         lightbox.querySelector('.lightbox__close')?.addEventListener('click', closeLightbox);
+        lbPrev?.addEventListener('click', (e: MouseEvent) => { e.stopPropagation(); showAt(lbIndex - 1); });
+        lbNext?.addEventListener('click', (e: MouseEvent) => { e.stopPropagation(); showAt(lbIndex + 1); });
         lightbox.addEventListener('click', (e: MouseEvent) => { if (e.target === lightbox || (e.target as HTMLElement).classList.contains('lightbox__inner')) closeLightbox(); });
-        document.addEventListener('keydown', (e: KeyboardEvent) => { if (e.key === 'Escape' && lightbox.classList.contains('is-open')) closeLightbox(); });
+        document.addEventListener('keydown', (e: KeyboardEvent) => {
+          if (!lightbox.classList.contains('is-open')) return;
+          if (e.key === 'Escape') closeLightbox();
+          else if (e.key === 'ArrowLeft') showAt(lbIndex - 1);
+          else if (e.key === 'ArrowRight') showAt(lbIndex + 1);
+        });
       }
 
       // Refresh after load
@@ -1961,6 +2108,26 @@ export default function Home() {
           <button className="cart__close" aria-label="Cerrar carrito">×</button>
         </div>
         <div className="cart__body" />
+        <div className="cart__checkout">
+          <div className="cart__summary" />
+          <div className="cart__field cart__field--name">
+            <label htmlFor="cart-name">Tu nombre</label>
+            <input id="cart-name" type="text" placeholder="¿Cómo te llamas, cremosito?" />
+          </div>
+          <div className="cart__field cart__field--phone">
+            <label htmlFor="cart-phone">Teléfono (WhatsApp)</label>
+            <input id="cart-phone" type="tel" placeholder="55 1234 5678" />
+          </div>
+          <div className="cart__field cart__field--addr">
+            <label htmlFor="cart-addr">Dirección de entrega</label>
+            <textarea id="cart-addr" placeholder="Calle, número, colonia, referencias..." />
+          </div>
+          <span className="cart__checkout-msg" role="status" aria-live="polite" />
+          <a className="btn cart__cta-whatsapp" href="#cta-final">
+            <span className="btn__label">Enviar por WhatsApp</span>
+            <span className="btn__drips"><i /><i /><i /></span>
+          </a>
+        </div>
         <div className="cart__foot">
           <div className="cart__total">
             <span className="cart__total-label">Total estimado</span>
@@ -1973,9 +2140,19 @@ export default function Home() {
         </div>
       </aside>
 
+      {/* ===== RESTORE TOAST ===== */}
+      <div className="restore-toast" role="status" aria-live="polite">
+        <span>Tu pedido te espera: <span className="restore-toast__count">0</span> 🍦</span>
+        <button className="btn-mini btn-mini--open">Verlo</button>
+        <button className="btn-mini btn-mini--ghost" aria-label="Cerrar">×</button>
+      </div>
+
       {/* ===== LIGHTBOX ===== */}
       <div className="lightbox" role="dialog" aria-label="Vista ampliada" aria-modal="true">
         <button className="lightbox__close" aria-label="Cerrar">×</button>
+        <span className="lightbox__count">1 / 5</span>
+        <button className="lightbox__nav lightbox__nav--prev" aria-label="Anterior">‹</button>
+        <button className="lightbox__nav lightbox__nav--next" aria-label="Siguiente">›</button>
         <div className="lightbox__inner">
           <img className="lightbox__img" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'/%3E" alt="" />
           <div className="lightbox__cap" />
