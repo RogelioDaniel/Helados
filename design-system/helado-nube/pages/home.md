@@ -24,11 +24,11 @@
 - **Texto y utilidad:** Geist, sobria y legible.
 - **Forma:** arcos amplios, círculos imperfectos y bordes finos. Las tarjetas genéricas con sombra se evitan.
 
-## Firma: La Huella del Cucharón
+## Firma: La Mantecación
 
-Dos o tres arcos imperfectos representan el surco que deja el cucharón al servir helado. La firma aparece en el hero, en el indicador de origen y al confirmar que un sabor se agregó. Las microleyendas siempre aportan información real: origen, lote o temporada.
+La experiencia abre, una vez por sesión, con una superficie cremosa que mezcla vainilla, fresa y pistache. Three.js genera pliegues y surcos de helado mediante un único shader; al terminar la carga real, la masa se retira hacia arriba con un borde viscoso y revela la fotografía. El respaldo CSS aparece desde SSR, el cierre nunca espera al chunk de Three y existe un límite duro para no bloquear el contenido.
 
-La escena Three.js del hero extiende esta firma con anillos tridimensionales y pequeñas partículas de ingrediente. Se carga de forma diferida, mantiene la fotografía como respaldo, limita el pixel ratio y se detiene fuera del viewport.
+La huella del cucharón queda como gesto secundario y funcional: aparece sobre la fotografía de un sabor al enfocarlo y en la compresión breve del botón “Servir”. No se representa mediante órbitas, partículas ni objetos flotantes.
 
 ## Composición
 
@@ -38,7 +38,7 @@ desktop
 │ navegación sobria                         pedido (0)      │
 ├──────────────────────────────────────────────────────────┤
 │ FOTO EDITORIAL FULL-WIDTH: copy en espacio negativo      │
-│ H1 + CTA                    cono + huella tridimensional  │
+│ H1 + CTA                    cono limpio, sin decoración   │
 ├──────────────────────────────────────────────────────────┤
 │ sello/origen       carta interactiva y pedido            │
 ├──────────────────────────────────────────────────────────┤
@@ -51,14 +51,16 @@ En móvil, copy y fotografía se separan para preservar legibilidad; la escena 3
 ## Movimiento
 
 - Feedback: `140ms`; UI: `240ms`; reveal: `520–800ms`; curva principal `cubic-bezier(.22,1,.36,1)`.
-- Un solo momento coreografiado en el hero: copy, máscara fotográfica, Huella y escena 3D.
-- Los títulos y fotografías importantes se revelan al entrar; el cuerpo permanece estable y legible.
-- Parallax máximo de 6–10px y tilt máximo de 1.5 grados.
-- Los botones se comprimen levemente al presionar; nunca rebotan de forma caricaturesca.
+- Un solo momento coreografiado principal: la introducción Three.js “La Mantecación”; se muestra como máximo una vez por sesión.
+- Las fotografías importantes se revelan como una cucharada circular; el cuerpo permanece estable y legible.
+- Al servir un sabor, una pequeña muestra del color correspondiente sube y vuelve al botón mientras el carrito se actualiza de inmediato.
+- La sección de eventos termina en un borde derretido sobrio y el carrito marca la cadena de frío con una línea de escarcha breve.
+- Los botones se comprimen levemente al presionar; nunca rebotan de forma caricaturesca ni se mueven sin interacción.
 - `prefers-reduced-motion` conserva todas las funciones, detiene RAF y elimina transformaciones no esenciales.
 
 ## Límites
 
-- Nada de preloader, cursor personalizado, scroll suavizado artificial, contadores inventados, glows, emojis como iconos o animación constante en cada sección.
-- La fotografía sigue vendiendo el producto. Three.js aporta firma y profundidad; no la sustituye.
+- Nada de partículas, órbitas, cursor personalizado, scroll suavizado artificial, contadores inventados, glows, emojis como iconos o animación constante en cada sección.
+- La introducción es una capa decorativa breve, no una espera artificial: respaldo CSS inmediato, salida forzada y contenido ya renderizado debajo.
+- La fotografía sigue vendiendo el producto. Three.js expresa la textura de la mezcla y desaparece al terminar; no compite con el hero.
 - Contraste mínimo 4.5:1, controles de 44px, foco visible y ausencia de scroll horizontal desde 320px.

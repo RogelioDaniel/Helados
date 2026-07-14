@@ -1,7 +1,5 @@
 import Image from 'next/image';
 import { ArrowDownRight, ArrowRight, Clock3, MapPin, Snowflake } from 'lucide-react';
-import { HeroSceneGate } from './hero-scene-gate';
-import { ScoopTrace } from './scoop-trace';
 
 type LuxuryHeroProps = {
   itemCount: number;
@@ -22,10 +20,10 @@ export function LuxuryHero({ itemCount, onOpenCart }: LuxuryHeroProps) {
           priority
           sizes="(max-width: 768px) 100vw, 1540px"
           className="nube-hero-image object-cover object-[68%_center] sm:object-[62%_center] lg:object-center"
+          data-hero-image
         />
         <div className="nube-hero-wash absolute inset-0" aria-hidden="true" />
         <div className="nube-hero-vignette absolute inset-0" aria-hidden="true" />
-        <HeroSceneGate />
 
         <div className="absolute left-5 right-5 top-8 z-20 max-w-[680px] sm:left-9 sm:right-auto sm:top-12 lg:left-[clamp(3.5rem,7vw,7.75rem)] lg:top-1/2 lg:w-[48%] lg:-translate-y-1/2">
           <p className="hero-copy hero-copy-1 flex items-center gap-3 text-[10px] font-bold uppercase tracking-[0.24em] text-[#8e2f3f] sm:text-xs">
@@ -86,8 +84,6 @@ export function LuxuryHero({ itemCount, onOpenCart }: LuxuryHeroProps) {
             <ArrowRight className="h-4 w-4 rotate-90 transition-transform duration-300 group-hover:translate-y-0.5" />
           </a>
         </div>
-
-        <ScoopTrace className="scoop-trace absolute -bottom-8 -right-9 z-10 h-[310px] w-[310px] text-white/80 sm:-bottom-12 sm:right-2 sm:h-[430px] sm:w-[430px] lg:-bottom-20 lg:right-[3%] lg:h-[560px] lg:w-[560px]" />
       </div>
     </section>
   );

@@ -14,7 +14,15 @@ import {
   Snowflake,
   X,
 } from 'lucide-react';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import {
+  type CSSProperties,
+  type MouseEvent as ReactMouseEvent,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
+import { CreamIntro } from '@/components/landing/cream-intro';
 import { LuxuryEffects } from '@/components/landing/luxury-effects';
 import { LuxuryHero } from '@/components/landing/luxury-hero';
 
@@ -27,6 +35,7 @@ type Flavor = {
   price: number;
   image: string;
   imageAlt: string;
+  color: string;
 };
 
 const FLAVORS: Flavor[] = [
@@ -39,6 +48,7 @@ const FLAVORS: Flavor[] = [
     price: 65,
     image: '/img/historia-1.png',
     imageAlt: 'Helado artesanal de fresa servido con fresas frescas',
+    color: '#a73f55',
   },
   {
     id: 'vainilla',
@@ -49,6 +59,7 @@ const FLAVORS: Flavor[] = [
     price: 72,
     image: '/img/historia-2.png',
     imageAlt: 'Helado cremoso de vainilla servido con cuchara',
+    color: '#d8bb8b',
   },
   {
     id: 'pistache',
@@ -59,6 +70,7 @@ const FLAVORS: Flavor[] = [
     price: 85,
     image: '/img/historia-3.png',
     imageAlt: 'Cono de helado artesanal de pistache con pistaches tostados',
+    color: '#789170',
   },
   {
     id: 'chocolate',
@@ -69,6 +81,7 @@ const FLAVORS: Flavor[] = [
     price: 78,
     image: '/img/gallery-3.png',
     imageAlt: 'Helado de chocolate oaxaqueño con textura intensa',
+    color: '#5b362b',
   },
   {
     id: 'mango',
@@ -79,6 +92,7 @@ const FLAVORS: Flavor[] = [
     price: 70,
     image: '/img/gallery-2.png',
     imageAlt: 'Helado artesanal de mango con un toque de chile',
+    color: '#c98b32',
   },
   {
     id: 'cajeta',
@@ -89,6 +103,7 @@ const FLAVORS: Flavor[] = [
     price: 74,
     image: '/img/gallery-4.png',
     imageAlt: 'Helado de cajeta de Celaya con caramelo',
+    color: '#a46b3f',
   },
 ];
 
@@ -221,9 +236,28 @@ export default function Home() {
     '¿Me ayudan a confirmar disponibilidad, entrega y forma de pago?',
   ].join('\n');
 
-  function addFlavor(flavor: Flavor) {
+  function addFlavor(flavor: Flavor, event?: ReactMouseEvent<HTMLButtonElement>) {
     setCart((current) => ({ ...current, [flavor.id]: (current[flavor.id] ?? 0) + 1 }));
     setRecentlyAdded(flavor.name);
+
+    if (!event || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    event.currentTarget.animate(
+      [
+        { transform: 'scale(1, 1)' },
+        { transform: 'scale(1.035, 0.94)', offset: 0.38 },
+        { transform: 'scale(0.985, 1.025)', offset: 0.68 },
+        { transform: 'scale(1, 1)' },
+      ],
+      { duration: 420, easing: 'cubic-bezier(.16,1,.3,1)' },
+    );
+    event.currentTarget.querySelector<HTMLElement>('[data-scoop-dot]')?.animate(
+      [
+        { transform: 'translate3d(0, 0, 0) scale(1)' },
+        { transform: 'translate3d(0, -9px, 0) scale(1.5)', offset: 0.48 },
+        { transform: 'translate3d(0, 0, 0) scale(1)' },
+      ],
+      { duration: 520, easing: 'cubic-bezier(.16,1,.3,1)' },
+    );
   }
 
   function updateQuantity(id: string, quantity: number) {
@@ -271,6 +305,7 @@ export default function Home() {
 
   return (
     <main className="min-h-[100dvh] overflow-x-clip bg-[#f5efe5] text-[#211a17]">
+      <CreamIntro />
       <LuxuryEffects />
       <script
         type="application/ld+json"
@@ -423,14 +458,15 @@ export default function Home() {
                       className="flavor-row group grid grid-cols-[92px_minmax(0,1fr)] gap-x-4 gap-y-5 border-t border-[#211a17]/15 py-6 sm:grid-cols-[128px_minmax(0,1fr)] sm:gap-x-6 sm:py-8 lg:grid-cols-[150px_minmax(0,1fr)_100px_142px] lg:items-center lg:gap-7"
                       data-flavor-row
                       data-reveal="row"
+                      style={{ '--flavor-color': flavor.color } as CSSProperties}
                     >
-                      <div className="relative aspect-square overflow-hidden rounded-full bg-[#e5d8ca]">
+                      <div className="flavor-scoop-thumb relative aspect-square overflow-hidden rounded-full bg-[#e5d8ca]">
                         <Image
                           src={flavor.image}
                           alt={flavor.imageAlt}
                           fill
                           sizes="150px"
-                          className="object-cover transition-transform duration-700 group-hover:scale-105"
+                          className="object-cover transition-transform duration-700 group-hover:scale-[1.025]"
                         />
                         <span className="absolute left-2 top-2 grid h-7 w-7 place-items-center rounded-full border border-white/30 bg-[#211a17]/45 text-[9px] font-semibold text-white backdrop-blur-sm">
                           {String(index + 1).padStart(2, '0')}
@@ -451,11 +487,16 @@ export default function Home() {
                       </div>
                       <button
                         type="button"
-                        onClick={() => addFlavor(flavor)}
-                        className="col-start-2 inline-flex min-h-11 items-center justify-center gap-2 rounded-full border border-[#211a17]/20 px-5 text-xs font-bold uppercase tracking-[0.08em] transition-colors hover:border-[#76283c] hover:bg-[#76283c] hover:text-white active:scale-[0.98] lg:col-auto"
+                        onClick={(event) => addFlavor(flavor, event)}
+                        className="scoop-add-button col-start-2 inline-flex min-h-11 items-center justify-center gap-2 rounded-full border border-[#211a17]/20 px-5 text-xs font-bold uppercase tracking-[0.08em] hover:border-[#76283c] hover:bg-[#76283c] hover:text-white lg:col-auto"
                       >
-                        <Plus className="h-4 w-4" strokeWidth={1.8} />
-                        Añadir
+                        <span className="scoop-add-dot" data-scoop-dot aria-hidden="true" />
+                        {recentlyAdded === flavor.name ? (
+                          <Check className="h-4 w-4" strokeWidth={1.8} />
+                        ) : (
+                          <Plus className="h-4 w-4" strokeWidth={1.8} />
+                        )}
+                        {recentlyAdded === flavor.name ? 'Servido' : 'Servir'}
                       </button>
                     </article>
                   ))}
@@ -596,7 +637,7 @@ export default function Home() {
           </div>
         </section>
 
-        <section className="bg-[#76283c] py-20 text-white sm:py-24">
+        <section className="melting-section relative bg-[#76283c] py-20 text-white sm:py-24">
           <div className="mx-auto grid max-w-[1400px] gap-10 px-5 sm:px-8 lg:grid-cols-12 lg:items-center lg:px-12">
             <div className="lg:col-span-8" data-reveal="copy">
               <p className="text-xs font-bold uppercase tracking-[0.22em] text-white/55">Bodas · Celebraciones · Eventos de marca</p>
@@ -617,6 +658,7 @@ export default function Home() {
               </a>
             </div>
           </div>
+          <span className="melt-edge" aria-hidden="true" />
         </section>
 
         <section id="preguntas" className="scroll-mt-24 py-24 sm:py-32">
@@ -729,8 +771,8 @@ export default function Home() {
           role="dialog"
           aria-modal="true"
           aria-labelledby="cart-title"
-          className={`absolute inset-y-0 right-0 flex w-full max-w-[520px] flex-col bg-[#faf5ed] shadow-[-28px_0_80px_-40px_rgba(33,26,23,0.5)] transition-transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] ${
-            cartOpen ? 'translate-x-0' : 'translate-x-full'
+          className={`cart-drawer absolute inset-y-0 right-0 flex w-full max-w-[520px] flex-col bg-[#faf5ed] shadow-[-28px_0_80px_-40px_rgba(33,26,23,0.5)] transition-transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+            cartOpen ? 'cart-drawer-open translate-x-0' : 'translate-x-full'
           }`}
         >
           <div className="flex h-[82px] items-center justify-between border-b border-[#211a17]/12 px-5 sm:px-7">
@@ -852,9 +894,10 @@ export default function Home() {
       )}
 
       <div
-        className={`pointer-events-none fixed bottom-6 left-1/2 z-[90] flex -translate-x-1/2 items-center gap-2 rounded-full bg-[#211a17] px-5 py-3 text-xs font-semibold text-white shadow-xl transition-all duration-500 ${
+        className={`served-toast pointer-events-none fixed bottom-6 left-1/2 z-[90] flex -translate-x-1/2 items-center gap-2 rounded-full bg-[#211a17] px-5 py-3 text-xs font-semibold text-white shadow-xl transition-[transform,opacity] duration-500 ${
           recentlyAdded ? 'translate-y-0 opacity-100' : 'translate-y-5 opacity-0'
         }`}
+        data-active={Boolean(recentlyAdded)}
         role="status"
         aria-live="polite"
       >
