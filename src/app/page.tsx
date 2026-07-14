@@ -359,6 +359,116 @@ section{position:relative}
 /* blob reveal path */
 @keyframes wobble{0%,100%{border-radius:48% 52% 55% 45% / 45% 48% 52% 55%}50%{border-radius:55% 45% 48% 52% / 52% 55% 45% 48%}}
 
+/* ===== SKIP LINK ===== */
+.skip-link{
+  position:fixed;top:-100px;left:1rem;z-index:10000;
+  background:var(--chocolate);color:var(--crema);
+  font-family:var(--display);font-weight:700;font-size:0.95rem;
+  padding:0.7rem 1.4rem;border-radius:0 0 999px 999px;
+  text-decoration:none;transition:top 0.5s var(--ease-cream);
+  box-shadow:0 8px 20px -8px rgba(59,35,24,0.5);
+}
+.skip-link:focus{top:0}
+
+/* ===== SCROLL PROGRESS DRIP ===== */
+.scroll-drip{
+  position:fixed;left:max(0.8rem,env(safe-area-inset-left));top:50%;transform:translateY(-50%);
+  width:14px;height:min(46vh,320px);z-index:150;pointer-events:none;
+  display:flex;flex-direction:column;align-items:center;
+}
+.scroll-drip__track{width:100%;height:100%;background:rgba(59,35,24,0.1);border-radius:999px;overflow:hidden;position:relative}
+.scroll-drip__fill{
+  position:absolute;left:0;right:0;top:0;height:0%;
+  background:linear-gradient(180deg,var(--fresa),var(--fresa-deep));
+  border-radius:999px;
+  box-shadow:inset 0 2px 4px rgba(255,255,255,0.5);
+}
+.scroll-drip__head{
+  position:absolute;left:50%;bottom:-6px;transform:translateX(-50%);
+  width:18px;height:18px;border-radius:50%;
+  background:var(--fresa-deep);
+  filter:url(#goo-strong);opacity:0;
+}
+@media (max-width:760px){.scroll-drip{display:none}}
+
+/* ===== HERO FLOATING BUBBLES (balance the right side) ===== */
+.hero__bubbles{position:absolute;inset:0;pointer-events:none;z-index:1;overflow:hidden}
+.hero__bubble{
+  position:absolute;border-radius:50%;
+  filter:blur(0.5px);opacity:0.85;
+  box-shadow:inset 0 4px 8px rgba(255,255,255,0.5),inset 0 -6px 10px rgba(59,35,24,0.08);
+  will-change:transform;
+}
+.hero__bubble::after{
+  content:'';position:absolute;left:24%;top:18%;width:32%;height:26%;
+  border-radius:50%;background:rgba(255,255,255,0.6);filter:blur(2px);
+}
+@media (max-width:900px){.hero__bubbles{display:none}}
+
+/* ===== TESTIMONIOS ===== */
+#testimonios{background:var(--crema);padding:clamp(4rem,8vw,7rem) 0;overflow:hidden}
+.testi__head{text-align:center;max-width:640px;margin:0 auto 3rem}
+.testi__head .section__title{margin-left:auto;margin-right:auto}
+.testi__marquee{position:relative;width:100%;overflow:hidden;-webkit-mask-image:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent);mask-image:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent)}
+.testi__track{display:flex;gap:1.4rem;width:max-content;will-change:transform}
+.testi__card{
+  --tc:var(--fresa);
+  flex:0 0 340px;background:var(--tc);color:var(--chocolate);
+  border-radius:46% 54% 52% 48% / 50% 46% 54% 50%;
+  padding:2rem 1.8rem 2.2rem;display:flex;flex-direction:column;gap:0.9rem;
+  box-shadow:inset 0 3px 8px rgba(255,255,255,0.5),inset 0 -8px 14px rgba(59,35,24,0.1),0 20px 36px -20px rgba(59,35,24,0.3);
+  animation:blobMorph 16s var(--ease-cream) infinite alternate;
+  position:relative;
+}
+.testi__avatar{display:flex;align-items:center;gap:0.8rem}
+.testi__avatar-goo{width:54px;height:54px;flex-shrink:0;filter:url(#goo);position:relative}
+.testi__avatar-goo .head{position:absolute;inset:0;border-radius:50%;background:rgba(255,255,255,0.7)}
+.testi__avatar-goo .head::after{content:'';position:absolute;left:22%;top:16%;width:34%;height:28%;border-radius:50%;background:rgba(255,255,255,0.85);filter:blur(1px)}
+.testi__avatar-goo .drip{position:absolute;left:50%;bottom:-2px;width:10px;height:10px;border-radius:50%;background:rgba(255,255,255,0.7);transform:translateX(-50%)}
+.testi__who{font-family:var(--display);font-weight:700;font-size:1.05rem;line-height:1.1}
+.testi__where{font-size:0.82rem;opacity:0.7;font-weight:500}
+.testi__stars{color:var(--fresa-deep);font-size:1rem;letter-spacing:2px;margin-top:0.2rem}
+.testi__quote{font-size:1.02rem;line-height:1.5;font-weight:500}
+.testi__quote::before{content:'“';font-family:var(--display);font-size:1.6rem;line-height:0;vertical-align:-0.3em;color:var(--chocolate);opacity:0.4;margin-right:0.15em}
+.testi__quote::after{content:'”';font-family:var(--display);font-size:1.6rem;line-height:0;vertical-align:-0.3em;color:var(--chocolate);opacity:0.4;margin-left:0.1em}
+.testi__rating-row{display:flex;align-items:center;justify-content:space-between;margin-top:auto;padding-top:0.4rem}
+.testi__flavor-tag{font-family:var(--display);font-weight:600;font-size:0.78rem;background:rgba(59,35,24,0.12);padding:0.3rem 0.8rem;border-radius:999px}
+
+/* ===== FLOATING ORDER BUBBLE ===== */
+.float-order{
+  position:fixed;right:max(1.2rem,env(safe-area-inset-right));bottom:max(1.2rem,env(safe-area-inset-bottom));
+  z-index:180;pointer-events:none;opacity:0;transform:translateY(20px) scale(0.8);
+  transition:opacity 0.6s var(--ease-cream),transform 0.6s var(--ease-cream);
+  will-change:transform,opacity;
+}
+.float-order.is-visible{opacity:1;transform:translateY(0) scale(1);pointer-events:auto}
+.float-order__goo{position:relative;width:74px;height:84px;filter:url(#goo-strong);cursor:pointer}
+.float-order__scoop{
+  position:absolute;left:50%;top:0;transform:translateX(-50%);
+  width:64px;height:58px;border-radius:50% 50% 46% 46% / 60% 60% 40% 40%;
+  background:linear-gradient(160deg,#FFD9E3,var(--fresa-deep));
+  box-shadow:inset 0 3px 6px rgba(255,255,255,0.6),inset 0 -6px 10px rgba(59,35,24,0.18);
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--display);font-weight:800;font-size:0.72rem;color:var(--chocolate);
+  text-align:center;line-height:1;padding-top:4px;
+}
+.float-order__drip{position:absolute;left:50%;bottom:6px;transform:translateX(-50%);width:14px;height:14px;border-radius:50%;background:var(--fresa-deep)}
+.float-order__pulse{position:absolute;inset:0;border-radius:50%;border:2px solid var(--fresa-deep);opacity:0;animation:floatPulse 2.6s var(--ease-cream) infinite}
+@keyframes floatPulse{0%{transform:scale(0.8);opacity:0.5}100%{transform:scale(1.6);opacity:0}}
+.float-order__label{
+  position:absolute;right:90px;top:50%;transform:translateY(-50%);
+  background:var(--chocolate);color:var(--crema);font-family:var(--display);font-weight:700;font-size:0.85rem;
+  padding:0.5rem 0.9rem;border-radius:999px;white-space:nowrap;
+  box-shadow:0 8px 18px -8px rgba(59,35,24,0.5);opacity:0;transition:opacity 0.4s var(--ease-cream);
+}
+.float-order:hover .float-order__label{opacity:1}
+@media (max-width:600px){.float-order__label{display:none}}
+
+/* proceso icon hover */
+.proceso__step{cursor:default}
+.proceso__icon{transition:transform 0.5s var(--ease-cream)}
+@media (hover:hover){.proceso__step:hover .proceso__icon{transform:translateY(-6px) scale(1.05)}}
+
 /* reduced motion */
 @media (prefers-reduced-motion:reduce){
   *{animation:none !important;transition:none !important}
@@ -367,6 +477,9 @@ section{position:relative}
   .preloader{transition:opacity 0.4s linear}
   .reveal{opacity:1 !important}
   .media-clip{clip-path:none !important}
+  .scroll-drip{display:none}
+  .hero__bubbles{display:none}
+  .float-order{transition:opacity 0.4s linear}
 }
 `;
 
@@ -725,6 +838,77 @@ export default function Home() {
           .set(scrollDrop, { y: 0, opacity: 0 });
       }
 
+      // ---------- Hero floating bubbles (balance + ambient) ----------
+      const bubbleColors = ['var(--fresa)', 'var(--vainilla)', 'var(--pistache)', 'var(--mango)'];
+      const bubbleField = document.querySelector('.hero__bubbles');
+      if (bubbleField && !isTouch) {
+        const bubbles = Array.from(bubbleField.querySelectorAll('.hero__bubble'));
+        bubbles.forEach((b, i) => {
+          gsap.to(b, {
+            y: () => '+=' + (30 + Math.random() * 40),
+            x: () => '+=' + (Math.random() * 30 - 15),
+            duration: 5 + Math.random() * 4,
+            ease: 'sine.inOut',
+            yoyo: true,
+            repeat: -1,
+          });
+          gsap.from(b, { opacity: 0, scale: 0.6, duration: 1.2, ease: 'elastic.out(1,0.6)', delay: 3 + i * 0.3 });
+        });
+      }
+
+      // ---------- Scroll progress drip ----------
+      const dripFill = document.querySelector('.scroll-drip__fill') as HTMLElement;
+      const dripHead = document.querySelector('.scroll-drip__head') as HTMLElement;
+      if (dripFill && dripHead) {
+        const updateDrip = () => {
+          const st = document.documentElement.scrollTop;
+          const max = document.documentElement.scrollHeight - w.innerHeight;
+          const p = max > 0 ? Math.min(1, Math.max(0, st / max)) : 0;
+          dripFill.style.height = (p * 100) + '%';
+          dripHead.style.opacity = p > 0.02 && p < 0.98 ? '1' : '0';
+        };
+        updateDrip();
+        w.addEventListener('scroll', updateDrip, { passive: true });
+      }
+
+      // ---------- Floating order bubble (appear after hero) ----------
+      const floatOrder = document.querySelector('.float-order') as HTMLElement;
+      if (floatOrder) {
+        ScrollTrigger.create({
+          trigger: '.hero', start: 'bottom 80%',
+          onEnter: () => floatOrder.classList.add('is-visible'),
+          onLeaveBack: () => floatOrder.classList.remove('is-visible'),
+        });
+        // hover swell on the scoop
+        const scoopEl = floatOrder.querySelector('.float-order__scoop') as HTMLElement;
+        floatOrder.addEventListener('mouseenter', () => {
+          gsap.to(scoopEl, { scale: 1.12, duration: 0.5, ease: 'elastic.out(1,0.5)', transformOrigin: 'center bottom' });
+        });
+        floatOrder.addEventListener('mouseleave', () => {
+          gsap.to(scoopEl, { scale: 1, duration: 0.6, ease: 'elastic.out(1,0.4)' });
+        });
+        floatOrder.addEventListener('click', () => {
+          gsap.timeline()
+            .to(scoopEl, { scaleY: 0.82, scaleX: 1.08, duration: 0.12, ease: 'power2.out' })
+            .to(scoopEl, { scaleY: 1, scaleX: 1, duration: 0.6, ease: 'elastic.out(1,0.4)' });
+        });
+      }
+
+      // ---------- Testimonios marquee ----------
+      const track = document.querySelector('.testi__track') as HTMLElement;
+      if (track) {
+        // duplicate content for seamless loop
+        track.innerHTML += track.innerHTML;
+        const distance = track.scrollWidth / 2;
+        gsap.to(track, {
+          x: -distance, duration: 38, ease: 'none', repeat: -1,
+        });
+        // pause on hover
+        const marquee = document.querySelector('.testi__marquee') as HTMLElement;
+        marquee.addEventListener('mouseenter', () => gsap.to(track, { timeScale: 0.15, duration: 0.6 }));
+        marquee.addEventListener('mouseleave', () => gsap.to(track, { timeScale: 1, duration: 0.6 }));
+      }
+
       // Refresh after load
       w.addEventListener('load', () => ScrollTrigger.refresh());
       gsap.delayedCall(4, () => ScrollTrigger.refresh());
@@ -842,6 +1026,17 @@ export default function Home() {
 
       <div className="grain" aria-hidden="true" />
 
+      {/* ===== SKIP TO CONTENT ===== */}
+      <a className="skip-link" href="#top">Saltar al contenido</a>
+
+      {/* ===== SCROLL PROGRESS DRIP ===== */}
+      <div className="scroll-drip" aria-hidden="true">
+        <div className="scroll-drip__track">
+          <div className="scroll-drip__fill" />
+        </div>
+        <div className="scroll-drip__head" />
+      </div>
+
       {/* ===== CUSTOM CURSOR ===== */}
       <div className="cursor-goo" aria-hidden="true">
         <div className="blob" />
@@ -897,6 +1092,14 @@ export default function Home() {
         {/* ===== HERO ===== */}
         <section className="hero wrap" aria-labelledby="hero-title">
           <h1 id="hero-title" className="sr-only">Helado Nube</h1>
+          {/* Floating flavor bubbles — balance the right side & add ambient melt life */}
+          <div className="hero__bubbles" aria-hidden="true">
+            <span className="hero__bubble" style={{ width: 64, height: 64, top: '8%', right: '4%', background: 'var(--fresa)' }} />
+            <span className="hero__bubble" style={{ width: 38, height: 38, top: '24%', right: '22%', background: 'var(--vainilla)' }} />
+            <span className="hero__bubble" style={{ width: 52, height: 52, top: '52%', right: '10%', background: 'var(--pistache)' }} />
+            <span className="hero__bubble" style={{ width: 30, height: 30, top: '68%', right: '28%', background: 'var(--mango)' }} />
+            <span className="hero__bubble" style={{ width: 26, height: 26, top: '38%', right: '36%', background: 'var(--fresa)' }} />
+          </div>
           <span className="hero__eyebrow">
             <span className="pip" /> Helado artesanal · Hecho en México
           </span>
@@ -1167,6 +1370,112 @@ export default function Home() {
           </div>
         </section>
 
+        {/* ===== DIVIDER proceso -> testimonios ===== */}
+        <div className="drip-divider" aria-hidden="true" style={{ height: 'clamp(40px,6vw,80px)' }}>
+          <svg viewBox="0 0 1440 80" preserveAspectRatio="none">
+            <path d="M0,0 L1440,0 L1440,24 C1320,58 1200,10 1080,38 C960,66 840,8 720,36 C600,64 480,10 360,38 C240,66 120,12 0,40 Z" fill="var(--crema)" />
+          </svg>
+        </div>
+
+        {/* ===== TESTIMONIOS ===== */}
+        <section id="testimonios" className="section" aria-labelledby="testi-title">
+          <div className="wrap">
+            <div className="testi__head">
+              <span className="section__eyebrow reveal">La gente ya se derritió</span>
+              <h2 id="testi-title" className="section__title reveal" style={{ fontSize: 'clamp(2rem,5vw,3.6rem)' }}>Lo que dice quien ya probó</h2>
+              <p className="section__sub reveal" style={{ margin: '0 auto' }}>Reseñas reales de clientes que pidieron y se les aflojó la sonrisa.</p>
+            </div>
+          </div>
+          <div className="testi__marquee" aria-label="Testimonios de clientes">
+            <div className="testi__track">
+              <article className="testi__card" style={{ ['--tc' as any]: 'var(--fresa)' }}>
+                <div className="testi__avatar">
+                  <div className="testi__avatar-goo"><div className="head" /><div className="drip" /></div>
+                  <div>
+                    <div className="testi__who">Mariana G.</div>
+                    <div className="testi__where">Roma Norte, CDMX</div>
+                  </div>
+                </div>
+                <p className="testi__quote">El de fresa sabe a mi infancia, pero más rico. Llegó frío y con una nota escrita a mano. Ya pedí tres veces.</p>
+                <div className="testi__rating-row">
+                  <span className="testi__stars">★★★★★</span>
+                  <span className="testi__flavor-tag">Fresa</span>
+                </div>
+              </article>
+              <article className="testi__card" style={{ ['--tc' as any]: 'var(--pistache)' }}>
+                <div className="testi__avatar">
+                  <div className="testi__avatar-goo"><div className="head" /><div className="drip" /></div>
+                  <div>
+                    <div className="testi__who">Don Refugio</div>
+                    <div className="testi__where">Coyoacán, CDMX</div>
+                  </div>
+                </div>
+                <p className="testi__quote">El pistache molido a mano se siente. Ningún helado de bodega le llega. Cremoso de verdad, no de cartón.</p>
+                <div className="testi__rating-row">
+                  <span className="testi__stars">★★★★★</span>
+                  <span className="testi__flavor-tag">Pistache</span>
+                </div>
+              </article>
+              <article className="testi__card" style={{ ['--tc' as any]: 'var(--vainilla)' }}>
+                <div className="testi__avatar">
+                  <div className="testi__avatar-goo"><div className="head" /><div className="drip" /></div>
+                  <div>
+                    <div className="testi__who">La Toñita</div>
+                    <div className="testi__where">Pátzcuaro, Mich</div>
+                  </div>
+                </div>
+                <p className="testi__quote">La vainilla me regresó al mercado de chiquita. Huele a Papantla de verdad. Hasta mi abuela lo aprobó.</p>
+                <div className="testi__rating-row">
+                  <span className="testi__stars">★★★★★</span>
+                  <span className="testi__flavor-tag">Vainilla</span>
+                </div>
+              </article>
+              <article className="testi__card" style={{ ['--tc' as any]: 'var(--mango)' }}>
+                <div className="testi__avatar">
+                  <div className="testi__avatar-goo"><div className="head" /><div className="drip" /></div>
+                  <div>
+                    <div className="testi__who">Diego R.</div>
+                    <div className="testi__where">Condesa, CDMX</div>
+                  </div>
+                </div>
+                <p className="testi__quote">El mango con chile pica poquito, justo. Mi novia y yo nos lo acabamos en el parque. Repetiremos.</p>
+                <div className="testi__rating-row">
+                  <span className="testi__stars">★★★★☆</span>
+                  <span className="testi__flavor-tag">Mango con Chile</span>
+                </div>
+              </article>
+              <article className="testi__card" style={{ ['--tc' as any]: '#E9C9A8' }}>
+                <div className="testi__avatar">
+                  <div className="testi__avatar-goo"><div className="head" /><div className="drip" /></div>
+                  <div>
+                    <div className="testi__who">Chef Lalo</div>
+                    <div className="testi__where">Polanco, CDMX</div>
+                  </div>
+                </div>
+                <p className="testi__quote">El chocolate oaxaqueño lo pongo en mi postre del menú. Intenso, con cuerpo. Ya es ingrediente de casa.</p>
+                <div className="testi__rating-row">
+                  <span className="testi__stars">★★★★★</span>
+                  <span className="testi__flavor-tag">Chocolate</span>
+                </div>
+              </article>
+              <article className="testi__card" style={{ ['--tc' as any]: '#E6C39A' }}>
+                <div className="testi__avatar">
+                  <div className="testi__avatar-goo"><div className="head" /><div className="drip" /></div>
+                  <div>
+                    <div className="testi__who">Doña Chelo</div>
+                    <div className="testi__where">Del Valle, CDMX</div>
+                  </div>
+                </div>
+                <p className="testi__quote">La cajeta sabe a rancho, a leña lenta. Me acordé de mi abuelo cajetero. Esto sí es helado con memoria.</p>
+                <div className="testi__rating-row">
+                  <span className="testi__stars">★★★★★</span>
+                  <span className="testi__flavor-tag">Cajeta</span>
+                </div>
+              </article>
+            </div>
+          </div>
+        </section>
+
         {/* ===== CTA FINAL ===== */}
         <section id="cta-final" aria-labelledby="cta-title">
           <div className="wrap" style={{ textAlign: 'center' }}>
@@ -1238,6 +1547,16 @@ export default function Home() {
           </div>
         </div>
       </footer>
+
+      {/* ===== FLOATING ORDER BUBBLE (sticky conversion CTA) ===== */}
+      <a className="float-order" href="#cta-final" aria-label="Ordenar helado ahora" data-cursor>
+        <span className="float-order__label">¡Pídelo cremosito!</span>
+        <div className="float-order__goo">
+          <div className="float-order__scoop">Ordenar</div>
+          <div className="float-order__drip" />
+          <span className="float-order__pulse" />
+        </div>
+      </a>
     </>
   );
 }
