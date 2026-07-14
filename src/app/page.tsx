@@ -283,6 +283,7 @@ section{position:relative}
 }
 .historia__scene{position:absolute;inset:0;width:100%;height:100%}
 .historia__scene svg{width:100%;height:100%;display:block}
+.historia__scene img{width:100%;height:100%;display:block;object-fit:cover}
 .historia__text p{font-size:1.08rem;color:var(--chocolate);margin-bottom:1.1rem;opacity:0;max-width:42ch}
 .historia__text .lead{font-family:var(--display);font-weight:700;font-size:clamp(1.4rem,2.4vw,2rem);color:var(--chocolate);margin-bottom:1.4rem;opacity:0}
 .historia__sig{margin-top:1.5rem;font-family:var(--display);font-style:italic;color:var(--fresa-deep);font-size:1.1rem;opacity:0}
@@ -464,10 +465,69 @@ section{position:relative}
 .float-order:hover .float-order__label{opacity:1}
 @media (max-width:600px){.float-order__label{display:none}}
 
+/* float-order count badge (mini-cart) */
+.float-order__badge{
+  position:absolute;top:-4px;right:-4px;min-width:24px;height:24px;padding:0 6px;
+  background:var(--chocolate);color:var(--crema);border-radius:999px;
+  font-family:var(--display);font-weight:800;font-size:0.78rem;line-height:24px;text-align:center;
+  box-shadow:0 4px 10px -3px rgba(59,35,24,0.6);z-index:3;
+  transform:scale(0);transform-origin:center;transition:transform 0.4s var(--ease-cream);
+}
+.float-order__badge.is-active{transform:scale(1)}
+.float-order__badge.pulse{animation:badgePulse 0.5s var(--ease-cream)}
+@keyframes badgePulse{0%{transform:scale(1)}40%{transform:scale(1.5)}100%{transform:scale(1)}}
+.float-order__pop{
+  position:absolute;left:50%;bottom:calc(100% + 8px);transform:translateX(-50%) translateY(8px);
+  background:var(--chocolate);color:var(--crema);font-family:var(--display);font-weight:700;font-size:0.82rem;
+  padding:0.5rem 0.9rem;border-radius:999px;white-space:nowrap;opacity:0;pointer-events:none;z-index:4;
+  box-shadow:0 8px 18px -8px rgba(59,35,24,0.5);
+}
+.float-order__pop.is-show{opacity:1;transform:translateX(-50%) translateY(0);transition:opacity 0.4s var(--ease-cream),transform 0.4s var(--ease-cream)}
+
+/* flying scoop (quick-add animation) */
+.fly-scoop{
+  position:fixed;width:34px;height:30px;border-radius:50% 50% 46% 46% / 60% 60% 40% 40%;
+  z-index:9995;pointer-events:none;will-change:transform,opacity;
+  box-shadow:inset 0 2px 4px rgba(255,255,255,0.6),inset 0 -4px 8px rgba(59,35,24,0.2);
+}
+
+/* ===== GALERIA ===== */
+#galeria{background:var(--crema);padding:clamp(4rem,8vw,7rem) 0;overflow:hidden}
+.gal__head{max-width:1280px;margin:0 auto 3rem;padding:0 clamp(1.2rem,5vw,3rem);text-align:center}
+.gal__head .section__title{margin-left:auto;margin-right:auto}
+.gal__grid{
+  max-width:1280px;margin:0 auto;padding:0 clamp(1.2rem,5vw,3rem);
+  display:grid;grid-template-columns:repeat(4,1fr);grid-auto-rows:160px;gap:1rem;
+}
+@media (max-width:820px){.gal__grid{grid-template-columns:repeat(2,1fr);grid-auto-rows:140px}}
+.gal__item{
+  position:relative;overflow:hidden;border-radius:32% 36% 34% 30% / 38% 32% 36% 34%;
+  box-shadow:inset 0 4px 10px rgba(255,255,255,0.4),0 18px 34px -22px rgba(59,35,24,0.4);
+  animation:blobMorph 20s var(--ease-cream) infinite alternate;cursor:pointer;
+}
+.gal__item--wide{grid-column:span 2}
+.gal__item--tall{grid-row:span 2}
+@media (max-width:820px){.gal__item--wide{grid-column:span 2}.gal__item--tall{grid-row:span 1}}
+.gal__item img{width:100%;height:100%;object-fit:cover;display:block;transition:transform 0.8s var(--ease-cream),filter 0.6s var(--ease-cream);filter:saturate(1.05)}
+.gal__item:hover img{transform:scale(1.08);filter:saturate(1.15) brightness(1.05)}
+.gal__cap{
+  position:absolute;left:0;right:0;bottom:0;padding:1.6rem 1rem 0.8rem;
+  background:linear-gradient(0deg,rgba(59,35,24,0.7),transparent);
+  color:var(--crema);font-family:var(--display);font-weight:700;font-size:0.92rem;
+  transform:translateY(100%);transition:transform 0.6s var(--ease-cream);text-align:center;
+}
+.gal__item:hover .gal__cap{transform:translateY(0)}
+
 /* proceso icon hover */
 .proceso__step{cursor:default}
 .proceso__icon{transition:transform 0.5s var(--ease-cream)}
 @media (hover:hover){.proceso__step:hover .proceso__icon{transform:translateY(-6px) scale(1.05)}}
+
+/* nav scroll behavior */
+.nav{transition:transform 0.5s var(--ease-cream),background 0.5s var(--ease-cream),box-shadow 0.5s var(--ease-cream)}
+.nav.is-hidden{transform:translateY(-110%)}
+.nav.is-scrolled{background:rgba(255,246,236,0.82);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);box-shadow:0 6px 24px -12px rgba(59,35,24,0.25)}
+@media (max-width:760px){.nav{padding:1rem clamp(1rem,5vw,1.5rem)}}
 
 /* reduced motion */
 @media (prefers-reduced-motion:reduce){
@@ -559,6 +619,21 @@ export default function Home() {
           }
         });
       });
+
+      // ---------- Nav: hide on scroll-down, show on scroll-up + scrolled state ----------
+      const nav = document.querySelector('.nav') as HTMLElement;
+      if (nav) {
+        let lastY = 0;
+        const onScroll = () => {
+          const y = w.scrollY;
+          if (y > 40) nav.classList.add('is-scrolled'); else nav.classList.remove('is-scrolled');
+          if (y > 200 && y > lastY + 8) nav.classList.add('is-hidden');
+          else if (y < lastY - 8 || y < 200) nav.classList.remove('is-hidden');
+          lastY = y;
+        };
+        w.addEventListener('scroll', onScroll, { passive: true });
+        onScroll();
+      }
 
       // ---------- Cursor ----------
       if (!isTouch) {
@@ -718,11 +793,55 @@ export default function Home() {
         });
       });
 
-      // ---------- Flavor cards: tilt + tint + drip ----------
+      // ---------- Flavor cards: tilt + tint + drip + quick-add ----------
       const sabores = document.querySelector('#sabores');
       const flavorData: Record<string, string> = {
         Fresa: '#FFD4DF', 'Vainilla de Papantla': '#FFEFC9', Pistache: '#CFEEDB',
         'Chocolate Oaxaqueño': '#E9C9A8', 'Mango con Chile': '#FFE2A8', Cajeta: '#E6C39A',
+      };
+      const flavorColor: Record<string, string> = {
+        Fresa: '#FFB3C7', 'Vainilla de Papantla': '#FFE8B8', Pistache: '#B8E0C8',
+        'Chocolate Oaxaqueño': '#8a5a3c', 'Mango con Chile': '#FFD27A', Cajeta: '#C98A4B',
+      };
+      // mini-cart state
+      const cartBadge = document.querySelector('.float-order__badge') as HTMLElement;
+      const cartPop = document.querySelector('.float-order__pop') as HTMLElement;
+      const floatOrderEl = document.querySelector('.float-order') as HTMLElement;
+      let cartCount = 0;
+      const updateCart = (flavorName: string) => {
+        cartCount += 1;
+        if (cartBadge) {
+          cartBadge.textContent = String(cartCount);
+          cartBadge.classList.add('is-active');
+          cartBadge.classList.remove('pulse');
+          void cartBadge.offsetWidth; // reflow to restart animation
+          cartBadge.classList.add('pulse');
+        }
+        if (cartPop && floatOrderEl) {
+          cartPop.textContent = `+1 ${flavorName} 🍦`;
+          cartPop.classList.add('is-show');
+          floatOrderEl.classList.add('is-visible');
+          clearTimeout((cartPop as any)._t);
+          (cartPop as any)._t = setTimeout(() => cartPop.classList.remove('is-show'), 1600);
+        }
+      };
+      const flyScoop = (fromEl: HTMLElement, color: string) => {
+        const fr = fromEl.getBoundingClientRect();
+        const target = floatOrderEl ? floatOrderEl.getBoundingClientRect() : { left: w.innerWidth - 60, top: w.innerHeight - 60, width: 60, height: 60 };
+        const scoop = document.createElement('div');
+        scoop.className = 'fly-scoop';
+        scoop.style.background = `linear-gradient(160deg, ${color}, ${color})`;
+        scoop.style.left = (fr.left + fr.width / 2 - 17) + 'px';
+        scoop.style.top = (fr.top + fr.height / 2 - 15) + 'px';
+        document.body.appendChild(scoop);
+        const dx = (target.left + target.width / 2) - (fr.left + fr.width / 2);
+        const dy = (target.top + target.height / 2) - (fr.top + fr.height / 2);
+        gsap.timeline({
+          onComplete: () => scoop.remove(),
+        })
+          .to(scoop, { y: -60, duration: 0.35, ease: 'power2.out' })
+          .to(scoop, { x: dx, y: dy, duration: 0.7, ease: 'power1.in' })
+          .to(scoop, { scale: 0.3, opacity: 0, duration: 0.25, ease: 'power2.in' });
       };
       document.querySelectorAll('.flavor').forEach((card) => {
         const name = (card.querySelector('.flavor__name') as HTMLElement)?.textContent?.trim() || '';
@@ -750,6 +869,20 @@ export default function Home() {
           const drip = card.querySelector('.flavor__scoop .drip') as HTMLElement;
           if (drip) gsap.to(drip, { opacity: 0, y: 26, duration: 0.5, ease: 'power2.in' });
         });
+        // quick-add to mini-cart on click
+        card.setAttribute('role', 'button');
+        card.setAttribute('tabindex', '0');
+        const addFlavor = () => {
+          const color = flavorColor[name] || '#FFB3C7';
+          flyScoop(card as HTMLElement, color);
+          // card squash feedback
+          gsap.timeline()
+            .to(card, { scaleY: 0.92, scaleX: 1.05, duration: 0.12, ease: 'power2.out' })
+            .to(card, { scaleY: 1, scaleX: 1, duration: 0.6, ease: 'elastic.out(1,0.4)' });
+          setTimeout(() => updateCart(name), 700);
+        };
+        card.addEventListener('click', addFlavor);
+        card.addEventListener('keydown', (e: KeyboardEvent) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); addFlavor(); } });
       });
 
       // ---------- Historia pinned image swap ----------
@@ -871,13 +1004,19 @@ export default function Home() {
         w.addEventListener('scroll', updateDrip, { passive: true });
       }
 
-      // ---------- Floating order bubble (appear after hero) ----------
+      // ---------- Floating order bubble (appear after hero, hide at footer) ----------
       const floatOrder = document.querySelector('.float-order') as HTMLElement;
       if (floatOrder) {
         ScrollTrigger.create({
           trigger: '.hero', start: 'bottom 80%',
           onEnter: () => floatOrder.classList.add('is-visible'),
           onLeaveBack: () => floatOrder.classList.remove('is-visible'),
+        });
+        // hide when footer is in view (don't cover newsletter)
+        ScrollTrigger.create({
+          trigger: '.footer', start: 'top 90%',
+          onEnter: () => floatOrder.classList.remove('is-visible'),
+          onLeaveBack: () => floatOrder.classList.add('is-visible'),
         });
         // hover swell on the scoop
         const scoopEl = floatOrder.querySelector('.float-order__scoop') as HTMLElement;
@@ -1078,6 +1217,7 @@ export default function Home() {
         </a>
         <nav className="nav__links" aria-label="Principal">
           <a className="drip-link" href="#sabores">Sabores</a>
+          <a className="drip-link" href="#galeria">Galería</a>
           <a className="drip-link" href="#historia">Historia</a>
           <a className="drip-link" href="#proceso">Proceso</a>
           <a className="drip-link" href="#cta-final">Contacto</a>
@@ -1253,7 +1393,45 @@ export default function Home() {
           </div>
         </section>
 
-        {/* ===== DIVIDER sabores -> historia ===== */}
+        {/* ===== DIVIDER sabores -> galeria ===== */}
+        <div className="drip-divider" aria-hidden="true" style={{ height: 'clamp(40px,6vw,80px)' }}>
+          <svg viewBox="0 0 1440 80" preserveAspectRatio="none">
+            <path d="M0,0 L1440,0 L1440,30 C1320,60 1200,12 1080,40 C960,68 840,8 720,38 C600,68 480,10 360,40 C240,70 120,14 0,42 Z" fill="var(--crema)" />
+          </svg>
+        </div>
+
+        {/* ===== GALERIA ===== */}
+        <section id="galeria" aria-labelledby="gal-title">
+          <div className="gal__head">
+            <span className="section__eyebrow reveal">Pura crema, pura antojo</span>
+            <h2 id="gal-title" className="section__title reveal" style={{ fontSize: 'clamp(2rem,5vw,3.6rem)' }}>La galería que babrea</h2>
+            <p className="section__sub reveal" style={{ margin: '0 auto' }}>Fotitos de nuestra cocina y nuestro mercado. Si se te hace agua la boca, vamos bien.</p>
+          </div>
+          <div className="gal__grid">
+            <figure className="gal__item gal__item--wide gal__item--tall reveal">
+              <img src="/img/gallery-1.png" alt="Bochas de helado artesanal en colores pastel servidas en superficie cremosa" loading="lazy" />
+              <figcaption className="gal__cap">Surtido del día, hecho a mano</figcaption>
+            </figure>
+            <figure className="gal__item reveal">
+              <img src="/img/gallery-2.png" alt="Helado de mango con chile, amarillo brillante con polvo de chile" loading="lazy" />
+              <figcaption className="gal__cap">Mango con chile</figcaption>
+            </figure>
+            <figure className="gal__item reveal">
+              <img src="/img/gallery-3.png" alt="Helado de chocolate oscuro derritiéndose con salsa de chocolate" loading="lazy" />
+              <figcaption className="gal__cap">Chocolate Oaxaqueño</figcaption>
+            </figure>
+            <figure className="gal__item reveal">
+              <img src="/img/gallery-4.png" alt="Helado de cajeta en vaso con salsa de caramelo dorada" loading="lazy" />
+              <figcaption className="gal__cap">Cajeta de Celaya</figcaption>
+            </figure>
+            <figure className="gal__item gal__item--wide reveal">
+              <img src="/img/historia-2.png" alt="Sirviendo helado de vainilla con cuchara, cremoso" loading="lazy" />
+              <figcaption className="gal__cap">Vainilla de Papantla, recién servida</figcaption>
+            </figure>
+          </div>
+        </section>
+
+        {/* ===== DIVIDER galeria -> historia ===== */}
         <div className="drip-divider" aria-hidden="true" style={{ height: 'clamp(40px,6vw,80px)' }}>
           <svg viewBox="0 0 1440 80" preserveAspectRatio="none">
             <path d="M0,0 L1440,0 L1440,30 C1320,60 1200,12 1080,40 C960,68 840,8 720,38 C600,68 480,10 360,40 C240,70 120,14 0,42 Z" fill="var(--vainilla)" />
@@ -1265,31 +1443,13 @@ export default function Home() {
           <div className="wrap historia__grid">
             <div className="historia__visual media-clip">
               <div className="historia__scene" data-scene="0">
-                <svg viewBox="0 0 400 500" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
-                  <rect width="400" height="500" fill="#FFD9E3" />
-                  <circle cx="200" cy="180" r="120" fill="#FFB3C7" />
-                  <circle cx="150" cy="150" r="40" fill="rgba(255,255,255,0.5)" />
-                  <path d="M120,300 q80,60 160,0 q40,-20 60,10 L400,500 L0,500 L0,300 Z" fill="#E8557A" />
-                  <ellipse cx="200" cy="430" rx="120" ry="40" fill="#3B2318" opacity="0.15" />
-                </svg>
+                <img src="/img/historia-1.png" alt="Bochas de helado artesanal de fresa en bowl de barro, con fresas frescas" loading="lazy" />
               </div>
               <div className="historia__scene" data-scene="1">
-                <svg viewBox="0 0 400 500" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
-                  <rect width="400" height="500" fill="#FFE8B8" />
-                  <circle cx="200" cy="200" r="90" fill="#E0B864" />
-                  <rect x="150" y="220" width="100" height="160" rx="12" fill="#C98A4B" />
-                  <rect x="160" y="240" width="80" height="120" rx="8" fill="#FFE8B8" />
-                  <path d="M100,420 q100,40 200,0 L320,500 L80,500 Z" fill="#C98A4B" />
-                </svg>
+                <img src="/img/historia-2.png" alt="Helado de vainilla con sus puntitos de vainilla, sirviéndose con cuchara" loading="lazy" />
               </div>
               <div className="historia__scene" data-scene="2">
-                <svg viewBox="0 0 400 500" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
-                  <rect width="400" height="500" fill="#B8E0C8" />
-                  <circle cx="120" cy="120" r="50" fill="#6FB489" />
-                  <circle cx="280" cy="160" r="70" fill="#6FB489" />
-                  <path d="M120,250 q80,-30 160,0 q40,10 60,-10 L400,500 L0,500 Z" fill="#6FB489" />
-                  <ellipse cx="200" cy="380" rx="100" ry="30" fill="#3B2318" opacity="0.12" />
-                </svg>
+                <img src="/img/historia-3.png" alt="Cono de helado de pistache con pistaches molidos, en un mercado soleado" loading="lazy" />
               </div>
             </div>
             <div className="historia__text">
@@ -1548,14 +1708,16 @@ export default function Home() {
         </div>
       </footer>
 
-      {/* ===== FLOATING ORDER BUBBLE (sticky conversion CTA) ===== */}
+      {/* ===== FLOATING ORDER BUBBLE (sticky conversion CTA + mini-cart) ===== */}
       <a className="float-order" href="#cta-final" aria-label="Ordenar helado ahora" data-cursor>
+        <span className="float-order__pop" />
         <span className="float-order__label">¡Pídelo cremosito!</span>
         <div className="float-order__goo">
           <div className="float-order__scoop">Ordenar</div>
           <div className="float-order__drip" />
           <span className="float-order__pulse" />
         </div>
+        <span className="float-order__badge" aria-hidden="true">0</span>
       </a>
     </>
   );

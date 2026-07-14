@@ -157,3 +157,92 @@ Unresolved Issues / Risks / Next-phase Priorities:
    mini-cart. Next-round candidate.
 5. Color-contrast audit (fresa-on-crema small text) still pending formal check.
 
+
+---
+Task ID: cron-round-3
+Agent: webDevReview (cron)
+Task: Recurring QA + independently propose & implement new features / styling detail improvements.
+
+Work Log:
+- Read prior worklog (2 rounds complete); confirmed project stable (HTTP 200, lint 0 errors/1 font
+  warning, no runtime errors). Page had 7 sections + 3 global UI layers.
+- agent-browser QA: preloader gone, GSAP/ScrollTrigger/Lenis loaded, __heladoInit true, 6 flavor
+  cards, 12 testi cards, float-order/scroll-drip/skip-link/hero-bubbles all present. No errors.
+- Found real UX issue: float-order stays visible when footer is in view → could cover the newsletter
+  input on smaller viewports (flagged as risk #2 last round). Decided to fix + add new features.
+- VLM review of historia confirmed the SVG illustration "looks like a simple vector placeholder,
+  real photography would significantly boost production value".
+
+Generated 7 real product images via image-generation skill (z-ai CLI) → public/img/:
+- historia-1.png (fresa scoops in rustic bowl, 864x1152 portrait)
+- historia-2.png (vanilla bean scooping, 864x1152)
+- historia-3.png (pistachio cone at market, 864x1152)
+- gallery-1.png (overhead pastel scoops flat lay, 1344x768)
+- gallery-2.png (mango con chile, 1024x1024)
+- gallery-3.png (dark chocolate melting, 1024x1024)
+- gallery-4.png (cajeta caramel glass, 1024x1024)
+- VLM-verified historia-1 as "highly appetizing, suitable for artisanal brand, no major issues".
+
+Implemented (all melting-theme coherent):
+1. **BUG FIX — float-order hides at footer**: added a second ScrollTrigger on `.footer`
+   (start: 'top 90%') that removes `is-visible` when the footer enters and re-adds it on
+   leaveBack. No more covering the newsletter input. Verified: hidden at footer ✓, reappears
+   scrolling up ✓.
+2. **Real product imagery in Historia**: replaced the 3 stylized SVG scenes with the 3 real
+   portrait photos (`<img object-fit:cover>` in the existing blob-frame + clip-path swap). Kept
+   the ScrollTrigger-driven crossfade/circle-clip swap logic intact (now crossfading real photos).
+   Descriptive Spanish alt text added. VLM: "real photo adds sensory appeal, authenticity,
+   warmth; well-cropped; polished; cohesive".
+3. **NEW Galería section** (between Sabores and Historia): masonry-style grid of 5 real photos in
+   morphing blob frames (`gal__item--wide`/`--tall` spans), hover scales image + reveals a
+   chocolate-gradient caption sliding up, saturate/brightness filter shift. Responsive (4-col →
+   2-col ≤820px). Drippy dividers added on both boundaries. Nav "Galería" link added.
+   VLM: "photos vibrant/appetizing, blob frames polished, no bugs, elevates production value
+   significantly vs flat SVG".
+4. **NEW flavor quick-add mini-cart**: clicking a Sabores card (or Enter/Space — cards now have
+   role=button + tabindex=0) launches a colored flying scoop (`.fly-scoop`) that arcs up then
+   flies to the float-order bubble and shrinks/fades (GSAP timeline, power2/power1/power2 easing).
+   The card does a squash-feedback. After ~0.7s the float-order's count badge increments + pulses
+   (badgePulse keyframe) and a "+1 {Flavor} 🍦" toast pops above the bubble. Badge starts at scale 0,
+   becomes `is-active` on first add. Works on mobile too. Verified: 1st click → badge "1", pop
+   "+1 Fresa 🍦"; 2nd click → badge "2".
+5. **Nav scroll behavior**: `.nav` gets `is-scrolled` (frosted cream blur + shadow) after 40px,
+   and `is-hidden` (translateY -110%) on scroll-down past 200px, shows again on scroll-up.
+   Cream easing 0.5s. Reduces chrome while reading.
+6. CSS: added `.historia__scene img` object-fit rule, float-order badge/pop/fly-scoop styles,
+   galeria grid + captions, nav scroll states. Updated reduced-motion block unaffected (new
+   elements degrade gracefully).
+
+Verification (agent-browser + VLM, post-changes):
+- DOM: #galeria ✓ (5 items/5 imgs), historia 3 real imgs ✓, nav "Galería" link ✓, float-order
+  badge+pop ✓, 6 flavor[role=button] ✓. Page height grew 6368→7150px (new gallery section).
+- Mini-cart: click Fresa → fly-scoop created, badge "1" + active, pop "+1 Fresa 🍦" shown, float
+  becomes visible ✓; 2nd card → badge "2" ✓. Mobile 390×844: badge "1" active ✓.
+- Nav: scroll-down 1000px → is-hidden + is-scrolled ✓; scroll-up → shown ✓.
+- Float-order: hidden at footer ✓; reappears scrolling up ✓ (newsletter no longer covered).
+- Mobile galeria: 2-col grid (167.5px), wide item spans 2 (352px) ✓.
+- Images serve: /img/historia-1.png 200, /img/gallery-1.png 200 ✓.
+- VLM full-page: "8 sections, no broken/overlaps/gaps, cohesive flow, high production value".
+- `bun run lint` = 0 errors (1 acceptable font warning). HTTP 200. No runtime/console errors.
+
+Stage Summary:
+- Page now has 8 landmark sections: Hero → Sabores → **Galería (new, real photos)** → Historia
+  (real photos) → Proceso → Testimonios → CTA final → Footer.
+- Real AI-generated product photography replaces all placeholder SVG art in Historia + powers the
+  new Galería — biggest production-value leap so far.
+- New interactive conversion loop: tap a flavor → scoop flies to a sticky bubble → live cart
+  counter + flavor toast → bubble is the persistent "Ordenar" CTA. Turns passive browsing into
+  playful "build your order" interaction, fully on-theme (melting scoops).
+- Nav is now scroll-aware (hide on scroll-down, frosted on scroll), reducing chrome.
+- Fixed the float-order/footer overlap UX bug.
+
+Unresolved Issues / Risks / Next-phase Priorities:
+1. Mini-cart is a counter only (no checkout / flavor list / remove). A future round could add a
+   small cart popover listing added flavors + prices + a "Ver mi pedido" CTA. Medium effort.
+2. Galeria images are decorative (no lightbox). Could add a gooey lightbox on click. Low priority.
+3. Color-contrast audit (fresa-on-crema small text) still pending formal check — now more relevant
+   with gallery captions (chocolate gradient backdrop mitigates).
+4. Image optimization: currently serving full-size PNGs (~100-160KB each). Could add Next/Image
+   with responsive sizes / WebP for better LCP. Low priority for a single landing page.
+5. Marquee still uses linear ease by design (standard for infinite marquees); pause-on-hover uses
+   cream easing. Acceptable.
