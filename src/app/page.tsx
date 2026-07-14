@@ -491,6 +491,131 @@ section{position:relative}
   box-shadow:inset 0 2px 4px rgba(255,255,255,0.6),inset 0 -4px 8px rgba(59,35,24,0.2);
 }
 
+/* ===== CART POPOVER ===== */
+.cart-overlay{
+  position:fixed;inset:0;z-index:1990;background:rgba(59,35,24,0.45);
+  opacity:0;pointer-events:none;transition:opacity 0.5s var(--ease-cream);
+  backdrop-filter:blur(2px);-webkit-backdrop-filter:blur(2px);
+}
+.cart-overlay.is-open{opacity:1;pointer-events:auto}
+.cart{
+  position:fixed;right:max(1rem,env(safe-area-inset-right));bottom:max(1rem,env(safe-area-inset-bottom));
+  z-index:2000;width:min(380px,calc(100vw - 2rem));max-height:min(80vh,640px);
+  background:var(--crema);border-radius:36px 36px 30px 30px;
+  box-shadow:0 30px 60px -20px rgba(59,35,24,0.5),inset 0 2px 4px rgba(255,255,255,0.6);
+  display:flex;flex-direction:column;overflow:hidden;
+  transform:translateY(40px) scale(0.92);opacity:0;pointer-events:none;
+  transform-origin:bottom right;
+  transition:transform 0.6s var(--ease-cream),opacity 0.5s var(--ease-cream);
+}
+.cart.is-open{transform:translateY(0) scale(1);opacity:1;pointer-events:auto}
+.cart__head{
+  padding:1.3rem 1.4rem 1rem;background:linear-gradient(160deg,var(--fresa),var(--fresa-deep));
+  color:var(--chocolate);display:flex;align-items:center;justify-content:space-between;gap:0.6rem;
+}
+.cart__title{font-family:var(--display);font-weight:800;font-size:1.25rem;display:flex;align-items:center;gap:0.5rem}
+.cart__close{
+  width:34px;height:34px;border-radius:50%;border:0;background:rgba(255,255,255,0.5);
+  cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--chocolate);
+  font-size:1.2rem;line-height:1;transition:transform 0.4s var(--ease-cream),background 0.4s var(--ease-cream);
+}
+.cart__close:hover{transform:rotate(90deg) scale(1.08);background:rgba(255,255,255,0.8)}
+.cart__body{flex:1;overflow-y:auto;padding:0.6rem 1rem;scrollbar-width:thin;scrollbar-color:var(--fresa) transparent}
+.cart__body::-webkit-scrollbar{width:6px}
+.cart__body::-webkit-scrollbar-thumb{background:var(--fresa);border-radius:999px}
+.cart__empty{
+  text-align:center;padding:2.5rem 1rem;color:var(--chocolate);opacity:0.6;
+  font-family:var(--display);font-weight:600;
+}
+.cart__empty .emoji{font-size:2.4rem;display:block;margin-bottom:0.6rem;filter:drop-shadow(0 4px 6px rgba(232,85,122,0.3))}
+.cart__row{
+  display:grid;grid-template-columns:40px 1fr auto;gap:0.7rem;align-items:center;
+  padding:0.7rem 0.5rem;border-bottom:1px dashed rgba(59,35,24,0.15);
+  animation:rowPlop 0.6s var(--ease-cream);
+}
+@keyframes rowPlop{0%{opacity:0;transform:translateX(20px) scale(0.9)}100%{opacity:1;transform:translateX(0) scale(1)}}
+.cart__row:last-child{border-bottom:0}
+.cart__swatch{
+  width:40px;height:40px;border-radius:50% 50% 46% 46% / 60% 60% 40% 40%;
+  box-shadow:inset 0 2px 4px rgba(255,255,255,0.5),inset 0 -3px 6px rgba(59,35,24,0.15);
+}
+.cart__info{min-width:0}
+.cart__fname{font-family:var(--display);font-weight:700;font-size:0.98rem;color:var(--chocolate);line-height:1.1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cart__fprice{font-size:0.8rem;color:var(--chocolate);opacity:0.65}
+.cart__qty{display:flex;align-items:center;gap:0.3rem;background:rgba(59,35,24,0.08);border-radius:999px;padding:0.2rem}
+.cart__qty button{
+  width:26px;height:26px;border:0;border-radius:50%;background:var(--crema);color:var(--chocolate);
+  font-family:var(--display);font-weight:800;font-size:1rem;line-height:1;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;transition:transform 0.3s var(--ease-cream),background 0.3s var(--ease-cream);
+}
+.cart__qty button:hover{background:var(--fresa);transform:scale(1.12)}
+.cart__qty button:active{transform:scale(0.88)}
+.cart__qty span{min-width:18px;text-align:center;font-family:var(--display);font-weight:700;font-size:0.92rem;color:var(--chocolate)}
+.cart__remove{
+  grid-column:1 / -1;background:none;border:0;color:var(--fresa-deep);font-family:var(--body);
+  font-size:0.76rem;font-weight:600;cursor:pointer;text-align:right;padding:0.2rem 0 0;justify-self:end;
+  transition:opacity 0.3s var(--ease-cream);
+}
+.cart__remove:hover{opacity:0.7;text-decoration:underline}
+.cart__foot{padding:1rem 1.4rem 1.3rem;background:rgba(255,246,236,0.6);border-top:1px solid rgba(59,35,24,0.1)}
+.cart__total{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:0.9rem}
+.cart__total-label{font-family:var(--body);font-weight:600;color:var(--chocolate);opacity:0.7;font-size:0.9rem}
+.cart__total-val{font-family:var(--display);font-weight:800;color:var(--chocolate);font-size:1.6rem}
+.cart__total-val small{font-size:0.6em;opacity:0.6;font-weight:600}
+.cart__cta{display:block;width:100%;text-align:center}
+
+/* ===== LIGHTBOX ===== */
+.lightbox{
+  position:fixed;inset:0;z-index:3000;background:rgba(59,35,24,0.85);
+  display:flex;align-items:center;justify-content:center;padding:clamp(1rem,4vw,3rem);
+  opacity:0;pointer-events:none;transition:opacity 0.5s var(--ease-cream);
+  backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
+}
+.lightbox.is-open{opacity:1;pointer-events:auto}
+.lightbox__inner{
+  position:relative;max-width:min(90vw,720px);max-height:80vh;
+  border-radius:42% 58% 50% 50% / 55% 45% 55% 45%;
+  overflow:hidden;transform:scale(0.85) rotate(-2deg);opacity:0;
+  transition:transform 0.7s var(--ease-cream),opacity 0.5s var(--ease-cream);
+  box-shadow:0 40px 80px -20px rgba(0,0,0,0.6);
+}
+.lightbox.is-open .lightbox__inner{transform:scale(1) rotate(0);opacity:1}
+.lightbox__inner img{width:100%;height:100%;object-fit:cover;display:block;max-height:80vh}
+.lightbox__cap{
+  position:absolute;left:0;right:0;bottom:0;padding:1.5rem 1.5rem 1.2rem;
+  background:linear-gradient(0deg,rgba(59,35,24,0.85),transparent);
+  color:var(--crema);font-family:var(--display);font-weight:700;font-size:1.1rem;text-align:center;
+}
+.lightbox__close{
+  position:absolute;top:1rem;right:1rem;z-index:2;width:44px;height:44px;border-radius:50%;
+  border:0;background:var(--crema);color:var(--chocolate);font-size:1.4rem;line-height:1;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 6px 14px -4px rgba(0,0,0,0.4);transition:transform 0.4s var(--ease-cream);
+}
+.lightbox__close:hover{transform:rotate(90deg) scale(1.08)}
+
+/* ===== STYLING DETAILS ===== */
+/* flavor price tag drip */
+.flavor__price{position:relative;display:inline-block;padding-left:1.1rem}
+.flavor__price::before{content:'';position:absolute;left:0;top:50%;transform:translateY(-50%);width:8px;height:10px;border-radius:50% 50% 50% 0 / 60% 60% 40% 40%;background:var(--fresa-deep);opacity:0.7;filter:url(#goo)}
+
+/* section eyebrow pip pulse */
+.section__eyebrow .pip,.hero__eyebrow .pip{display:inline-block;animation:pipPulse 2.4s var(--ease-cream) infinite}
+@keyframes pipPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.4)}}
+
+/* testimonial card visual hierarchy: quote indent + drip accent */
+.testi__card{position:relative;overflow:visible}
+.testi__card::after{
+  content:'';position:absolute;left:1.6rem;bottom:-4px;width:10px;height:10px;border-radius:50%;
+  background:rgba(255,255,255,0.6);filter:url(#goo);opacity:0.7;
+}
+
+/* hero decorative melting accent near eyebrow */
+.hero__accent-drip{position:absolute;left:0;top:clamp(5.5rem,8vw,7rem);width:90px;height:120px;opacity:0.5;pointer-events:none;z-index:0}
+.hero__accent-drip svg{width:100%;height:100%}
+@media (max-width:900px){.hero__accent-drip{display:none}}
+
+
 /* ===== GALERIA ===== */
 #galeria{background:var(--crema);padding:clamp(4rem,8vw,7rem) 0;overflow:hidden}
 .gal__head{max-width:1280px;margin:0 auto 3rem;padding:0 clamp(1.2rem,5vw,3rem);text-align:center}
@@ -803,16 +928,86 @@ export default function Home() {
         Fresa: '#FFB3C7', 'Vainilla de Papantla': '#FFE8B8', Pistache: '#B8E0C8',
         'Chocolate Oaxaqueño': '#8a5a3c', 'Mango con Chile': '#FFD27A', Cajeta: '#C98A4B',
       };
-      // mini-cart state
+      // mini-cart state -> full cart with quantities + prices + total
       const cartBadge = document.querySelector('.float-order__badge') as HTMLElement;
       const cartPop = document.querySelector('.float-order__pop') as HTMLElement;
       const floatOrderEl = document.querySelector('.float-order') as HTMLElement;
-      let cartCount = 0;
-      const updateCart = (flavorName: string) => {
-        cartCount += 1;
+      const cartEl = document.querySelector('.cart') as HTMLElement;
+      const cartOverlay = document.querySelector('.cart-overlay') as HTMLElement;
+      const cartBody = document.querySelector('.cart__body') as HTMLElement;
+      const cartTotalVal = document.querySelector('.cart__total-val') as HTMLElement;
+      const cartItems: Record<string, { name: string; price: number; color: string; qty: number }> = {};
+      const flavorPrice: Record<string, number> = {
+        Fresa: 65, 'Vainilla de Papantla': 72, Pistache: 85,
+        'Chocolate Oaxaqueño': 78, 'Mango con Chile': 70, Cajeta: 74,
+      };
+      const formatTotal = (n: number) => '$' + n + ' <small>MNX</small>';
+      const renderCart = () => {
+        const keys = Object.keys(cartItems);
+        const count = keys.reduce((s, k) => s + cartItems[k].qty, 0);
+        const total = keys.reduce((s, k) => s + cartItems[k].qty * cartItems[k].price, 0);
         if (cartBadge) {
-          cartBadge.textContent = String(cartCount);
-          cartBadge.classList.add('is-active');
+          cartBadge.textContent = String(count);
+          if (count > 0) cartBadge.classList.add('is-active'); else cartBadge.classList.remove('is-active');
+        }
+        if (cartTotalVal) cartTotalVal.innerHTML = formatTotal(total);
+        if (!cartBody) return;
+        if (count === 0) {
+          cartBody.innerHTML = '<div class="cart__empty"><span class="emoji">🍦</span>Tu carrito está derretido de vacío.<br/>¡Agrega un sabor!</div>';
+          return;
+        }
+        cartBody.innerHTML = keys.map((k) => {
+          const it = cartItems[k];
+          return `<div class="cart__row" data-key="${k}">
+            <div class="cart__swatch" style="background:${it.color}"></div>
+            <div class="cart__info">
+              <div class="cart__fname">${it.name}</div>
+              <div class="cart__fprice">$${it.price} · litro</div>
+            </div>
+            <div class="cart__qty">
+              <button class="cart__dec" aria-label="Quitar uno">−</button>
+              <span>${it.qty}</span>
+              <button class="cart__inc" aria-label="Agregar uno">+</button>
+            </div>
+            <button class="cart__remove">quitar</button>
+          </div>`;
+        }).join('');
+        // wire qty buttons
+        cartBody.querySelectorAll('.cart__row').forEach((row) => {
+          const key = (row as HTMLElement).dataset.key;
+          row.querySelector('.cart__inc')?.addEventListener('click', () => { if (cartItems[key]) { cartItems[key].qty += 1; renderCart(); } });
+          row.querySelector('.cart__dec')?.addEventListener('click', () => { if (cartItems[key]) { cartItems[key].qty -= 1; if (cartItems[key].qty <= 0) delete cartItems[key]; renderCart(); } });
+          row.querySelector('.cart__remove')?.addEventListener('click', () => { delete cartItems[key]; renderCart(); });
+        });
+      };
+      const openCart = () => {
+        if (cartEl) cartEl.classList.add('is-open');
+        if (cartOverlay) cartOverlay.classList.add('is-open');
+      };
+      const closeCart = () => {
+        if (cartEl) cartEl.classList.remove('is-open');
+        if (cartOverlay) cartOverlay.classList.remove('is-open');
+      };
+      if (cartOverlay) cartOverlay.addEventListener('click', closeCart);
+      document.querySelector('.cart__close')?.addEventListener('click', closeCart);
+      document.querySelector('.cart__cta')?.addEventListener('click', () => {
+        closeCart();
+        lenis.scrollTo('#cta-final', { duration: 1.4 });
+      });
+      // open cart when clicking the float-order bubble (instead of jumping straight to CTA)
+      floatOrderEl?.addEventListener('click', (e) => {
+        e.preventDefault();
+        const count = Object.keys(cartItems).reduce((s, k) => s + cartItems[k].qty, 0);
+        if (count > 0) openCart(); else lenis.scrollTo('#cta-final', { duration: 1.4 });
+      });
+      renderCart();
+      const updateCart = (flavorName: string) => {
+        const color = flavorColor[flavorName] || '#FFB3C7';
+        const price = flavorPrice[flavorName] || 70;
+        if (cartItems[flavorName]) cartItems[flavorName].qty += 1;
+        else cartItems[flavorName] = { name: flavorName, price, color, qty: 1 };
+        renderCart();
+        if (cartBadge) {
           cartBadge.classList.remove('pulse');
           void cartBadge.offsetWidth; // reflow to restart animation
           cartBadge.classList.add('pulse');
@@ -1048,6 +1243,38 @@ export default function Home() {
         marquee.addEventListener('mouseleave', () => gsap.to(track, { timeScale: 1, duration: 0.6 }));
       }
 
+      // ---------- Galeria lightbox ----------
+      const lightbox = document.querySelector('.lightbox') as HTMLElement;
+      const lbImg = lightbox?.querySelector('.lightbox__img') as HTMLImageElement;
+      const lbCap = lightbox?.querySelector('.lightbox__cap') as HTMLElement;
+      if (lightbox && lbImg && lbCap) {
+        const openLightbox = (src: string, cap: string) => {
+          lbImg.src = src;
+          lbCap.textContent = cap;
+          lightbox.classList.add('is-open');
+          document.body.style.overflow = 'hidden';
+          if (lenis) lenis.stop();
+        };
+        const closeLightbox = () => {
+          lightbox.classList.remove('is-open');
+          document.body.style.overflow = '';
+          if (lenis) lenis.start();
+        };
+        document.querySelectorAll('.gal__item').forEach((item) => {
+          const img = item.querySelector('img');
+          const cap = item.querySelector('.gal__cap');
+          item.addEventListener('click', () => {
+            if (img && cap) openLightbox(img.src, cap.textContent || '');
+          });
+          item.setAttribute('role', 'button');
+          item.setAttribute('tabindex', '0');
+          item.addEventListener('keydown', (e: KeyboardEvent) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); if (img && cap) openLightbox(img.src, cap.textContent || ''); } });
+        });
+        lightbox.querySelector('.lightbox__close')?.addEventListener('click', closeLightbox);
+        lightbox.addEventListener('click', (e: MouseEvent) => { if (e.target === lightbox || (e.target as HTMLElement).classList.contains('lightbox__inner')) closeLightbox(); });
+        document.addEventListener('keydown', (e: KeyboardEvent) => { if (e.key === 'Escape' && lightbox.classList.contains('is-open')) closeLightbox(); });
+      }
+
       // Refresh after load
       w.addEventListener('load', () => ScrollTrigger.refresh());
       gsap.delayedCall(4, () => ScrollTrigger.refresh());
@@ -1239,6 +1466,12 @@ export default function Home() {
             <span className="hero__bubble" style={{ width: 52, height: 52, top: '52%', right: '10%', background: 'var(--pistache)' }} />
             <span className="hero__bubble" style={{ width: 30, height: 30, top: '68%', right: '28%', background: 'var(--mango)' }} />
             <span className="hero__bubble" style={{ width: 26, height: 26, top: '38%', right: '36%', background: 'var(--fresa)' }} />
+          </div>
+          <div className="hero__accent-drip" aria-hidden="true">
+            <svg viewBox="0 0 90 120">
+              <path d="M45,0 C60,20 70,30 65,50 C60,70 70,80 55,100 C48,110 50,118 45,120 C40,118 42,110 35,100 C20,80 30,70 25,50 C20,30 30,20 45,0 Z" fill="var(--fresa)" opacity="0.6" />
+              <circle cx="45" cy="118" r="6" fill="var(--fresa-deep)" />
+            </svg>
           </div>
           <span className="hero__eyebrow">
             <span className="pip" /> Helado artesanal · Hecho en México
@@ -1719,6 +1952,35 @@ export default function Home() {
         </div>
         <span className="float-order__badge" aria-hidden="true">0</span>
       </a>
+
+      {/* ===== CART POPOVER ===== */}
+      <div className="cart-overlay" aria-hidden="true" />
+      <aside className="cart" role="dialog" aria-label="Tu pedido" aria-modal="true">
+        <div className="cart__head">
+          <span className="cart__title">🍦 Tu pedido</span>
+          <button className="cart__close" aria-label="Cerrar carrito">×</button>
+        </div>
+        <div className="cart__body" />
+        <div className="cart__foot">
+          <div className="cart__total">
+            <span className="cart__total-label">Total estimado</span>
+            <span className="cart__total-val">$0 <small>MNX</small></span>
+          </div>
+          <a className="btn cart__cta" href="#cta-final">
+            <span className="btn__label">Ver mi pedido</span>
+            <span className="btn__drips"><i /><i /><i /></span>
+          </a>
+        </div>
+      </aside>
+
+      {/* ===== LIGHTBOX ===== */}
+      <div className="lightbox" role="dialog" aria-label="Vista ampliada" aria-modal="true">
+        <button className="lightbox__close" aria-label="Cerrar">×</button>
+        <div className="lightbox__inner">
+          <img className="lightbox__img" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'/%3E" alt="" />
+          <div className="lightbox__cap" />
+        </div>
+      </div>
     </>
   );
 }

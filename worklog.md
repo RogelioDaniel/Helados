@@ -246,3 +246,81 @@ Unresolved Issues / Risks / Next-phase Priorities:
    with responsive sizes / WebP for better LCP. Low priority for a single landing page.
 5. Marquee still uses linear ease by design (standard for infinite marquees); pause-on-hover uses
    cream easing. Acceptable.
+
+---
+Task ID: cron-round-4
+Agent: webDevReview (cron)
+Task: Recurring QA + independently propose & implement new features / styling detail improvements.
+
+Work Log:
+- Read prior worklog (3 rounds complete); confirmed project stable (HTTP 200, lint 0 errors/1 font
+  warning, no runtime errors). Page had 8 sections + mini-cart counter + galeria + real imagery.
+- agent-browser QA: preloader gone, all libs loaded, 6 flavor cards, 5 gal items, nav links intact,
+  float-badge "0". No console/page errors. Mini-cart click still increments badge ✓.
+- VLM full-page review: no broken layouts, cohesive. Flagged testimonial section as slightly
+  under-styled (addressed via drip accent). No real bugs to fix → implement new features.
+
+Implemented (all melting-theme coherent):
+1. **Full cart popover** (was worklog priority #1 — mini-cart was a counter only). Built a complete
+   `<aside class="cart">` modal with: pink-gradient header + close (rotates 90° on hover), scrollable
+   body listing each flavor as a row (color swatch scoop, name, "$N · litro", qty ± buttons in a
+   pill, "quitar" remove link), a "Total estimado" footer with live MXN total, and a "Ver mi pedido"
+   CTA that closes the cart + smooth-scrolls to the final CTA. Empty state: "Tu carrito está
+   derretido de vacío. ¡Agrega un sabor!" 🍦. Cart state is an object map keyed by flavor name with
+   {qty, price, color}; renderCart() rebuilds the DOM and rewires qty/remove buttons each time.
+   Opens via clicking the float-order bubble (if items > 0) or stays as scroll-to-CTA if empty.
+   Overlay click + close button dismiss. Rows plop in with a rowPlop animation. Verified: add Fresa
+   ×2 + Pistache → badge 3, 2 rows, total $215; inc Fresa → qty 3, $280; dec → qty 2, $215; remove
+   Pistache → 1 row, badge 2, $130; close ✓. Mobile 390×844: cart 358px fits screen ✓.
+   VLM: "polished & on-theme, swatches/quantities/total clear, CTA prominent, no bugs".
+2. **Gooey lightbox for Galería** (was worklog priority #2). Each `.gal__item` is now role=button +
+   tabindex=0; click/Enter/Space opens a full-screen `.lightbox` (chocolate 85% bg + 6px backdrop
+   blur) containing a blob-framed `.lightbox__inner` (morphing border-radius) with the enlarged
+   image + chocolate-gradient caption. Opens with scale(0.85) rotate(-2deg) → scale(1) rotate(0)
+   (cream easing 0.7s). Closes via: × button (rotates on hover), click on backdrop, or Escape key
+   (document-level keydown). Lenis paused + body overflow hidden while open. Verified: opens with
+   correct src + caption "Surtido del día, hecho a mano", Escape closes ✓, mobile opens ✓.
+   VLM: "polished blob-shaped frame, photo/caption clear, no bugs, fits melting-cream theme".
+3. **Styling details**:
+   - **Flavor price-tag drip**: `.flavor__price::before` adds a gooey fresa-deep drip shape before
+     each price, reinforcing the melting motif on every card.
+   - **Eyebrow pip pulse**: the small pip dot in section/hero eyebrows now pulses scale 1↔1.4 on a
+     2.4s loop (cream easing) — subtle "alive" signal.
+   - **Testimonial card drip accent**: `.testi__card::after` adds a small gooey white drip at the
+     bottom-left of each review card, addressing VLM's "under-styled testimonial" note.
+   - **Hero decorative melting accent**: a soft fresa drip SVG (`.hero__accent-drip`) near the hero
+     eyebrow, hidden ≤900px, adds organic melting detail to the hero's left edge.
+4. Fixed a Next.js dev warning: lightbox `<img>` had src="" → swapped to a transparent SVG
+   data-URI placeholder.
+
+Verification (agent-browser + VLM, post-changes):
+- DOM: .cart ✓, .cart-overlay ✓, .cart__body ✓, .cart__total-val ✓, .cart__cta ✓, .cart__close ✓,
+  .lightbox ✓, .lightbox__img ✓, .lightbox__close ✓, .hero__accent-drip ✓, 5 gal__item[role=button]
+  ✓, pipPulse animation running ✓, flavor__price::before drip present ✓.
+- Cart flow: add Fresa×2 + Pistache → badge 3 / 2 rows / $215 ✓; inc → qty3/$280 ✓; dec →
+  qty2/$215 ✓; remove Pistache → 1 row / badge2 / $130 ✓; close ✓. Mobile: cart 358px fits ✓.
+- Lightbox: opens with correct img src + caption ✓; Escape closes ✓ (after fixing listener from
+  window→document); backdrop/close-button work ✓; mobile opens ✓.
+- VLM cart: "polished, on-theme, clear, CTA prominent, no bugs". VLM lightbox: "polished blob
+  frame, clear, no bugs, fits theme". VLM full-page: "no broken layouts, cohesive, high value".
+- `bun run lint` = 0 errors (1 acceptable font warning). HTTP 200. No runtime/console errors.
+
+Stage Summary:
+- Mini-cart is now a complete e-commerce-style cart popover (quantities, remove, live MXN total,
+  empty state, checkout CTA) — turns the landing page into a genuinely interactive ordering
+  experience while staying 100% on the melting-cream theme.
+- Galeria is now explorable: click any photo → gooey blob-framed lightbox with caption, keyboard +
+  Escape accessible.
+- Styling details (price-tag drips, pulsing eyebrow pips, testimonial drips, hero accent drip)
+  deepen the melting motif across every section.
+
+Unresolved Issues / Risks / Next-phase Priorities:
+1. Cart state is in-memory only (lost on reload). A future round could persist to localStorage and
+   show a "se guardó tu pedido" toast on return. Low-medium effort.
+2. Cart "Ver mi pedido" just scrolls to the CTA — there's no real checkout form. Could add a simple
+   order form (name, address, WhatsApp send) in the CTA section that reads the cart. Medium effort.
+3. Lightbox has no prev/next navigation between images. Could add arrow keys + on-screen arrows.
+   Low priority.
+4. Color-contrast audit (fresa-on-crema small text) still pending formal check.
+5. Image optimization: full-size PNGs still served (~100-160KB each). Next/Image + WebP would
+   improve LCP. Low priority for single landing page.
