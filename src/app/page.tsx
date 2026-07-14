@@ -709,6 +709,70 @@ section{position:relative}
 .nav.is-scrolled{background:rgba(255,246,236,0.82);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);box-shadow:0 6px 24px -12px rgba(59,35,24,0.25)}
 @media (max-width:760px){.nav{padding:1rem clamp(1rem,5vw,1.5rem)}}
 
+/* ===== FAQ ===== */
+#faq{background:var(--vainilla);padding:clamp(4rem,8vw,7rem) 0}
+.faq__head{text-align:center;max-width:640px;margin:0 auto 3rem}
+.faq__head .section__title{margin-left:auto;margin-right:auto}
+.faq__list{max-width:760px;margin:0 auto;display:flex;flex-direction:column;gap:0.8rem}
+.faq__item{
+  background:var(--crema);border-radius:28px;overflow:hidden;
+  box-shadow:inset 0 2px 6px rgba(255,255,255,0.5),0 10px 24px -16px rgba(59,35,24,0.3);
+  transition:border-radius 0.5s var(--ease-cream);
+}
+.faq__item.is-open{border-radius:36px 36px 28px 28px}
+.faq__q{
+  width:100%;display:flex;align-items:center;justify-content:space-between;gap:1rem;
+  padding:1.3rem 1.6rem;background:none;border:0;cursor:pointer;text-align:left;
+  font-family:var(--display);font-weight:700;font-size:clamp(1rem,2vw,1.2rem);color:var(--chocolate);
+}
+.faq__q-icon{
+  flex-shrink:0;width:32px;height:32px;border-radius:50%;background:var(--fresa);
+  display:flex;align-items:center;justify-content:center;color:var(--chocolate);font-size:1.3rem;line-height:1;
+  transition:transform 0.5s var(--ease-cream),background 0.4s var(--ease-cream);
+  will-change:transform;
+}
+.faq__item.is-open .faq__q-icon{transform:rotate(45deg) scale(1.1);background:var(--fresa-deep);color:var(--crema)}
+.faq__a{
+  max-height:0;overflow:hidden;opacity:0;
+  transition:max-height 0.6s var(--ease-cream),opacity 0.4s var(--ease-cream),padding 0.5s var(--ease-cream);
+  padding:0 1.6rem;
+}
+.faq__item.is-open .faq__a{max-height:240px;opacity:1;padding:0 1.6rem 1.4rem}
+.faq__a p{font-size:1rem;color:var(--chocolate);opacity:0.8;line-height:1.6}
+.faq__a p+p{margin-top:0.6rem}
+.faq__contact{text-align:center;margin-top:2.5rem;font-family:var(--display);font-weight:600;color:var(--chocolate);opacity:0.7;font-size:1rem}
+.faq__contact a{color:var(--fresa-deep);text-decoration:none;border-bottom:2px dotted var(--fresa-deep);padding-bottom:1px;transition:opacity 0.3s var(--ease-cream)}
+.faq__contact a:hover{opacity:0.7}
+
+/* ===== BACK TO TOP ===== */
+.back-top{
+  position:fixed;left:max(1rem,env(safe-area-inset-left));bottom:max(1.2rem,env(safe-area-inset-bottom));
+  z-index:170;width:48px;height:56px;pointer-events:none;opacity:0;transform:translateY(20px) scale(0.7);
+  transition:opacity 0.5s var(--ease-cream),transform 0.5s var(--ease-cream);will-change:transform,opacity;
+}
+.back-top.is-visible{opacity:1;transform:translateY(0) scale(1);pointer-events:auto;cursor:pointer}
+.back-top__goo{position:relative;width:100%;height:100%;filter:url(#goo-strong)}
+.back-top__drop{
+  position:absolute;left:50%;top:0;transform:translateX(-50%);
+  width:40px;height:46px;border-radius:50% 50% 46% 46% / 60% 60% 40% 40%;
+  background:linear-gradient(160deg,#FFD9E3,var(--fresa-deep));
+  box-shadow:inset 0 2px 4px rgba(255,255,255,0.5),inset 0 -4px 8px rgba(59,35,24,0.15);
+  display:flex;align-items:center;justify-content:center;color:var(--chocolate);
+}
+.back-top__drop svg{width:18px;height:18px}
+.back-top__drip{position:absolute;left:50%;bottom:4px;transform:translateX(-50%);width:12px;height:12px;border-radius:50%;background:var(--fresa-deep)}
+.back-top:hover .back-top__drop{animation:bobUp 0.6s var(--ease-cream)}
+@keyframes bobUp{0%{transform:translateX(-50%) translateY(0)}50%{transform:translateX(-50%) translateY(-6px)}100%{transform:translateX(-50%) translateY(0)}}
+@media (max-width:760px){.back-top{left:auto;right:max(5rem,calc(env(safe-area-inset-right) + 5rem));bottom:max(5.5rem,calc(env(safe-area-inset-bottom) + 5.5rem))}}
+
+/* nav cart count badge */
+.nav__cart-count{
+  display:inline-flex;align-items:center;justify-content:center;min-width:20px;height:20px;padding:0 5px;
+  background:var(--chocolate);color:var(--crema);border-radius:999px;font-family:var(--display);font-weight:800;
+  font-size:0.72rem;margin-left:0.4rem;transform:scale(0);transition:transform 0.4s var(--ease-cream);vertical-align:middle;
+}
+.nav__cart-count.is-active{transform:scale(1)}
+
 /* reduced motion */
 @media (prefers-reduced-motion:reduce){
   *{animation:none !important;transition:none !important}
@@ -1018,6 +1082,14 @@ export default function Home() {
         return false;
       };
       const formatTotal = (n: number) => '$' + n + ' <small>MNX</small>';
+      const navCartCount = document.querySelector('.nav__cart-count') as HTMLElement;
+      const syncNavCount = () => {
+        const c = Object.keys(cartItems).reduce((s, k) => s + cartItems[k].qty, 0);
+        if (navCartCount) {
+          navCartCount.textContent = String(c);
+          if (c > 0) navCartCount.classList.add('is-active'); else navCartCount.classList.remove('is-active');
+        }
+      };
       const renderCart = () => {
         const keys = Object.keys(cartItems);
         const count = keys.reduce((s, k) => s + cartItems[k].qty, 0);
@@ -1035,9 +1107,10 @@ export default function Home() {
             ? keys.map((k) => `<div class="cart__summary-row"><span>${cartItems[k].name} ×${cartItems[k].qty}</span><span>$${cartItems[k].qty * cartItems[k].price}</span></div>`).join('')
             : '';
         }
-        if (!cartBody) return;
+        if (!cartBody) { syncNavCount(); return; }
         if (count === 0) {
           cartBody.innerHTML = '<div class="cart__empty"><span class="emoji">🍦</span>Tu carrito está derretido de vacío.<br/>¡Agrega un sabor!</div>';
+          syncNavCount();
           return;
         }
         cartBody.innerHTML = keys.map((k) => {
@@ -1063,6 +1136,7 @@ export default function Home() {
           row.querySelector('.cart__dec')?.addEventListener('click', () => { if (cartItems[key]) { cartItems[key].qty -= 1; if (cartItems[key].qty <= 0) delete cartItems[key]; renderCart(); saveCart(); } });
           row.querySelector('.cart__remove')?.addEventListener('click', () => { delete cartItems[key]; renderCart(); saveCart(); });
         });
+        syncNavCount();
       };
       // checkout step (form inside cart)
       const enterCheckout = () => {
@@ -1422,6 +1496,37 @@ export default function Home() {
         });
       }
 
+      // ---------- FAQ accordion ----------
+      document.querySelectorAll('.faq__item').forEach((item) => {
+        const q = item.querySelector('.faq__q') as HTMLElement;
+        q.addEventListener('click', () => {
+          const wasOpen = item.classList.contains('is-open');
+          document.querySelectorAll('.faq__item').forEach((other) => {
+            if (other !== item) { other.classList.remove('is-open'); (other.querySelector('.faq__q') as HTMLElement)?.setAttribute('aria-expanded', 'false'); }
+          });
+          item.classList.toggle('is-open', !wasOpen);
+          q.setAttribute('aria-expanded', String(!wasOpen));
+        });
+      });
+
+      // ---------- Back to top ----------
+      const backTop = document.querySelector('.back-top') as HTMLElement;
+      if (backTop) {
+        ScrollTrigger.create({
+          trigger: '.hero', start: 'bottom 90%',
+          onEnter: () => backTop.classList.add('is-visible'),
+          onLeaveBack: () => backTop.classList.remove('is-visible'),
+        });
+        backTop.addEventListener('click', () => {
+          lenis.scrollTo(0, { duration: 1.6 });
+          gsap.timeline()
+            .to(backTop.querySelector('.back-top__drop'), { scaleY: 0.82, scaleX: 1.08, duration: 0.12, ease: 'power2.out' })
+            .to(backTop.querySelector('.back-top__drop'), { scaleY: 1, scaleX: 1, duration: 0.6, ease: 'elastic.out(1,0.4)' });
+        });
+      }
+
+      // ---------- Nav cart count badge (synced via renderCart -> syncNavCount) ----------
+
       // Refresh after load
       w.addEventListener('load', () => ScrollTrigger.refresh());
       gsap.delayedCall(4, () => ScrollTrigger.refresh());
@@ -1594,9 +1699,10 @@ export default function Home() {
           <a className="drip-link" href="#galeria">Galería</a>
           <a className="drip-link" href="#historia">Historia</a>
           <a className="drip-link" href="#proceso">Proceso</a>
-          <a className="drip-link" href="#cta-final">Contacto</a>
-          <a className="btn" href="#cta-final" style={{ padding: '0.7rem 1.4rem', fontSize: '0.95rem' }}>
+          <a className="drip-link" href="#faq">FAQ</a>
+          <a className="btn" href="#cta-final" style={{ padding: '0.7rem 1.4rem', fontSize: '0.95rem' }} data-cursor>
             <span className="btn__label">Ordenar</span>
+            <span className="nav__cart-count" aria-hidden="true">0</span>
             <span className="btn__drips"><i /><i /><i /></span>
           </a>
         </nav>
@@ -2016,6 +2122,51 @@ export default function Home() {
           </div>
         </section>
 
+        {/* ===== DIVIDER testimonios -> faq ===== */}
+        <div className="drip-divider" aria-hidden="true" style={{ height: 'clamp(40px,6vw,80px)' }}>
+          <svg viewBox="0 0 1440 80" preserveAspectRatio="none">
+            <path d="M0,0 L1440,0 L1440,24 C1320,58 1200,10 1080,38 C960,66 840,8 720,36 C600,64 480,10 360,38 C240,66 120,12 0,40 Z" fill="var(--vainilla)" />
+          </svg>
+        </div>
+
+        {/* ===== FAQ ===== */}
+        <section id="faq" aria-labelledby="faq-title">
+          <div className="wrap">
+            <div className="faq__head">
+              <span className="section__eyebrow reveal">¿Te quedó duda?</span>
+              <h2 id="faq-title" className="section__title reveal" style={{ fontSize: 'clamp(2rem,5vw,3.6rem)' }}>Preguntas que se derriten</h2>
+              <p className="section__sub reveal" style={{ margin: '0 auto' }}>Lo que más nos preguntan antes de pedir. Si falta algo, escríbenos.</p>
+            </div>
+            <div className="faq__list">
+              <div className="faq__item reveal">
+                <button className="faq__q" aria-expanded="false">¿Hasta dónde llevan? <span className="faq__q-icon">+</span></button>
+                <div className="faq__a"><p>Por ahora enviamos en toda la CDMX y zona metropolitana. Próximamente Pátzcuaro y Morelia. El envío sale sin costo en pedidos mayores a $200; abajo de eso, $40 de corrido.</p></div>
+              </div>
+              <div className="faq__item reveal">
+                <button className="faq__q" aria-expanded="false">¿Cómo conservo el helado si no me lo como todo? <span className="faq__q-icon">+</span></button>
+                <div className="faq__a"><p>Tapa bien, mételo al congelador y cómelo en menos de una semana. Como no lleva estabilizantes químicos, si se congela duro se deja reposar 5 minutitos fuera antes de servir. Así regresa a su textura cremosa.</p></div>
+              </div>
+              <div className="faq__item reveal">
+                <button className="faq__q" aria-expanded="false">¿Tienen opciones veganas o sin lactosa? <span className="faq__q-icon">+</span></button>
+                <div className="faq__a"><p>¡Sí! El de mango con chíchago y el de fresa los hacemos con base de coco. Marca "vegano" en las notas del pedido y te los mandamos así. Sin lactosa, sin leche, puro sabor.</p></div>
+              </div>
+              <div className="faq__item reveal">
+                <button className="faq__q" aria-expanded="false">¿Puedo pedir para evento o boda? <span className="faq__q-icon">+</span></button>
+                <div className="faq__a"><p>Claro que sí, esa es nuestra debilidad. Hamos puesto carritos de helado en bodas, cumpleaños y fiestas de quince. Escríbenos por WhatsApp con tu fecha y número de invitados y te mandamos propuesta.</p></div>
+              </div>
+              <div className="faq__item reveal">
+                <button className="faq__q" aria-expanded="false">¿Cuánto dura el helado en el camino? <span className="faq__q-icon">+</span></button>
+                <div className="faq__a"><p>Lo llevamos en hieleras con gel refrigerante. Aguantando perfecto hasta 2 horas desde que sale de nuestra nevera. En CDMX casi siempre llega en 40 minutos. Si llega derretido (casi nunca), te lo cambiamos sin chistar.</p></div>
+              </div>
+              <div className="faq__item reveal">
+                <button className="faq__q" aria-expanded="false">¿Aceptan pago contra entrega? <span className="faq__q-icon">+</span></button>
+                <div className="faq__a"><p>Sí: efectivo, transferencia y tarjetas al recibir. También puedes pagar por WhatsApp con Stripe si prefieres. Tú escoges cómo, nosotros ya lo armamos.</p></div>
+              </div>
+            </div>
+            <p className="faq__contact reveal">¿No se derritió tu duda? <a href="#cta-final">Escríbenos por WhatsApp</a> — te respondemos cremosito.</p>
+          </div>
+        </section>
+
         {/* ===== CTA FINAL ===== */}
         <section id="cta-final" aria-labelledby="cta-title">
           <div className="wrap" style={{ textAlign: 'center' }}>
@@ -2158,6 +2309,18 @@ export default function Home() {
           <div className="lightbox__cap" />
         </div>
       </div>
+
+      {/* ===== BACK TO TOP (melting drip) ===== */}
+      <button className="back-top" aria-label="Volver arriba" data-cursor>
+        <div className="back-top__goo">
+          <div className="back-top__drop">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M12 19V5M5 12l7-7 7 7" />
+            </svg>
+          </div>
+          <div className="back-top__drip" />
+        </div>
+      </button>
     </>
   );
 }

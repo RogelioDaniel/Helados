@@ -324,3 +324,102 @@ Unresolved Issues / Risks / Next-phase Priorities:
 4. Color-contrast audit (fresa-on-crema small text) still pending formal check.
 5. Image optimization: full-size PNGs still served (~100-160KB each). Next/Image + WebP would
    improve LCP. Low priority for single landing page.
+
+---
+Task ID: cron-round-5
+Agent: webDevReview (cron)
+Task: Recurring QA + implement localStorage cart persistence, checkout form, lightbox nav.
+
+Work Log:
+- Read prior worklog (4 rounds complete); confirmed project stable (HTTP 200, lint 0 errors/1 font
+  warning, no runtime errors).
+- agent-browser QA: all subsystems healthy. VLM CTA review noted a form on the main CTA would hurt
+  conversion → adapted plan to put checkout form INSIDE the cart popover (where intent to order exists).
+- Implemented 3 features (all melting-theme coherent):
+  1. localStorage cart persistence + restore toast (priority #1): cart saves to localStorage on every
+     add/remove/qty change; restores on load; "Tu pedido te espera: N 🍦" toast with Verlo/dismiss.
+  2. Checkout step inside cart (priority #2): two-step cart (list → checkout form with name/phone/
+     address + order summary + WhatsApp send). CTA toggles "Ver mi pedido"↔"Volver". Validation with
+     playful Mexican-Spanish errors. Opens wa.me with pre-filled order message.
+  3. Lightbox prev/next nav (priority #3): ‹ › arrow buttons + "1 / 5" counter + ArrowLeft/Right/
+     Escape keyboard support.
+- NOTE: Round 5 was implemented + lint passed (0 errors), but a transient tooling outage prevented
+  final browser verification + worklog update. Verification completed in round 6 (see below).
+
+Verification (completed in round 6):
+- Cart checkout: add Fresa + Pistache → localStorage saved {Fresa, Pistache} ✓; "Ver mi pedido" →
+  is-checkout=true, CTA label "Volver", 2 summary rows ✓.
+- WhatsApp validation: no name → "¿Cómo te llamas, cremosito?" ✓; no contact → "Necesitamos un
+  teléfono o dirección..." ✓; valid → "¡Abriendo WhatsApp!" (pistache green) ✓; wa.me opened with
+  full order message (Fresa ×1 $65, Pistache ×1 $85, Total $150, Nombre: Mariana, Tel: 5512345678) ✓.
+- Lightbox nav: opens 1/5 "Surtido del día" → next btn 2/5 "Mango con chile" → ArrowRight 3/5 →
+  ArrowLeft 2/5 → Escape closes ✓.
+- Restore toast: add item → reload → toast appears with count + badge matches + float-order visible ✓.
+- VLM checkout: "polished, on-theme, form fields clear, WhatsApp button stands out, no bugs".
+
+---
+Task ID: cron-round-6
+Agent: webDevReview (cron)
+Task: Recurring QA + verify round-5 (cut off by outage) + implement new features.
+
+Work Log:
+- Read prior worklog; round 5 was implemented but verification was cut off by a transient tooling
+  outage. First task: verify round-5 features work.
+- agent-browser QA of round-5 features (all passed):
+  - Cart checkout step: add Fresa + Pistache → localStorage saved ✓; "Ver mi pedido" →
+    is-checkout=true, CTA label "Volver", 2 summary rows ✓.
+  - WhatsApp validation: no name → "¿Cómo te llamas, cremosito?" ✓; no contact → "Necesitamos un
+    teléfono o dirección..." ✓; valid → "¡Abriendo WhatsApp!" (pistache green) ✓; wa.me opened with
+    full order message (Fresa ×1 $65, Pistache ×1 $85, Total $150, Nombre: Mariana, Tel: 5512345678) ✓.
+  - Lightbox nav: 1/5 → next btn 2/5 → ArrowRight 3/5 → ArrowLeft 2/5 → Escape closes ✓.
+  - Restore toast: add item → reload → toast with count + badge matches + float-order visible ✓.
+  - VLM checkout: "polished, on-theme, form fields clear, WhatsApp button stands out, no bugs".
+- Page stable → implemented round-6 new features + styling details:
+
+Implemented (all melting-theme coherent):
+1. **FAQ section** (new, between Testimonios and CTA-final): 6-item accordion with Mexican-Spanish
+   Q&As (delivery zones, storage, vegan options, events, transit time, payment). Single-open behavior
+   (opening one closes others). Each item: cream card, rotating + → × icon (fresa → fresa-deep on
+   open, 45° rotate + scale 1.1), answer expands with max-height + opacity transition (cream easing
+   0.6s). aria-expanded toggled for a11y. Drippy divider before it. "¿No se derritió tu duda? Escríbenos
+   por WhatsApp" contact line at the bottom. Nav "FAQ" link added.
+   VLM: "polished, on-theme, smooth animation, readable, rotating + icon clear, no bugs".
+2. **Back-to-top melting drip button** (`.back-top`): fixed bottom-left, a pink melting scoop with
+   gooey drip inside `#goo-strong`, appears via ScrollTrigger after hero bottom passes 90%, hides on
+   leaveBack. Hover bobs the scoop up (bobUp keyframe). Click does squash-feedback + smooth-scrolls
+   to top (Lenis 1.6s). Hidden at top. On mobile, repositions to avoid the float-order bubble.
+   Verified: visible after scroll down ✓, hidden at top ✓.
+3. **Nav cart count badge** (`.nav__cart-count`): a chocolate pill next to "Ordenar" in the nav that
+   shows the live cart item count. Starts at scale 0, becomes `is-active` (scale 1) when items exist.
+   Synced via `syncNavCount()` called inside `renderCart()` (covers add, qty change, remove, restore).
+   Verified: add Fresa → badge "3" (2 restored + 1 new) + active ✓.
+4. **Accessibility**: FAQ buttons use `aria-expanded`; FAQ items are `<button>` elements (keyboard
+   accessible); back-to-top is a `<button>` with aria-label.
+
+Verification (agent-browser + VLM, post-changes):
+- DOM: #faq ✓ (6 items), .back-top ✓, .nav__cart-count ✓, nav FAQ link ✓. No console/runtime errors.
+- FAQ: click item 1 → opens + aria-expanded="true" ✓; click item 2 → item 1 closes, item 2 opens ✓.
+- Back-top: visible after scroll ✓, hidden at top ✓.
+- Nav count: add flavor → badge "3" + active ✓.
+- VLM FAQ: "polished, on-theme, smooth, readable, no bugs". VLM full-page: "9 sections (Header, Hero,
+  Flavors, Gallery, History, Process, Testimonials, FAQ, Footer), no broken/overlaps/gaps, cohesive,
+  high production value".
+- `bun run lint` = 0 errors (1 acceptable font warning). HTTP 200. No runtime/console errors.
+
+Stage Summary:
+- Page now has 9 landmark sections: Hero → Sabores → Galería → Historia → Proceso → Testimonios →
+  **FAQ (new)** → CTA final → Footer.
+- Complete ordering loop fully verified: browse → quick-add (flying scoop) → cart (qty/remove/total)
+  → checkout form (name/phone/address + summary) → WhatsApp send → localStorage persists across
+  reloads + restore toast. Nav badge + floating bubble both reflect live count.
+- Lightbox is fully navigable (arrows + keyboard + counter + Escape).
+- New UX touches: FAQ fills the information gap (delivery, storage, vegan, events, payment), back-to-
+  top drip, nav cart count — all on the melting-cream theme.
+
+Unresolved Issues / Risks / Next-phase Priorities:
+1. Image optimization: full-size PNGs still served (~100-160KB each). Next/Image + WebP would improve
+   LCP. Low priority for single landing page.
+2. Color-contrast audit (fresa-on-crema small text) still pending formal check.
+3. FAQ could use schema.org FAQPage structured data for SEO/rich snippets. Low effort, future round.
+4. Cart could support "clear all" button. Minor.
+5. Could add a seasonal/flavor-of-the-month banner or a social Instagram feed. Future enhancement.
