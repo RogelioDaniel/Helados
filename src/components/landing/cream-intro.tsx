@@ -105,7 +105,6 @@ export function CreamIntro() {
     const enableFrame = window.requestAnimationFrame(() => setAllowWebgl(true));
 
     const root = document.documentElement;
-    const previousOverflow = document.body.style.overflow;
     let disposed = false;
     let leaving = false;
     let fallbackMinimumReady = false;
@@ -116,12 +115,10 @@ export function CreamIntro() {
     let shaderResidencyTimer = 0;
 
     root.classList.add('cream-intro-active');
-    document.body.style.overflow = 'hidden';
 
     const restorePage = () => {
       root.classList.remove('cream-intro-active');
       root.classList.remove('cream-intro-revealing');
-      document.body.style.overflow = previousOverflow;
     };
 
     const finish = () => {
@@ -241,16 +238,16 @@ export function CreamIntro() {
       className={`cream-intro cream-intro--${phase} ${webglReady ? 'cream-intro--webgl' : ''}`}
       aria-hidden="true"
     >
+      <script
+        id="cream-intro-prepaint"
+        suppressHydrationWarning
+        dangerouslySetInnerHTML={{ __html: creamBootstrapScript }}
+      />
       <CreamIntroPoster />
       <canvas
         id={CREAM_INTRO_CANVAS_ID}
         suppressHydrationWarning
         className={`cream-intro-canvas ${canvasFailed ? 'cream-intro-canvas--failed' : ''}`}
-      />
-      <script
-        id="cream-intro-prepaint"
-        suppressHydrationWarning
-        dangerouslySetInnerHTML={{ __html: creamBootstrapScript }}
       />
 
       {allowWebgl ? (

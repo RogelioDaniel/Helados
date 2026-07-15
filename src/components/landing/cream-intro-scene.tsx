@@ -16,14 +16,12 @@ type CreamIntroSceneProps = {
 
 type CreamPrepaint = {
   context: WebGL2RenderingContext;
-  startedAt: number;
   stop: () => void;
   dispose: () => void;
 };
 
 type CreamCanvas = HTMLCanvasElement & {
   __creamPrepaint?: CreamPrepaint;
-  __creamStartedAt?: number;
 };
 
 const REVEAL_DURATION_SECONDS = 1.68;
@@ -39,9 +37,11 @@ export default function CreamIntroScene({
   onFailure,
 }: CreamIntroSceneProps) {
   const leavingRef = useRef(leaving);
+  const startRenderingRef = useRef<() => void>(() => undefined);
 
   useEffect(() => {
     leavingRef.current = leaving;
+    if (leaving) startRenderingRef.current();
   }, [leaving]);
 
   useEffect(() => {
@@ -55,13 +55,12 @@ export default function CreamIntroScene({
       depth: false,
       stencil: false,
       premultipliedAlpha: false,
-      preserveDrawingBuffer: false,
+      preserveDrawingBuffer: true,
       powerPreference: 'low-power',
     };
     const prepaint = canvas.__creamPrepaint;
     prepaint?.stop();
     const context = prepaint?.context ?? canvas.getContext('webgl2', contextAttributes);
-    const startedAt = canvas.__creamStartedAt ?? performance.now();
 
     if (!context) {
       onFailure();
@@ -75,9 +74,11 @@ export default function CreamIntroScene({
     let disposed = false;
     let pageVisible = !document.hidden;
     let lastFrame = performance.now();
-    let elapsed = Math.max(0, (lastFrame - startedAt) / 1000);
     let revealElapsed = 0;
     let reveal = leavingRef.current ? 1 : 0;
+    let renderWidth = 0;
+    let renderHeight = 0;
+    let renderDpr = 0;
 
     const stop = () => {
       if (frame) window.cancelAnimationFrame(frame);
@@ -94,6 +95,7 @@ export default function CreamIntroScene({
         stencil: false,
         powerPreference: 'low-power',
         premultipliedAlpha: false,
+        preserveDrawingBuffer: true,
       });
       renderer.resetState();
       renderer.setClearColor(0x000000, 0);
@@ -107,7 +109,7 @@ export default function CreamIntroScene({
         depthWrite: false,
         depthTest: false,
         uniforms: {
-          uTime: { value: elapsed },
+          uTime: { value: 0 },
           uReveal: { value: reveal },
           uAspect: { value: 1 },
         },
@@ -117,14 +119,27 @@ export default function CreamIntroScene({
       const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
       scene.add(new THREE.Mesh(geometry, material));
 
+      const renderCurrentFrame = () => {
+        if (!renderer || !material) return;
+        material.uniforms.uTime.value = 0;
+        material.uniforms.uReveal.value = reveal;
+        renderer.render(scene, camera);
+      };
+
       const resize = () => {
         if (!renderer || !material) return;
         const width = Math.max(host.clientWidth, 1);
         const height = Math.max(host.clientHeight, 1);
         const dprCap = width < 768 ? 1.1 : 1.35;
-        renderer.setPixelRatio(Math.min(window.devicePixelRatio, dprCap));
+        const dpr = Math.min(window.devicePixelRatio || 1, dprCap);
+        if (width === renderWidth && height === renderHeight && dpr === renderDpr) return;
+        renderWidth = width;
+        renderHeight = height;
+        renderDpr = dpr;
+        renderer.setPixelRatio(dpr);
         renderer.setSize(width, height, false);
         material.uniforms.uAspect.value = width / height;
+        renderCurrentFrame();
       };
 
       const render = (now: number) => {
@@ -138,15 +153,12 @@ export default function CreamIntroScene({
         }
 
         lastFrame = now;
-        elapsed += delta;
         if (leavingRef.current) {
           revealElapsed = Math.min(REVEAL_DURATION_SECONDS, revealElapsed + delta);
           const progress = revealElapsed / REVEAL_DURATION_SECONDS;
           reveal = smootherStep(progress);
         }
-        material.uniforms.uTime.value = elapsed;
-        material.uniforms.uReveal.value = reveal;
-        renderer.render(scene, camera);
+        renderCurrentFrame();
 
         if (!(leavingRef.current && reveal >= 1)) {
           frame = window.requestAnimationFrame(render);
@@ -162,7 +174,7 @@ export default function CreamIntroScene({
 
       const handleVisibility = () => {
         pageVisible = !document.hidden;
-        if (pageVisible) start();
+        if (pageVisible && leavingRef.current) start();
         else stop();
       };
 
@@ -176,17 +188,16 @@ export default function CreamIntroScene({
       resizeObserver.observe(host);
       document.addEventListener('visibilitychange', handleVisibility);
       canvas.addEventListener('webglcontextlost', handleContextLost);
+      startRenderingRef.current = start;
       resize();
-      material.uniforms.uTime.value = elapsed;
-      material.uniforms.uReveal.value = reveal;
-      renderer.render(scene, camera);
       onFirstFrame();
       prepaint?.dispose();
       delete canvas.__creamPrepaint;
-      start();
+      if (leavingRef.current) start();
 
       return () => {
         disposed = true;
+        startRenderingRef.current = () => undefined;
         stop();
         resizeObserver.disconnect();
         document.removeEventListener('visibilitychange', handleVisibility);
