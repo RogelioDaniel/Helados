@@ -471,8 +471,397 @@ html.cream-intro-active:not(.cream-intro-revealing) .nube-hero {
 }
 
 html.cream-intro-active:not(.cream-intro-revealing) .nube-hero-image,
-html.cream-intro-active:not(.cream-intro-revealing) .hero-copy {
+html.cream-intro-active:not(.cream-intro-revealing) .hero-copy,
+html.cream-intro-active:not(.cream-intro-revealing) .hero-flavor-catalogue,
+html.cream-intro-active:not(.cream-intro-revealing) .hero-flavor-catalogue * {
   animation-play-state: paused;
+}
+
+.nube-hero-ambient {
+  background:
+    radial-gradient(circle at 9% 9%, rgb(255 253 248 / 0.82) 0 7%, transparent 29%),
+    radial-gradient(circle at 41% 76%, color-mix(in srgb, var(--cream-ribbon-b) 16%, transparent) 0 2%, transparent 26%),
+    linear-gradient(120deg, var(--cream-light) 0%, var(--cream-base) 54%, color-mix(in srgb, var(--cream-ribbon-a) 16%, var(--cream-base)) 100%);
+}
+
+.hero-flavor-catalogue {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  min-height: 100%;
+  overflow: hidden;
+  isolation: isolate;
+  border: 1px solid rgb(255 253 248 / 0.58);
+  border-radius: clamp(1.25rem, 2.2vw, 2.2rem);
+  background:
+    radial-gradient(circle at 75% 17%, color-mix(in srgb, var(--cream-light) 80%, transparent) 0 7%, transparent 35%),
+    radial-gradient(circle at 23% 92%, color-mix(in srgb, var(--catalogue-tone) 28%, transparent) 0 8%, transparent 44%),
+    linear-gradient(145deg, color-mix(in srgb, var(--catalogue-tone) 76%, #2a1913) 0%, color-mix(in srgb, var(--catalogue-tone) 44%, var(--cream-base)) 44%, var(--cream-light) 100%);
+  box-shadow: 0 26px 80px -52px rgb(42 25 19 / 0.78);
+  opacity: 0;
+  transform: translateY(20px) scale(0.985);
+  animation: hero-catalogue-in 1.05s cubic-bezier(0.22, 1, 0.36, 1) 240ms forwards;
+}
+
+.catalogue-grain {
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  opacity: 0.34;
+  background-image:
+    radial-gradient(circle at 20% 30%, rgb(255 253 248 / 0.78) 0 0.8px, transparent 1px),
+    radial-gradient(circle at 75% 64%, rgb(42 25 19 / 0.22) 0 0.7px, transparent 1px);
+  background-size: 13px 13px, 17px 17px;
+  mix-blend-mode: soft-light;
+}
+
+.catalogue-topline {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: clamp(1rem, 2.1vw, 1.75rem) clamp(1rem, 2.4vw, 2rem) 0;
+  color: rgb(255 253 248 / 0.92);
+}
+
+.catalogue-kicker,
+.catalogue-count {
+  margin: 0;
+  font-size: 0.6rem;
+  font-weight: 760;
+  letter-spacing: 0.18em;
+  line-height: 1.3;
+  text-transform: uppercase;
+}
+
+.catalogue-count {
+  margin-top: 0.38rem;
+  color: rgb(255 253 248 / 0.58);
+  font-size: 0.54rem;
+}
+
+.catalogue-controls {
+  display: flex;
+  gap: 0.45rem;
+}
+
+.catalogue-arrow {
+  display: grid;
+  width: 2.7rem;
+  height: 2.7rem;
+  place-items: center;
+  border: 1px solid rgb(255 253 248 / 0.42);
+  border-radius: 999px;
+  color: #fffdf8;
+  background: rgb(42 25 19 / 0.12);
+  transition:
+    transform 200ms cubic-bezier(0.22, 1, 0.36, 1),
+    color 180ms ease,
+    background-color 180ms ease,
+    border-color 180ms ease;
+}
+
+.catalogue-arrow:hover {
+  color: var(--nube-ink);
+  border-color: #fffdf8;
+  background: #fffdf8;
+  transform: translateY(-1px);
+}
+
+.catalogue-arrow:active {
+  transform: scale(0.94);
+}
+
+.catalogue-stage {
+  position: relative;
+  min-height: clamp(18rem, 29vw, 33.5rem);
+  overflow: hidden;
+}
+
+.catalogue-word {
+  position: absolute;
+  z-index: 0;
+  top: clamp(2rem, 6vw, 5rem);
+  left: 50%;
+  width: max-content;
+  max-width: 112%;
+  color: color-mix(in srgb, #fffdf8 76%, var(--catalogue-tone));
+  font-family: var(--font-geist-sans), sans-serif;
+  font-size: clamp(4rem, 9.2vw, 9rem);
+  font-weight: 650;
+  letter-spacing: -0.1em;
+  line-height: 0.78;
+  opacity: 0.7;
+  text-transform: uppercase;
+  transform: translateX(-50%);
+  animation: catalogue-word-in 700ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.catalogue-orbit {
+  position: absolute;
+  z-index: 1;
+  display: block;
+  border: 1px solid rgb(255 253 248 / 0.34);
+  border-radius: 48% 52% 44% 56% / 52% 44% 56% 48%;
+  opacity: 0.75;
+}
+
+.catalogue-orbit--one {
+  top: 20%;
+  right: 12%;
+  width: 44%;
+  height: 52%;
+  transform: rotate(-13deg);
+}
+
+.catalogue-orbit--two {
+  bottom: 9%;
+  left: 14%;
+  width: 30%;
+  height: 18%;
+  border-color: color-mix(in srgb, var(--catalogue-tone) 30%, #fffdf8);
+  transform: rotate(18deg);
+}
+
+.catalogue-product {
+  position: absolute;
+  z-index: 3;
+  top: 9%;
+  right: 6%;
+  bottom: 4%;
+  width: min(52%, 25rem);
+  margin: 0;
+  pointer-events: none;
+  animation: catalogue-product-in 760ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.catalogue-product-image-wrap {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  border: 1px solid rgb(255 253 248 / 0.56);
+  border-radius: 49% 51% 42% 58% / 43% 47% 53% 57%;
+  background: color-mix(in srgb, var(--catalogue-tone) 32%, var(--cream-light));
+  box-shadow:
+    inset 0 0 0 9px rgb(255 253 248 / 0.08),
+    0 32px 56px -34px rgb(42 25 19 / 0.62);
+  transform: rotate(3deg);
+}
+
+.catalogue-product-image-wrap::after {
+  position: absolute;
+  z-index: 2;
+  inset: auto -9% -2% -7%;
+  height: 27%;
+  border-radius: 50% 50% 0 0 / 35% 35% 0 0;
+  content: "";
+  background: linear-gradient(180deg, transparent, rgb(42 25 19 / 0.28));
+}
+
+.catalogue-product-image {
+  object-fit: cover;
+  object-position: center;
+  transform: scale(1.055);
+}
+
+.catalogue-origin {
+  position: absolute;
+  z-index: 4;
+  right: 10%;
+  bottom: 4%;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.35rem;
+  color: rgb(255 253 248 / 0.88);
+  font-size: 0.53rem;
+  font-weight: 720;
+  letter-spacing: 0.15em;
+  line-height: 1.35;
+  text-align: right;
+  text-transform: uppercase;
+  text-shadow: 0 2px 12px rgb(42 25 19 / 0.62);
+}
+
+.catalogue-caption {
+  position: absolute;
+  z-index: 5;
+  bottom: clamp(0.9rem, 2vw, 1.6rem);
+  left: clamp(1rem, 2.4vw, 2rem);
+  width: min(42%, 17rem);
+  color: var(--nube-ink);
+  animation: catalogue-caption-in 680ms cubic-bezier(0.16, 1, 0.3, 1) 70ms both;
+}
+
+.catalogue-eyebrow {
+  margin: 0;
+  color: color-mix(in srgb, var(--catalogue-tone) 72%, var(--nube-ink));
+  font-size: 0.54rem;
+  font-weight: 800;
+  letter-spacing: 0.15em;
+  line-height: 1.35;
+  text-transform: uppercase;
+}
+
+.catalogue-caption h2 {
+  margin: 0.42rem 0 0;
+  font-size: clamp(1.9rem, 3.4vw, 3.7rem);
+  font-weight: 540;
+  letter-spacing: -0.055em;
+  line-height: 0.88;
+}
+
+.catalogue-caption > p:not(.catalogue-eyebrow) {
+  display: -webkit-box;
+  margin: 0.62rem 0 0;
+  overflow: hidden;
+  color: rgb(42 25 19 / 0.66);
+  font-size: clamp(0.66rem, 0.8vw, 0.76rem);
+  line-height: 1.45;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+}
+
+.catalogue-price-row {
+  display: flex;
+  align-items: end;
+  gap: 0.5rem;
+  margin-top: 0.78rem;
+  color: var(--nube-ink);
+}
+
+.catalogue-price-row > span:first-child {
+  font-size: clamp(1.45rem, 2vw, 2.2rem);
+  font-weight: 560;
+  line-height: 0.8;
+  letter-spacing: -0.05em;
+}
+
+.catalogue-price-row > span:last-child {
+  padding-bottom: 0.1rem;
+  color: rgb(42 25 19 / 0.58);
+  font-size: 0.5rem;
+  font-weight: 760;
+  letter-spacing: 0.13em;
+  line-height: 1.2;
+  text-transform: uppercase;
+}
+
+.catalogue-rail {
+  position: relative;
+  z-index: 10;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.38rem;
+  padding: 0.65rem clamp(0.7rem, 1.7vw, 1.25rem) clamp(0.8rem, 1.7vw, 1.25rem);
+  border-top: 1px solid rgb(42 25 19 / 0.12);
+  background: rgb(255 253 248 / 0.24);
+  backdrop-filter: blur(10px);
+}
+
+.catalogue-flavor-tab {
+  display: flex;
+  min-width: 0;
+  min-height: 2.75rem;
+  align-items: center;
+  gap: 0.42rem;
+  overflow: hidden;
+  padding: 0.35rem 0.42rem;
+  border: 1px solid transparent;
+  border-radius: 0.75rem;
+  color: rgb(42 25 19 / 0.66);
+  font-size: 0.56rem;
+  font-weight: 760;
+  letter-spacing: 0.04em;
+  line-height: 1.1;
+  text-align: left;
+  transition:
+    color 180ms ease,
+    background-color 180ms ease,
+    border-color 180ms ease,
+    transform 180ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.catalogue-flavor-tab:hover {
+  color: var(--nube-ink);
+  transform: translateY(-1px);
+}
+
+.catalogue-flavor-tab:active {
+  transform: scale(0.965);
+}
+
+.catalogue-flavor-tab--active {
+  border-color: color-mix(in srgb, var(--catalogue-tone) 38%, transparent);
+  color: var(--nube-ink);
+  background: color-mix(in srgb, var(--cream-light) 68%, var(--catalogue-tone));
+}
+
+.catalogue-tab-image {
+  position: relative;
+  display: block;
+  width: 1.68rem;
+  height: 1.68rem;
+  flex: none;
+  overflow: hidden;
+  border-radius: 50%;
+  border: 1px solid rgb(42 25 19 / 0.1);
+}
+
+@keyframes hero-catalogue-in {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes catalogue-word-in {
+  from {
+    opacity: 0;
+    transform: translate(-53%, 18px) scale(0.94);
+  }
+  to {
+    opacity: 0.7;
+    transform: translateX(-50%) scale(1);
+  }
+}
+
+@keyframes catalogue-product-in {
+  from {
+    opacity: 0;
+    transform: translate3d(16px, 26px, 0) rotate(3deg) scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) rotate(0) scale(1);
+  }
+}
+
+@keyframes catalogue-caption-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (min-width: 640px) {
+  .catalogue-rail {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+
+  .catalogue-flavor-tab {
+    justify-content: center;
+  }
 }
 
 .nube-hero-image {
@@ -919,6 +1308,43 @@ html.cream-intro-active:not(.cream-intro-revealing) .hero-copy {
 }
 
 @media (max-width: 767px) {
+  .nube-hero-ambient {
+    background:
+      radial-gradient(circle at 16% 12%, rgb(255 253 248 / 0.86) 0 5%, transparent 30%),
+      linear-gradient(145deg, var(--cream-light), var(--cream-base) 54%, color-mix(in srgb, var(--cream-ribbon-a) 16%, var(--cream-base)));
+  }
+
+  .catalogue-stage {
+    min-height: 19.5rem;
+  }
+
+  .catalogue-word {
+    top: 2.8rem;
+    font-size: clamp(4rem, 18vw, 6.2rem);
+  }
+
+  .catalogue-product {
+    top: 15%;
+    right: 5%;
+    bottom: 8%;
+    width: 51%;
+  }
+
+  .catalogue-caption {
+    bottom: 1rem;
+    width: 45%;
+  }
+
+  .catalogue-caption > p:not(.catalogue-eyebrow) {
+    -webkit-line-clamp: 2;
+  }
+
+  .catalogue-origin {
+    right: 7%;
+    bottom: 5%;
+    max-width: 72%;
+  }
+
   .nube-hero-wash {
     background:
       linear-gradient(180deg, rgb(245 240 232 / 0.99) 0%, rgb(245 240 232 / 0.95) 37%, rgb(245 240 232 / 0.38) 59%, transparent 73%),
@@ -961,6 +1387,11 @@ html.cream-intro-active:not(.cream-intro-revealing) .hero-copy {
 
   .hero-copy {
     opacity: 1;
+  }
+
+  .hero-flavor-catalogue {
+    opacity: 1;
+    transform: none;
   }
 
   .cream-intro,

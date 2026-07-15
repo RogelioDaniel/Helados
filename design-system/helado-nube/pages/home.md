@@ -32,6 +32,8 @@ Three.js genera pliegues y surcos mediante un único shader que se amasa lentame
 
 La misma textura WebGL se conserva en móvil: 24 FPS, DPR máximo de 1 y repintado continuo para no dejar un framebuffer congelado en el compositor. El SVG con filtros queda fuera de la ruta móvil; mientras llega el primer frame sólo existe un fondo lineal crema, sin círculos, filtros ni mosaicos. Escritorio trabaja a 30 FPS y DPR máximo de 1.35.
 
+Los cuatro enlaces del menú principal reutilizan esta introducción como transición de sección. Al activarlos, el hash se actualiza para conservar enlaces compartibles, la marea se retira y la sección destino se coloca detrás de la crema sin desplazamiento suave artificial. La máscara se abre sobre esa sección y al terminar recibe foco programático; Ctrl/Cmd-clic, historial y enlaces directos conservan el comportamiento nativo. Con reducción de movimiento o ahorro de datos no hay máscara: el destino se posiciona y enfoca de inmediato.
+
 ## Firma de scroll: Mantecación bajo el mostrador
 
 Cuando el encabezado queda fijo, funciona como una espátula. Al bajar deposita una corona delgada de helado bajo la navegación; al subir la raspa y vuelve a mostrar la página. El borde inferior nunca es recto: combina tres lóbulos grandes, ondas lentas y amasado persistente para formar una lengua irregular, no una barra rectangular. La profundidad responde a la distancia recorrida y permanece donde la persona la dejó, mientras los pliegues siguen amasándose con lentitud.
@@ -39,6 +41,8 @@ Cuando el encabezado queda fijo, funciona como una espátula. Al bajar deposita 
 Cuatro ranuras de gotas SDF quedan disponibles, pero su aparición es deliberadamente rara: una oportunidad cada 680–1040px en móvil y 520–880px en escritorio, con pausas mínimas de 1250ms y 950ms respectivamente. Tamaño, posición, desfase y duración derivan de la semilla de la receta. La gota se separa mediante un cuello y un espacio transparente antes de caer; al subir no se crean gotas nuevas. El canvas sólo reserva altura transparente para ese recorrido, no bloquea interacción, queda entre contenido y navegación y se oculta al abrir menú o carrito.
 
 El loader libera su contexto antes de montar esta segunda fase: nunca hay dos escenas WebGL activas simultáneamente. La marea usa un plano, un material shader, 24 FPS y DPR 1 en móvil, 30 FPS y DPR 1.25 en escritorio. `prefers-reduced-motion` y `Save-Data` omiten el efecto; una pérdida temporal de contexto lo pausa y lo recupera cuando el navegador vuelve a disponer de WebGL.
+
+El hero reemplaza la fotografía única por un catálogo de temporada: el sabor inicial se alinea con la receta aleatoria de la visita, una palabra editorial queda detrás de la imagen y la selección cambia con un corte de cucharada breve. Flechas y seis pestañas permiten explorar sin autoavance ni movimiento persistente; las imágenes son propias de la carta y cargan con `next/image`.
 
 La huella del cucharón queda como gesto secundario y funcional: aparece sobre la fotografía de un sabor al enfocarlo y en la compresión breve del botón “Servir”. No se representa mediante órbitas, partículas ni objetos flotantes.
 
@@ -49,8 +53,9 @@ desktop
 ┌──────────────────────────────────────────────────────────┐
 │ navegación sobria                         pedido (0)      │
 ├──────────────────────────────────────────────────────────┤
-│ FOTO EDITORIAL FULL-WIDTH: copy en espacio negativo      │
-│ H1 + CTA                    cono limpio, sin decoración   │
+│ COPY EDITORIAL             CATÁLOGO VIVO DE TEMPORADA     │
+│ H1 + CTA                   sabor, origen, precio, imagen  │
+│                              pestañas y flechas de elección │
 ├──────────────────────────────────────────────────────────┤
 │ sello/origen       carta interactiva y pedido            │
 ├──────────────────────────────────────────────────────────┤
@@ -58,7 +63,7 @@ desktop
 └──────────────────────────────────────────────────────────┘
 ```
 
-En móvil, copy y fotografía se separan para preservar legibilidad; la introducción conserva el shader a resolución controlada y la barra del pedido respeta `safe-area-inset-bottom`.
+En móvil, copy y catálogo se apilan para preservar legibilidad; la introducción conserva el shader a resolución controlada y la barra del pedido respeta `safe-area-inset-bottom`.
 
 ## Movimiento
 

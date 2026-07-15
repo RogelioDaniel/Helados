@@ -26,6 +26,7 @@ import {
 } from 'react';
 import { CreamIntro } from '@/components/landing/cream-intro';
 import type { CreamSession } from '@/components/landing/cream-recipes';
+import { FLAVORS, type Flavor } from '@/components/landing/flavor-data';
 import { LuxuryEffects } from '@/components/landing/luxury-effects';
 import { LuxuryHero } from '@/components/landing/luxury-hero';
 
@@ -33,87 +34,6 @@ const CreamScrollTide = dynamic(() => import('@/components/landing/cream-scroll-
   ssr: false,
   loading: () => null,
 });
-
-type Flavor = {
-  id: string;
-  name: string;
-  eyebrow: string;
-  description: string;
-  origin: string;
-  price: number;
-  image: string;
-  imageAlt: string;
-  color: string;
-};
-
-const FLAVORS: Flavor[] = [
-  {
-    id: 'fresa',
-    name: 'Fresa',
-    eyebrow: 'Frutal · Disponible vegano',
-    description: 'Fresas de Zamora y una acidez limpia. Dulce, fresca y sin colorantes.',
-    origin: 'Zamora, Michoacán',
-    price: 65,
-    image: '/img/historia-1.png',
-    imageAlt: 'Helado artesanal de fresa servido con fresas frescas',
-    color: '#a73f55',
-  },
-  {
-    id: 'vainilla',
-    name: 'Vainilla de Papantla',
-    eyebrow: 'Floral · Cremoso',
-    description: 'Vainilla veracruzana curada a mano, con aroma profundo y final sedoso.',
-    origin: 'Papantla, Veracruz',
-    price: 72,
-    image: '/img/historia-2.png',
-    imageAlt: 'Helado cremoso de vainilla servido con cuchara',
-    color: '#d8bb8b',
-  },
-  {
-    id: 'pistache',
-    name: 'Pistache tostado',
-    eyebrow: 'Intenso · Cremoso',
-    description: 'Pistache tostado al comal, una pizca de sal y una textura larga en boca.',
-    origin: 'Tostado en casa',
-    price: 85,
-    image: '/img/historia-3.png',
-    imageAlt: 'Cono de helado artesanal de pistache con pistaches tostados',
-    color: '#789170',
-  },
-  {
-    id: 'chocolate',
-    name: 'Chocolate Oaxaqueño',
-    eyebrow: 'Cacao · Profundo',
-    description: 'Tableta de cacao molida, notas tostadas y un final cálido que permanece.',
-    origin: 'Oaxaca, México',
-    price: 78,
-    image: '/img/gallery-3.png',
-    imageAlt: 'Helado de chocolate oaxaqueño con textura intensa',
-    color: '#5b362b',
-  },
-  {
-    id: 'mango',
-    name: 'Mango con chile',
-    eyebrow: 'Frutal · Disponible vegano',
-    description: 'Mango Manila maduro, cítricos y un toque medido de chile mexicano.',
-    origin: 'Fruta de temporada',
-    price: 70,
-    image: '/img/gallery-2.png',
-    imageAlt: 'Helado artesanal de mango con un toque de chile',
-    color: '#c98b32',
-  },
-  {
-    id: 'cajeta',
-    name: 'Cajeta de Celaya',
-    eyebrow: 'Edición de temporada',
-    description: 'Leche de cabra cocida a fuego lento: caramelo, humo suave y mucha memoria.',
-    origin: 'Celaya, Guanajuato',
-    price: 74,
-    image: '/img/gallery-4.png',
-    imageAlt: 'Helado de cajeta de Celaya con caramelo',
-    color: '#a46b3f',
-  },
-];
 
 const FAQS = [
   {
@@ -146,6 +66,15 @@ const money = new Intl.NumberFormat('es-MX', {
 
 const whatsappNumber = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER?.replace(/\D/g, '') ?? '';
 
+const RECIPE_TO_FEATURED_FLAVOR: Record<string, Flavor['id']> = {
+  'fresa-pistache': 'fresa',
+  'cacao-cajeta': 'cajeta',
+  'mango-chile': 'mango',
+  'pistache-cacao': 'pistache',
+  'vainilla-cajeta': 'vainilla',
+  'zarzamora-crema': 'fresa',
+};
+
 function getWhatsAppHref(message: string) {
   return `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`;
 }
@@ -158,10 +87,21 @@ export default function Home() {
   const [recentlyAdded, setRecentlyAdded] = useState<string | null>(null);
   const [cartReady, setCartReady] = useState(false);
   const [introComplete, setIntroComplete] = useState(false);
+  const [introRun, setIntroRun] = useState(0);
   const [creamSession, setCreamSession] = useState<CreamSession | null>(null);
   const closeCartRef = useRef<HTMLButtonElement>(null);
   const drawerRef = useRef<HTMLElement>(null);
   const returnFocusRef = useRef<HTMLElement | null>(null);
+  const pendingDestinationRef = useRef<string | null>(null);
+  const destinationPositionedRef = useRef(false);
+  const navigationInFlightRef = useRef(false);
+
+  useEffect(() => {
+    const targetId = window.location.hash.slice(1);
+    if (targetId && document.getElementById(targetId)) {
+      pendingDestinationRef.current = targetId;
+    }
+  }, []);
 
   useEffect(() => {
     const frame = window.requestAnimationFrame(() => {
@@ -246,9 +186,58 @@ export default function Home() {
     '¿Me ayudan a confirmar disponibilidad, entrega y forma de pago?',
   ].join('\n');
 
+  const positionPendingDestination = useCallback(() => {
+    const targetId = pendingDestinationRef.current;
+    const target = targetId ? document.getElementById(targetId) : null;
+    if (!target) return false;
+
+    target.scrollIntoView({ block: 'start', behavior: 'auto' });
+    destinationPositionedRef.current = true;
+    return true;
+  }, []);
+
   const handleIntroComplete = useCallback((session: CreamSession) => {
     setCreamSession(session);
     setIntroComplete(true);
+
+    window.requestAnimationFrame(() => {
+      if (!destinationPositionedRef.current) positionPendingDestination();
+
+      const targetId = pendingDestinationRef.current;
+      const target = targetId ? document.getElementById(targetId) : null;
+      target?.focus({ preventScroll: true });
+      pendingDestinationRef.current = null;
+      destinationPositionedRef.current = false;
+      navigationInFlightRef.current = false;
+    });
+  }, [positionPendingDestination]);
+
+  const handleCreamNavigation = useCallback((event: ReactMouseEvent<HTMLAnchorElement>) => {
+    if (
+      event.defaultPrevented
+      || event.button !== 0
+      || event.metaKey
+      || event.ctrlKey
+      || event.shiftKey
+      || event.altKey
+    ) return;
+
+    const href = event.currentTarget.getAttribute('href');
+    const targetId = href?.startsWith('#') ? href.slice(1) : '';
+    const target = targetId ? document.getElementById(targetId) : null;
+    if (!href || !target) return;
+
+    event.preventDefault();
+    if (navigationInFlightRef.current) return;
+
+    navigationInFlightRef.current = true;
+    pendingDestinationRef.current = targetId;
+    destinationPositionedRef.current = false;
+    if (window.location.hash !== href) window.history.pushState(null, '', href);
+
+    setMenuOpen(false);
+    setIntroComplete(false);
+    setIntroRun((run) => run + 1);
   }, []);
 
   function addFlavor(flavor: Flavor, event?: ReactMouseEvent<HTMLButtonElement>) {
@@ -320,7 +309,11 @@ export default function Home() {
 
   return (
     <main className="min-h-[100dvh] overflow-x-clip bg-[#f5efe5] text-[#211a17]">
-      <CreamIntro onComplete={handleIntroComplete} />
+      <CreamIntro
+        key={introRun}
+        onRevealStart={positionPendingDestination}
+        onComplete={handleIntroComplete}
+      />
       {!introComplete ? (
         <p className="sr-only" role="status" aria-live="polite">
           Preparando la primera cucharada
@@ -372,6 +365,7 @@ export default function Home() {
               <a
                 key={href}
                 href={href}
+                onClick={handleCreamNavigation}
                 className="text-sm font-medium text-[#211a17]/70 transition-colors hover:text-[var(--nube-accent)]"
               >
                 {label}
@@ -421,7 +415,10 @@ export default function Home() {
               <a
                 key={href}
                 href={href}
-                onClick={() => setMenuOpen(false)}
+                onClick={(event) => {
+                  setMenuOpen(false);
+                  handleCreamNavigation(event);
+                }}
                 tabIndex={menuOpen ? 0 : -1}
                 className="font-display flex min-h-14 items-center justify-between border-b border-[#211a17]/10 text-2xl"
               >
@@ -438,7 +435,12 @@ export default function Home() {
       ) : null}
 
       <div id="contenido">
-        <LuxuryHero itemCount={itemCount} onOpenCart={openCart} />
+        <LuxuryHero
+          flavors={FLAVORS}
+          featuredFlavorId={creamSession ? RECIPE_TO_FEATURED_FLAVOR[creamSession.recipe.id] : undefined}
+          itemCount={itemCount}
+          onOpenCart={openCart}
+        />
 
         <div className="border-y border-[#211a17]/10 bg-[#eee3d5]" aria-label="Ingredientes de origen">
           <dl className="ingredient-ledger mx-auto grid max-w-[1400px] grid-cols-1 px-5 sm:grid-cols-3 sm:px-8 lg:px-12">
@@ -455,7 +457,7 @@ export default function Home() {
           </dl>
         </div>
 
-        <section id="sabores" className="scroll-mt-24 py-24 sm:py-32">
+        <section id="sabores" tabIndex={-1} className="scroll-mt-24 py-24 sm:py-32">
           <div className="mx-auto max-w-[1400px] px-5 sm:px-8 lg:px-12">
             <div className="grid gap-10 lg:grid-cols-12 lg:gap-8">
               <div className="lg:col-span-4">
@@ -537,7 +539,7 @@ export default function Home() {
           </div>
         </section>
 
-        <section id="historia" className="scroll-mt-24 bg-[#211a17] py-24 text-[#f8f1e8] sm:py-32">
+        <section id="historia" tabIndex={-1} className="scroll-mt-24 bg-[#211a17] py-24 text-[#f8f1e8] sm:py-32">
           <div className="mx-auto max-w-[1400px] px-5 sm:px-8 lg:px-12">
             <div className="grid items-center gap-14 lg:grid-cols-12 lg:gap-16">
               <div className="history-cream-wipe relative lg:col-span-6" data-cream-wipe>
@@ -587,7 +589,7 @@ export default function Home() {
           </div>
         </section>
 
-        <section id="proceso" className="scroll-mt-24 py-24 sm:py-32">
+        <section id="proceso" tabIndex={-1} className="scroll-mt-24 py-24 sm:py-32">
           <div className="mx-auto max-w-[1400px] px-5 sm:px-8 lg:px-12">
             <div className="grid gap-12 lg:grid-cols-12 lg:gap-10">
               <div className="lg:col-span-5" data-reveal="copy">
@@ -693,7 +695,7 @@ export default function Home() {
           <span className="melt-edge" aria-hidden="true" />
         </section>
 
-        <section id="preguntas" className="scroll-mt-24 py-24 sm:py-32">
+        <section id="preguntas" tabIndex={-1} className="scroll-mt-24 py-24 sm:py-32">
           <div className="mx-auto grid max-w-[1400px] gap-12 px-5 sm:px-8 lg:grid-cols-12 lg:gap-16 lg:px-12">
             <div className="lg:col-span-4" data-reveal="copy">
               <p className="text-xs font-bold uppercase tracking-[0.22em] text-[var(--cream-theme-accent)]">Antes de pedir</p>

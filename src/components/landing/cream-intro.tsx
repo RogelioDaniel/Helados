@@ -31,6 +31,7 @@ type IntroPhase = 'loading' | 'leaving' | 'done';
 
 type CreamIntroProps = {
   onComplete?: (session: CreamSession) => void;
+  onRevealStart?: () => void;
 };
 
 class CreamSceneBoundary extends Component<
@@ -73,7 +74,7 @@ function disposeBootstrapCanvas() {
   if (canvas) delete canvas.__creamPrepaint;
 }
 
-export function CreamIntro({ onComplete }: CreamIntroProps) {
+export function CreamIntro({ onComplete, onRevealStart }: CreamIntroProps) {
   const [phase, setPhase] = useState<IntroPhase>('loading');
   const [allowWebgl, setAllowWebgl] = useState(false);
   const [webglReady, setWebglReady] = useState(false);
@@ -83,6 +84,12 @@ export function CreamIntro({ onComplete }: CreamIntroProps) {
   const registerWebglReadyRef = useRef<() => void>(() => undefined);
   const registerWebglFailureRef = useRef<() => void>(() => undefined);
   const completeNotifiedRef = useRef(false);
+  const revealNotifiedRef = useRef(false);
+  const onRevealStartRef = useRef(onRevealStart);
+
+  useEffect(() => {
+    onRevealStartRef.current = onRevealStart;
+  }, [onRevealStart]);
 
   const handleFirstFrame = useCallback(() => {
     if (leavingRef.current) return;
@@ -153,6 +160,10 @@ export function CreamIntro({ onComplete }: CreamIntroProps) {
         setAllowWebgl(false);
       }
       root.classList.add('cream-intro-revealing');
+      if (!revealNotifiedRef.current) {
+        revealNotifiedRef.current = true;
+        onRevealStartRef.current?.();
+      }
       setPhase('leaving');
       exitTimer = window.setTimeout(finish, EXIT_DURATION_MS);
     };
