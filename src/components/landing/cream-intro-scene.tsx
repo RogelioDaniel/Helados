@@ -7,6 +7,7 @@ import {
   creamVertexShader,
 } from './cream-shader-source';
 import {
+  type CreamRecipe,
   type CreamSession,
   getOrCreateCreamSession,
 } from './cream-recipes';
@@ -14,6 +15,7 @@ import {
 type CreamIntroSceneProps = {
   canvasId: string;
   leaving: boolean;
+  recipe?: CreamRecipe;
   onFirstFrame: () => void;
   onFailure: () => void;
 };
@@ -41,6 +43,7 @@ function smootherStep(progress: number) {
 export default function CreamIntroScene({
   canvasId,
   leaving,
+  recipe,
   onFirstFrame,
   onFailure,
 }: CreamIntroSceneProps) {
@@ -69,6 +72,7 @@ export default function CreamIntroScene({
     const prepaint = canvas.__creamPrepaint;
     const handoff = prepaint?.stop();
     const session = handoff?.session ?? getOrCreateCreamSession();
+    const activeRecipe = recipe ?? session.recipe;
     const context = prepaint?.context ?? canvas.getContext('webgl2', contextAttributes);
 
     if (!context) {
@@ -123,15 +127,15 @@ export default function CreamIntroScene({
           uTime: { value: 0 },
           uReveal: { value: reveal },
           uAspect: { value: 1 },
-          uBaseColor: { value: new THREE.Vector3(...session.recipe.base) },
-          uLightColor: { value: new THREE.Vector3(...session.recipe.light) },
-          uRibbonAColor: { value: new THREE.Vector3(...session.recipe.ribbonA) },
-          uRibbonBColor: { value: new THREE.Vector3(...session.recipe.ribbonB) },
-          uRibbonWeights: { value: new THREE.Vector2(...session.recipe.ribbonWeights) },
-          uRidge: { value: session.recipe.ridge },
-          uGloss: { value: session.recipe.gloss },
-          uFlowRate: { value: session.recipe.flowRate },
-          uFlowStrength: { value: session.recipe.flowStrength },
+          uBaseColor: { value: new THREE.Vector3(...activeRecipe.base) },
+          uLightColor: { value: new THREE.Vector3(...activeRecipe.light) },
+          uRibbonAColor: { value: new THREE.Vector3(...activeRecipe.ribbonA) },
+          uRibbonBColor: { value: new THREE.Vector3(...activeRecipe.ribbonB) },
+          uRibbonWeights: { value: new THREE.Vector2(...activeRecipe.ribbonWeights) },
+          uRidge: { value: activeRecipe.ridge },
+          uGloss: { value: activeRecipe.gloss },
+          uFlowRate: { value: activeRecipe.flowRate },
+          uFlowStrength: { value: activeRecipe.flowStrength },
           uMaterialSeed: { value: session.materialPhase },
           uDropletSeed: { value: session.dropletSeed / 0xffffffff },
         },
@@ -247,7 +251,7 @@ export default function CreamIntroScene({
       renderer?.dispose();
       onFailure();
     }
-  }, [canvasId, onFailure, onFirstFrame]);
+  }, [canvasId, onFailure, onFirstFrame, recipe]);
 
   return null;
 }

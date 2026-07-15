@@ -463,7 +463,9 @@ html.cream-intro-revealing .cream-intro {
   isolation: isolate;
   box-shadow: 0 28px 90px -58px rgb(42 25 19 / 0.65);
   transform-origin: 50% 42%;
-  transition: transform 1780ms cubic-bezier(0.65, 0, 0.35, 1);
+  transition:
+    transform 1780ms cubic-bezier(0.65, 0, 0.35, 1),
+    background-color 620ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 html.cream-intro-active:not(.cream-intro-revealing) .nube-hero {
@@ -482,6 +484,59 @@ html.cream-intro-active:not(.cream-intro-revealing) .hero-flavor-catalogue * {
     radial-gradient(circle at 9% 9%, rgb(255 253 248 / 0.82) 0 7%, transparent 29%),
     radial-gradient(circle at 41% 76%, color-mix(in srgb, var(--cream-ribbon-b) 16%, transparent) 0 2%, transparent 26%),
     linear-gradient(120deg, var(--cream-light) 0%, var(--cream-base) 54%, color-mix(in srgb, var(--cream-ribbon-a) 16%, var(--cream-base)) 100%);
+  transition: background 620ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* The active hero flavour owns these semantic surfaces.  Keeping the tokens on
+   one wrapper lets the catalogue, the long-form sections, and the WebGL tide
+   stay in the same flavour family without repainting the whole document. */
+.flavor-theme {
+  min-height: 100dvh;
+  background-color: var(--site-canvas, var(--nube-canvas));
+  transition: background-color 620ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.site-header,
+.site-mobile-nav,
+.site-origin-ledger,
+.site-history,
+.site-footer,
+.site-cart-drawer,
+.site-cart-total,
+.melting-section,
+.closing-cta {
+  transition:
+    background-color 620ms cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 480ms ease,
+    color 380ms ease;
+}
+
+.site-header {
+  background-color: color-mix(in srgb, var(--site-canvas, var(--nube-canvas)) 90%, transparent);
+}
+
+.site-mobile-nav {
+  background-color: var(--site-canvas, var(--nube-canvas));
+}
+
+.site-origin-ledger {
+  background-color: var(--site-ledger, var(--cream-base));
+}
+
+.site-history {
+  background-color: var(--cream-theme-surface);
+}
+
+.site-footer {
+  background-color: color-mix(in srgb, var(--cream-theme-surface) 82%, #211a17);
+}
+
+.site-cart-drawer {
+  background-color: var(--cream-light);
+}
+
+.site-cart-total {
+  background-color: color-mix(in srgb, var(--cream-base) 62%, var(--cream-light));
 }
 
 .hero-flavor-catalogue {
@@ -500,6 +555,10 @@ html.cream-intro-active:not(.cream-intro-revealing) .hero-flavor-catalogue * {
   box-shadow: 0 26px 80px -52px rgb(42 25 19 / 0.78);
   opacity: 0;
   transform: translateY(20px) scale(0.985);
+  transition:
+    background 640ms cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 520ms cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 420ms ease;
   animation: hero-catalogue-in 1.05s cubic-bezier(0.22, 1, 0.36, 1) 240ms forwards;
 }
 
@@ -513,6 +572,25 @@ html.cream-intro-active:not(.cream-intro-revealing) .hero-flavor-catalogue * {
     radial-gradient(circle at 75% 64%, rgb(42 25 19 / 0.22) 0 0.7px, transparent 1px);
   background-size: 13px 13px, 17px 17px;
   mix-blend-mode: soft-light;
+}
+
+.catalogue-cream-sweep {
+  position: absolute;
+  z-index: 2;
+  top: -24%;
+  bottom: -22%;
+  left: -62%;
+  width: 64%;
+  pointer-events: none;
+  border-radius: 44% 56% 48% 52% / 53% 43% 57% 47%;
+  background:
+    radial-gradient(ellipse at 52% 25%, rgb(255 253 248 / 0.68) 0 10%, transparent 42%),
+    radial-gradient(ellipse at 34% 74%, color-mix(in srgb, var(--catalogue-tone) 24%, var(--cream-light)) 0 14%, transparent 54%),
+    linear-gradient(104deg, color-mix(in srgb, var(--cream-light) 80%, var(--catalogue-tone)) 0%, rgb(255 253 248 / 0.56) 48%, transparent 78%);
+  filter: blur(1px);
+  opacity: 0;
+  transform: translate3d(-10%, 2%, 0) rotate(-10deg) scale(0.72, 1.14);
+  animation: catalogue-cream-sweep 760ms cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 .catalogue-topline {
@@ -540,6 +618,7 @@ html.cream-intro-active:not(.cream-intro-revealing) .hero-flavor-catalogue * {
   margin-top: 0.38rem;
   color: rgb(255 253 248 / 0.58);
   font-size: 0.54rem;
+  animation: catalogue-count-in 460ms cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 .catalogue-controls {
@@ -600,12 +679,15 @@ html.cream-intro-active:not(.cream-intro-revealing) .hero-flavor-catalogue * {
 }
 
 .catalogue-orbit {
+  --catalogue-orbit-rotation: -13deg;
   position: absolute;
   z-index: 1;
   display: block;
   border: 1px solid rgb(255 253 248 / 0.34);
   border-radius: 48% 52% 44% 56% / 52% 44% 56% 48%;
   opacity: 0.75;
+  transform: rotate(var(--catalogue-orbit-rotation));
+  animation: catalogue-orbit-in 760ms cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 .catalogue-orbit--one {
@@ -613,16 +695,15 @@ html.cream-intro-active:not(.cream-intro-revealing) .hero-flavor-catalogue * {
   right: 12%;
   width: 44%;
   height: 52%;
-  transform: rotate(-13deg);
 }
 
 .catalogue-orbit--two {
+  --catalogue-orbit-rotation: 18deg;
   bottom: 9%;
   left: 14%;
   width: 30%;
   height: 18%;
   border-color: color-mix(in srgb, var(--catalogue-tone) 30%, #fffdf8);
-  transform: rotate(18deg);
 }
 
 .catalogue-product {
@@ -648,6 +729,7 @@ html.cream-intro-active:not(.cream-intro-revealing) .hero-flavor-catalogue * {
     inset 0 0 0 9px rgb(255 253 248 / 0.08),
     0 32px 56px -34px rgb(42 25 19 / 0.62);
   transform: rotate(3deg);
+  animation: catalogue-product-sculpt 880ms cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 .catalogue-product-image-wrap::after {
@@ -683,6 +765,7 @@ html.cream-intro-active:not(.cream-intro-revealing) .hero-flavor-catalogue * {
   text-align: right;
   text-transform: uppercase;
   text-shadow: 0 2px 12px rgb(42 25 19 / 0.62);
+  animation: catalogue-origin-in 720ms cubic-bezier(0.16, 1, 0.3, 1) 130ms both;
 }
 
 .catalogue-caption {
@@ -762,6 +845,8 @@ html.cream-intro-active:not(.cream-intro-revealing) .hero-flavor-catalogue * {
 }
 
 .catalogue-flavor-tab {
+  position: relative;
+  isolation: isolate;
   display: flex;
   min-width: 0;
   min-height: 2.75rem;
@@ -784,6 +869,25 @@ html.cream-intro-active:not(.cream-intro-revealing) .hero-flavor-catalogue * {
     transform 180ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
+.catalogue-flavor-tab > * {
+  position: relative;
+  z-index: 1;
+}
+
+.catalogue-flavor-tab::before {
+  position: absolute;
+  z-index: 0;
+  inset: -34% -18%;
+  pointer-events: none;
+  border-radius: 48% 52% 43% 57% / 57% 43% 57% 43%;
+  content: "";
+  background:
+    radial-gradient(ellipse at 31% 33%, rgb(255 253 248 / 0.7) 0 11%, transparent 42%),
+    linear-gradient(106deg, color-mix(in srgb, var(--catalogue-tone) 54%, var(--cream-light)), color-mix(in srgb, var(--catalogue-tone) 22%, #fffdf8));
+  opacity: 0;
+  transform: translateX(-120%) rotate(-11deg) scale(0.74, 1.2);
+}
+
 .catalogue-flavor-tab:hover {
   color: var(--nube-ink);
   transform: translateY(-1px);
@@ -799,6 +903,10 @@ html.cream-intro-active:not(.cream-intro-revealing) .hero-flavor-catalogue * {
   background: color-mix(in srgb, var(--cream-light) 68%, var(--catalogue-tone));
 }
 
+.catalogue-flavor-tab--active::before {
+  animation: catalogue-tab-churn 620ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
 .catalogue-tab-image {
   position: relative;
   display: block;
@@ -808,6 +916,16 @@ html.cream-intro-active:not(.cream-intro-revealing) .hero-flavor-catalogue * {
   overflow: hidden;
   border-radius: 50%;
   border: 1px solid rgb(42 25 19 / 0.1);
+  transition:
+    border-radius 440ms cubic-bezier(0.16, 1, 0.3, 1),
+    transform 440ms cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 360ms ease;
+}
+
+.catalogue-flavor-tab--active .catalogue-tab-image {
+  border-radius: 48% 52% 44% 56% / 57% 45% 55% 43%;
+  box-shadow: 0 6px 14px -9px color-mix(in srgb, var(--catalogue-tone) 80%, #211a17);
+  transform: rotate(-5deg) scale(1.08);
 }
 
 @keyframes hero-catalogue-in {
@@ -851,6 +969,82 @@ html.cream-intro-active:not(.cream-intro-revealing) .hero-flavor-catalogue * {
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+@keyframes catalogue-cream-sweep {
+  0% {
+    opacity: 0;
+    transform: translate3d(-10%, 2%, 0) rotate(-10deg) scale(0.72, 1.14);
+  }
+  18% {
+    opacity: 0.72;
+  }
+  100% {
+    opacity: 0;
+    transform: translate3d(258%, -2%, 0) rotate(8deg) scale(1.2, 0.92);
+  }
+}
+
+@keyframes catalogue-count-in {
+  from {
+    opacity: 0;
+    transform: translateY(-5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes catalogue-orbit-in {
+  from {
+    opacity: 0;
+    transform: rotate(calc(var(--catalogue-orbit-rotation) - 10deg)) scale(0.8);
+  }
+  to {
+    opacity: 0.75;
+    transform: rotate(var(--catalogue-orbit-rotation)) scale(1);
+  }
+}
+
+@keyframes catalogue-product-sculpt {
+  from {
+    border-radius: 58% 42% 51% 49% / 38% 58% 42% 62%;
+    transform: rotate(10deg) scale(0.9);
+  }
+  58% {
+    border-radius: 45% 55% 39% 61% / 55% 42% 58% 45%;
+    transform: rotate(-1deg) scale(1.025);
+  }
+  to {
+    border-radius: 49% 51% 42% 58% / 43% 47% 53% 57%;
+    transform: rotate(3deg) scale(1);
+  }
+}
+
+@keyframes catalogue-origin-in {
+  from {
+    opacity: 0;
+    transform: translate3d(8px, 6px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes catalogue-tab-churn {
+  0% {
+    opacity: 0;
+    transform: translateX(-120%) rotate(-11deg) scale(0.74, 1.2);
+  }
+  36% {
+    opacity: 0.9;
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(116%) rotate(8deg) scale(1.08, 0.9);
   }
 }
 
@@ -1230,6 +1424,569 @@ html.cream-intro-active:not(.cream-intro-revealing) .hero-flavor-catalogue * {
   animation: served-drop 620ms cubic-bezier(0.16, 1, 0.3, 1) 120ms both;
 }
 
+/* A spoon pass leaves a shallow, irregular imprint on the story photograph. */
+.history-cream-wipe::after {
+  position: absolute;
+  z-index: 21;
+  right: -14%;
+  bottom: -8%;
+  width: 76%;
+  aspect-ratio: 1.1;
+  border-radius: 49% 51% 42% 58% / 58% 38% 62% 42%;
+  pointer-events: none;
+  content: "";
+  background:
+    repeating-radial-gradient(
+      ellipse at 42% 47%,
+      transparent 0 13%,
+      color-mix(in srgb, var(--cream-light) 76%, transparent) 13.8% 14.8%,
+      transparent 15.6% 23%,
+      color-mix(in srgb, var(--cream-ribbon-a) 24%, transparent) 23.8% 24.8%,
+      transparent 25.6% 33%
+    );
+  mix-blend-mode: screen;
+  opacity: 0;
+  transform: translate3d(-10%, 8%, 0) rotate(-15deg) scale(0.78);
+  transform-origin: 50% 50%;
+  transition:
+    opacity 360ms ease 230ms,
+    transform 900ms cubic-bezier(0.16, 1, 0.3, 1) 160ms;
+}
+
+.history-cream-wipe[data-cream-revealed="true"]::after {
+  opacity: 0.56;
+  transform: translate3d(0, 0, 0) rotate(-7deg) scale(1);
+}
+
+/* Process rows become three small deposits of cream, rather than generic oval hover states. */
+.process-step {
+  --process-tilt: -1.2deg;
+}
+
+.process-step:nth-child(2) {
+  --process-tilt: 1deg;
+}
+
+.process-step:nth-child(3) {
+  --process-tilt: -0.5deg;
+}
+
+.process-step::before {
+  top: 14%;
+  right: 3%;
+  bottom: 12%;
+  left: clamp(3.15rem, 8vw, 5.8rem);
+  border-radius: 49% 51% 43% 57% / 57% 38% 62% 43%;
+  background:
+    radial-gradient(ellipse 34% 84% at 17% 48%, color-mix(in srgb, var(--cream-light) 68%, transparent), transparent 72%),
+    radial-gradient(ellipse 38% 92% at 74% 50%, color-mix(in srgb, var(--cream-ribbon-a) 27%, var(--cream-base)), transparent 73%),
+    linear-gradient(100deg, color-mix(in srgb, var(--cream-light) 36%, transparent), color-mix(in srgb, var(--cream-ribbon-b) 17%, var(--cream-base)) 54%, transparent 97%);
+  box-shadow:
+    inset 15px 8px 20px rgb(255 253 248 / 0.38),
+    inset -13px -8px 18px color-mix(in srgb, var(--cream-ribbon-a) 10%, transparent);
+  transform: rotate(var(--process-tilt)) scaleX(0.07) scaleY(0.64);
+  transition: opacity 200ms ease;
+  will-change: transform, opacity;
+}
+
+.process-step[data-churned="true"]::before {
+  opacity: 0.5;
+  transform: rotate(var(--process-tilt)) scaleX(1) scaleY(1);
+  animation: process-cream-settle 780ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.process-step:hover::before,
+.process-step:focus-within::before {
+  opacity: 0.66;
+}
+
+.process-step-icon {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--nube-ink) 18%, transparent);
+  border-radius: 47% 53% 44% 56% / 54% 42% 58% 46%;
+  color: var(--nube-ink);
+  background: color-mix(in srgb, var(--nube-surface) 74%, transparent);
+  box-shadow: 0 9px 18px -17px rgb(42 25 19 / 0.65);
+  transition:
+    border-color 220ms ease,
+    color 220ms ease,
+    box-shadow 260ms ease,
+    transform 300ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.process-step-icon::before,
+.process-step-icon::after {
+  position: absolute;
+  pointer-events: none;
+  content: "";
+}
+
+.process-step-icon::before {
+  z-index: -1;
+  inset: 8%;
+  border-radius: 58% 42% 49% 51% / 41% 58% 42% 59%;
+  background:
+    radial-gradient(circle at 34% 28%, rgb(255 253 248 / 0.58) 0 11%, transparent 29%),
+    linear-gradient(138deg, var(--cream-light), color-mix(in srgb, var(--cream-ribbon-a) 68%, var(--cream-base)) 70%);
+  opacity: 0;
+  transform: rotate(-18deg) scale(0.34, 0.62);
+  transition:
+    opacity 180ms ease,
+    transform 460ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.process-step-icon::after {
+  z-index: -1;
+  right: 12%;
+  bottom: 11%;
+  left: 16%;
+  height: 16%;
+  border-radius: 60% 40% 55% 45%;
+  background: color-mix(in srgb, var(--cream-light) 68%, transparent);
+  opacity: 0;
+  transform: rotate(-8deg) scaleX(0.2);
+  transform-origin: 0 50%;
+  transition:
+    opacity 180ms ease 60ms,
+    transform 420ms cubic-bezier(0.16, 1, 0.3, 1) 20ms;
+}
+
+.process-step-icon svg {
+  position: relative;
+  z-index: 1;
+}
+
+.process-step[data-churned="true"] .process-step-icon,
+.process-step:hover .process-step-icon,
+.process-step:focus-within .process-step-icon {
+  border-color: color-mix(in srgb, var(--nube-accent) 56%, var(--nube-ink));
+  color: var(--nube-ink);
+  box-shadow: 0 14px 24px -20px color-mix(in srgb, var(--nube-accent) 72%, transparent);
+  transform: rotate(-3deg) translateY(-2px);
+}
+
+.process-step[data-churned="true"] .process-step-icon::before,
+.process-step:hover .process-step-icon::before,
+.process-step:focus-within .process-step-icon::before {
+  opacity: 0.94;
+  transform: rotate(-5deg) scale(1);
+}
+
+.process-step[data-churned="true"] .process-step-icon::after,
+.process-step:hover .process-step-icon::after,
+.process-step:focus-within .process-step-icon::after {
+  opacity: 0.58;
+  transform: rotate(-8deg) scaleX(1);
+}
+
+/* The FAQ trigger keeps its chevron, but it now reads as a small moving portion of gelato. */
+.faq-trigger-icon {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--nube-ink) 18%, transparent);
+  border-radius: 48% 52% 42% 58% / 55% 40% 60% 45%;
+  color: var(--nube-ink);
+  background: color-mix(in srgb, var(--nube-surface) 76%, transparent);
+  box-shadow: 0 8px 16px -16px rgb(42 25 19 / 0.62);
+  transition:
+    border-color 220ms ease,
+    color 220ms ease,
+    box-shadow 260ms ease,
+    transform 360ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.faq-trigger-icon::before,
+.faq-trigger-icon::after {
+  position: absolute;
+  pointer-events: none;
+  content: "";
+}
+
+.faq-trigger-icon::before {
+  z-index: -1;
+  inset: 6%;
+  border-radius: 62% 38% 48% 52% / 42% 62% 38% 58%;
+  background:
+    radial-gradient(circle at 34% 30%, rgb(255 253 248 / 0.56) 0 12%, transparent 29%),
+    linear-gradient(140deg, var(--cream-light), color-mix(in srgb, var(--cream-ribbon-a) 58%, var(--cream-base)));
+  opacity: 0;
+  transform: translateY(42%) rotate(-18deg) scale(0.58, 0.32);
+  transition:
+    opacity 180ms ease,
+    transform 480ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.faq-trigger-icon::after {
+  z-index: -1;
+  right: 15%;
+  bottom: 16%;
+  left: 19%;
+  height: 14%;
+  border-radius: 52% 48% 64% 36%;
+  background: rgb(255 253 248 / 0.44);
+  opacity: 0;
+  transform: rotate(-12deg) scaleX(0.1);
+  transform-origin: 0 50%;
+  transition:
+    opacity 180ms ease 80ms,
+    transform 360ms cubic-bezier(0.16, 1, 0.3, 1) 50ms;
+}
+
+.faq-trigger-icon svg {
+  position: relative;
+  z-index: 1;
+  transition: transform 360ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.faq-trigger:hover .faq-trigger-icon,
+.faq-trigger:focus-visible .faq-trigger-icon,
+.faq-trigger-icon--open {
+  border-color: color-mix(in srgb, var(--nube-accent) 62%, var(--nube-ink));
+  color: var(--nube-ink);
+  box-shadow: 0 13px 22px -18px color-mix(in srgb, var(--nube-accent) 78%, transparent);
+  transform: rotate(-4deg) scale(1.04);
+}
+
+.faq-trigger:hover .faq-trigger-icon::before,
+.faq-trigger:focus-visible .faq-trigger-icon::before,
+.faq-trigger-icon--open::before {
+  opacity: 0.96;
+  transform: translateY(0) rotate(-5deg) scale(1);
+}
+
+.faq-trigger:hover .faq-trigger-icon::after,
+.faq-trigger:focus-visible .faq-trigger-icon::after,
+.faq-trigger-icon--open::after {
+  opacity: 0.66;
+  transform: rotate(-12deg) scaleX(1);
+}
+
+.faq-trigger-icon--open svg {
+  transform: rotate(180deg);
+}
+
+/* Closing CTA: a self-contained SVG mascot brings a tactile finishing gesture without another WebGL surface. */
+.ice-cream-mascot {
+  position: absolute;
+  z-index: 4;
+  right: clamp(1.25rem, 4.8vw, 5rem);
+  bottom: clamp(1rem, 3vw, 2.6rem);
+  width: min(31vw, 26rem);
+  min-width: 18.5rem;
+  color: var(--nube-ink);
+  text-align: center;
+}
+
+.mascot-stage {
+  position: relative;
+  display: grid;
+  min-height: clamp(16rem, 22vw, 21.5rem);
+  place-items: center;
+  isolation: isolate;
+  touch-action: pan-y;
+}
+
+.mascot-stage::before {
+  position: absolute;
+  z-index: -2;
+  inset: 10% 5% 5%;
+  border-radius: 54% 46% 48% 52% / 43% 57% 43% 57%;
+  pointer-events: none;
+  content: "";
+  background:
+    radial-gradient(ellipse at 48% 18%, rgb(255 253 248 / 0.72) 0 10%, transparent 45%),
+    linear-gradient(136deg, color-mix(in srgb, var(--cream-light) 82%, transparent), color-mix(in srgb, var(--cream-ribbon-b) 27%, var(--cream-base)));
+  box-shadow:
+    inset 16px 14px 30px rgb(255 253 248 / 0.46),
+    inset -18px -16px 28px color-mix(in srgb, var(--cream-ribbon-a) 12%, transparent);
+  opacity: 0.76;
+  transform: rotate(-8deg);
+}
+
+.mascot-halo {
+  position: absolute;
+  z-index: -1;
+  top: 10%;
+  right: 12%;
+  left: 12%;
+  height: 58%;
+  border: 1px solid color-mix(in srgb, var(--nube-accent) 26%, transparent);
+  border-radius: 55% 45% 58% 42% / 43% 58% 42% 57%;
+  opacity: 0.68;
+  transform: rotate(7deg);
+}
+
+.mascot-svg {
+  display: block;
+  width: min(100%, 20.5rem);
+  height: auto;
+  overflow: visible;
+  filter: drop-shadow(0 20px 18px rgb(42 25 19 / 0.18));
+  transform: translateY(var(--mascot-lift, 0px)) rotate(var(--mascot-tilt, 0deg));
+  transform-origin: 50% 72%;
+  transition: transform 360ms cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: transform;
+}
+
+.mascot-ground-shadow {
+  fill: rgb(42 25 19 / 0.17);
+  transform-box: fill-box;
+  transform-origin: center;
+  transition: transform 360ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.mascot-cone,
+.mascot-scoop,
+.mascot-face,
+.mascot-sprinkle {
+  transform-box: fill-box;
+  transform-origin: center;
+  transition: transform 380ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.mascot-interactive-part {
+  cursor: pointer;
+}
+
+.mascot-cone-grid {
+  opacity: 0.42;
+}
+
+.mascot-cone-edge {
+  fill: none;
+  stroke: rgb(255 248 234 / 0.7);
+  stroke-linecap: round;
+  stroke-width: 4;
+}
+
+.mascot-scoop-highlight {
+  fill: none;
+  stroke: rgb(255 253 248 / 0.5);
+  stroke-linecap: round;
+  stroke-width: 6;
+}
+
+.mascot-face {
+  fill: var(--nube-ink);
+}
+
+.mascot-smile,
+.mascot-cheek {
+  fill: none;
+  stroke: var(--nube-ink);
+  stroke-linecap: round;
+}
+
+.mascot-smile {
+  stroke-width: 4.5;
+}
+
+.mascot-cheek {
+  stroke-width: 3.2;
+  opacity: 0.4;
+}
+
+.mascot-sprinkle {
+  fill: none;
+  stroke: var(--nube-ink);
+  stroke-linecap: round;
+  stroke-width: 4;
+  opacity: 0.58;
+}
+
+.mascot-stage[data-mascot-mood="top"] .mascot-scoop--top {
+  transform: translateY(-7px) rotate(-2deg) scale(1.03, 1.08);
+}
+
+.mascot-stage[data-mascot-mood="middle"] .mascot-scoop--bottom,
+.mascot-stage[data-mascot-mood="middle"] .mascot-scoop--middle,
+.mascot-stage[data-mascot-mood="middle"] .mascot-face {
+  transform: translateY(-4px) rotate(2deg) scale(1.045, 0.97);
+}
+
+.mascot-stage[data-mascot-mood="cone"] .mascot-cone {
+  transform: translateY(4px) rotate(2deg) scale(0.97, 1.04);
+}
+
+.mascot-stage[data-mascot-mood="cone"] .mascot-ground-shadow {
+  transform: translateX(6px) scaleX(1.08);
+}
+
+.mascot-stage[data-mascot-reacted="true"][data-mascot-mood="top"] .mascot-scoop--top {
+  animation: mascot-top-scoop 620ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.mascot-stage[data-mascot-reacted="true"][data-mascot-mood="middle"] .mascot-scoop--bottom,
+.mascot-stage[data-mascot-reacted="true"][data-mascot-mood="middle"] .mascot-scoop--middle,
+.mascot-stage[data-mascot-reacted="true"][data-mascot-mood="middle"] .mascot-face {
+  animation: mascot-middle-scoop 620ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.mascot-stage[data-mascot-reacted="true"][data-mascot-mood="cone"] .mascot-cone {
+  animation: mascot-cone-tilt 620ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.mascot-copy {
+  margin-top: -0.15rem;
+}
+
+.mascot-kicker {
+  margin: 0;
+  color: color-mix(in srgb, var(--nube-accent) 74%, var(--nube-ink));
+  font-size: 0.59rem;
+  font-weight: 800;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+
+.mascot-name {
+  margin: 0.3rem 0 0;
+  font-family: var(--font-fraunces), Georgia, serif;
+  font-size: clamp(1.45rem, 2.2vw, 2rem);
+  font-weight: 500;
+  letter-spacing: -0.04em;
+}
+
+.mascot-hint {
+  max-width: 30ch;
+  margin: 0.46rem auto 0;
+  color: rgb(42 25 19 / 0.63);
+  font-size: 0.7rem;
+  line-height: 1.45;
+}
+
+.mascot-controls {
+  display: flex;
+  justify-content: center;
+  gap: 0.42rem;
+  margin-top: 0.8rem;
+}
+
+.mascot-control {
+  display: inline-flex;
+  min-height: 2.75rem;
+  align-items: center;
+  justify-content: center;
+  gap: 0.34rem;
+  border: 1px solid color-mix(in srgb, var(--nube-ink) 16%, transparent);
+  border-radius: 49% 51% 46% 54% / 54% 45% 55% 46%;
+  padding: 0.45rem 0.62rem;
+  color: rgb(42 25 19 / 0.72);
+  background: rgb(255 253 248 / 0.42);
+  font-size: 0.6rem;
+  font-weight: 800;
+  letter-spacing: 0.035em;
+  line-height: 1.05;
+  text-align: center;
+  transition:
+    border-color 180ms ease,
+    color 180ms ease,
+    background-color 180ms ease,
+    box-shadow 220ms ease,
+    transform 220ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.mascot-control:hover,
+.mascot-control:focus-visible,
+.mascot-control[data-active="true"] {
+  border-color: color-mix(in srgb, var(--nube-accent) 62%, var(--nube-ink));
+  color: var(--nube-ink);
+  background: color-mix(in srgb, var(--cream-light) 74%, var(--cream-base));
+  box-shadow: 0 9px 16px -15px color-mix(in srgb, var(--nube-accent) 84%, transparent);
+  transform: translateY(-2px) rotate(-1deg);
+}
+
+.mascot-control:active {
+  transform: translateY(1px) scale(0.97);
+}
+
+.mascot-control-dot {
+  width: 0.48rem;
+  height: 0.48rem;
+  flex: none;
+  border-radius: 48% 52% 43% 57% / 55% 42% 58% 45%;
+  background: linear-gradient(140deg, var(--cream-light), var(--cream-ribbon-a));
+  box-shadow: inset 1px 1px 2px rgb(255 253 248 / 0.65), inset -1px -1px 2px rgb(42 25 19 / 0.18);
+}
+
+.mascot-control:nth-child(2) .mascot-control-dot {
+  background: linear-gradient(140deg, var(--cream-light), var(--cream-ribbon-b));
+}
+
+.mascot-control:nth-child(3) .mascot-control-dot {
+  background: linear-gradient(140deg, #f0c986, #a35d31);
+}
+
+.luxury-motion-ready .closing-cta:not([data-revealed="true"]) .ice-cream-mascot {
+  opacity: 0;
+  transform: translate3d(26px, 18px, 0) rotate(3deg) scale(0.94);
+}
+
+.luxury-motion-ready .closing-cta .ice-cream-mascot {
+  transition:
+    opacity 520ms cubic-bezier(0.16, 1, 0.3, 1) 120ms,
+    transform 760ms cubic-bezier(0.16, 1, 0.3, 1) 80ms;
+}
+
+.luxury-motion-ready .closing-cta[data-revealed="true"] .ice-cream-mascot {
+  opacity: 1;
+  transform: none;
+}
+
+@keyframes process-cream-settle {
+  0% {
+    opacity: 0;
+    transform: rotate(var(--process-tilt)) scaleX(0.07) scaleY(0.64);
+  }
+  56% {
+    opacity: 0.58;
+    transform: rotate(var(--process-tilt)) scaleX(1.035) scaleY(1.055);
+  }
+  100% {
+    opacity: 0.5;
+    transform: rotate(var(--process-tilt)) scaleX(1) scaleY(1);
+  }
+}
+
+@keyframes mascot-top-scoop {
+  0% {
+    transform: translateY(0) rotate(0) scale(1);
+  }
+  48% {
+    transform: translateY(-15px) rotate(-5deg) scale(0.96, 1.19);
+  }
+  100% {
+    transform: translateY(-7px) rotate(-2deg) scale(1.03, 1.08);
+  }
+}
+
+@keyframes mascot-middle-scoop {
+  0% {
+    transform: translateY(0) rotate(0) scale(1);
+  }
+  48% {
+    transform: translateY(-11px) rotate(5deg) scale(1.12, 0.9);
+  }
+  100% {
+    transform: translateY(-4px) rotate(2deg) scale(1.045, 0.97);
+  }
+}
+
+@keyframes mascot-cone-tilt {
+  0% {
+    transform: translateY(0) rotate(0) scale(1);
+  }
+  45% {
+    transform: translateY(10px) rotate(7deg) scale(0.92, 1.12);
+  }
+  100% {
+    transform: translateY(4px) rotate(2deg) scale(0.97, 1.04);
+  }
+}
+
 @keyframes hero-image-reveal {
   from {
     clip-path: inset(6% 5% 7% 5% round 2.8rem);
@@ -1372,6 +2129,76 @@ html.cream-intro-active:not(.cream-intro-revealing) .hero-flavor-catalogue * {
   }
 }
 
+@media (max-width: 1150px) {
+  .ice-cream-mascot {
+    position: relative;
+    right: auto;
+    bottom: auto;
+    width: min(100%, 26rem);
+    min-width: 0;
+    margin: 3rem auto 0;
+  }
+
+  .mascot-stage {
+    min-height: 18rem;
+  }
+}
+
+@media (max-width: 767px) {
+  .history-cream-wipe::after {
+    right: -18%;
+    bottom: -12%;
+    width: 92%;
+  }
+
+  .process-step::before {
+    top: 8%;
+    right: -2%;
+    bottom: 7%;
+    left: 2.4rem;
+  }
+
+  .process-step-icon {
+    border-radius: 45% 55% 48% 52% / 57% 40% 60% 43%;
+  }
+
+  .faq-trigger-icon {
+    flex: none;
+  }
+
+  .ice-cream-mascot {
+    width: min(100%, 23rem);
+    margin-top: 2.5rem;
+  }
+
+  .mascot-stage {
+    min-height: 15.4rem;
+  }
+
+  .mascot-svg {
+    width: min(100%, 17.8rem);
+  }
+
+  .mascot-copy {
+    margin-top: -0.35rem;
+  }
+
+  .mascot-hint {
+    max-width: 32ch;
+    font-size: 0.68rem;
+  }
+
+  .mascot-controls {
+    gap: 0.32rem;
+  }
+
+  .mascot-control {
+    min-height: 2.75rem;
+    padding-inline: 0.46rem;
+    font-size: 0.55rem;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
@@ -1394,9 +2221,22 @@ html.cream-intro-active:not(.cream-intro-revealing) .hero-flavor-catalogue * {
     transform: none;
   }
 
+  .catalogue-cream-sweep {
+    display: none;
+  }
+
   .cream-intro,
   .cream-scroll-tide,
   .served-toast::after {
     display: none !important;
+  }
+
+  .mascot-svg {
+    transform: none !important;
+  }
+
+  .mascot-stage {
+    --mascot-tilt: 0deg !important;
+    --mascot-lift: 0px !important;
   }
 }

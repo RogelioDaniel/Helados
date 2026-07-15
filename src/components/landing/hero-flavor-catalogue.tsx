@@ -12,6 +12,7 @@ import type { Flavor } from './flavor-data';
 type HeroFlavorCatalogueProps = {
   flavors: readonly Flavor[];
   initialFlavorId?: string;
+  onFlavorChange?: (flavor: Flavor) => void;
 };
 
 function findFlavorIndex(flavors: readonly Flavor[], id?: string) {
@@ -19,7 +20,11 @@ function findFlavorIndex(flavors: readonly Flavor[], id?: string) {
   return index >= 0 ? index : 0;
 }
 
-export function HeroFlavorCatalogue({ flavors, initialFlavorId }: HeroFlavorCatalogueProps) {
+export function HeroFlavorCatalogue({
+  flavors,
+  initialFlavorId,
+  onFlavorChange,
+}: HeroFlavorCatalogueProps) {
   const [selectedId, setSelectedId] = useState(() => flavors[findFlavorIndex(flavors, initialFlavorId)]?.id ?? '');
   const selectedIndex = useMemo(
     () => Math.max(0, flavors.findIndex((flavor) => flavor.id === selectedId)),
@@ -29,13 +34,19 @@ export function HeroFlavorCatalogue({ flavors, initialFlavorId }: HeroFlavorCata
 
   if (!selectedFlavor) return null;
 
+  const selectFlavor = (flavor: Flavor) => {
+    if (flavor.id === selectedFlavor.id) return;
+    setSelectedId(flavor.id);
+    onFlavorChange?.(flavor);
+  };
+
   const selectOffset = (offset: number) => {
     const nextIndex = (selectedIndex + offset + flavors.length) % flavors.length;
-    setSelectedId(flavors[nextIndex].id);
+    selectFlavor(flavors[nextIndex]);
   };
 
   const catalogueStyle = {
-    '--catalogue-tone': selectedFlavor.color,
+    '--catalogue-tone': selectedFlavor.theme.accent,
   } as CSSProperties;
 
   return (
@@ -43,12 +54,14 @@ export function HeroFlavorCatalogue({ flavors, initialFlavorId }: HeroFlavorCata
       className="hero-flavor-catalogue"
       style={catalogueStyle}
       aria-labelledby="catalogue-title"
+      data-flavor={selectedFlavor.id}
     >
       <div className="catalogue-grain" aria-hidden="true" />
+      <span key={`cream-sweep-${selectedFlavor.id}`} className="catalogue-cream-sweep" aria-hidden="true" />
       <header className="catalogue-topline">
         <div>
           <p className="catalogue-kicker">Selección de temporada</p>
-          <p className="catalogue-count">Lote {String(selectedIndex + 1).padStart(2, '0')} / {String(flavors.length).padStart(2, '0')}</p>
+          <p key={`count-${selectedFlavor.id}`} className="catalogue-count">Lote {String(selectedIndex + 1).padStart(2, '0')} / {String(flavors.length).padStart(2, '0')}</p>
         </div>
         <div className="catalogue-controls" aria-label="Cambiar sabor destacado">
           <button
@@ -72,8 +85,8 @@ export function HeroFlavorCatalogue({ flavors, initialFlavorId }: HeroFlavorCata
 
       <div className="catalogue-stage" data-catalogue-stage>
         <span key={`word-${selectedFlavor.id}`} className="catalogue-word" aria-hidden="true">{selectedFlavor.catalogueName}</span>
-        <span className="catalogue-orbit catalogue-orbit--one" aria-hidden="true" />
-        <span className="catalogue-orbit catalogue-orbit--two" aria-hidden="true" />
+        <span key={`orbit-one-${selectedFlavor.id}`} className="catalogue-orbit catalogue-orbit--one" aria-hidden="true" />
+        <span key={`orbit-two-${selectedFlavor.id}`} className="catalogue-orbit catalogue-orbit--two" aria-hidden="true" />
 
         <figure className="catalogue-product" key={selectedFlavor.id}>
           <div className="catalogue-product-image-wrap">
@@ -112,7 +125,7 @@ export function HeroFlavorCatalogue({ flavors, initialFlavorId }: HeroFlavorCata
             <button
               key={flavor.id}
               type="button"
-              onClick={() => setSelectedId(flavor.id)}
+              onClick={() => selectFlavor(flavor)}
               className={`catalogue-flavor-tab ${selected ? 'catalogue-flavor-tab--active' : ''}`}
               aria-pressed={selected}
               aria-label={`Mostrar ${flavor.name}, sabor ${index + 1} de ${flavors.length}`}

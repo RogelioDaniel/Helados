@@ -3,6 +3,7 @@
 import dynamic from 'next/dynamic';
 import {
   Component,
+  type CSSProperties,
   type ErrorInfo,
   type ReactNode,
   useCallback,
@@ -14,6 +15,7 @@ import { creamBootstrapScript } from './cream-bootstrap-script';
 import { CREAM_INTRO_CANVAS_ID } from './cream-canvas-id';
 import { CreamIntroPoster } from './cream-intro-poster';
 import {
+  type CreamRecipe,
   type CreamSession,
   getOrCreateCreamSession,
 } from './cream-recipes';
@@ -28,8 +30,17 @@ type NavigatorWithConnection = Navigator & {
 };
 
 type IntroPhase = 'loading' | 'leaving' | 'done';
+type CreamIntroVariant = 'intro' | 'navigation';
 
 type CreamIntroProps = {
+  /**
+   * The complete introduction holds the cream long enough for the first
+   * render. Navigation only needs the final, lifting gesture: it covers the
+   * destination for a beat and immediately starts the same reveal shader.
+   */
+  variant?: CreamIntroVariant;
+  /** Keeps the short navigation curtain in the palette of the active scoop. */
+  recipe?: CreamRecipe;
   onComplete?: (session: CreamSession) => void;
   onRevealStart?: () => void;
 };
@@ -58,10 +69,16 @@ const SHADER_RESIDENCY_MS = 2200;
 const WEBGL_ACQUISITION_MS = 2400;
 const EXIT_DURATION_MS = 1780;
 const HARD_DEADLINE_MS = 5000;
+const NAVIGATION_COVER_MS = 140;
+const NAVIGATION_HARD_DEADLINE_MS = 420;
 
 function waitForImage(image: HTMLImageElement | null) {
   if (!image) return Promise.resolve();
   return image.decode?.().catch(() => undefined) ?? Promise.resolve();
+}
+
+function toCssRgb(color: CreamRecipe['base']) {
+  return `rgb(${color.map((channel) => Math.round(channel * 255)).join(', ')})`;
 }
 
 type BootstrapCanvas = HTMLCanvasElement & {
@@ -74,7 +91,12 @@ function disposeBootstrapCanvas() {
   if (canvas) delete canvas.__creamPrepaint;
 }
 
-export function CreamIntro({ onComplete, onRevealStart }: CreamIntroProps) {
+export function CreamIntro({
+  variant = 'intro',
+  recipe,
+  onComplete,
+  onRevealStart,
+}: CreamIntroProps) {
   const [phase, setPhase] = useState<IntroPhase>('loading');
   const [allowWebgl, setAllowWebgl] = useState(false);
   const [webglReady, setWebglReady] = useState(false);
@@ -86,6 +108,14 @@ export function CreamIntro({ onComplete, onRevealStart }: CreamIntroProps) {
   const completeNotifiedRef = useRef(false);
   const revealNotifiedRef = useRef(false);
   const onRevealStartRef = useRef(onRevealStart);
+  const recipeStyle = recipe
+    ? ({
+        '--cream-base': toCssRgb(recipe.base),
+        '--cream-light': toCssRgb(recipe.light),
+        '--cream-ribbon-a': toCssRgb(recipe.ribbonA),
+        '--cream-ribbon-b': toCssRgb(recipe.ribbonB),
+      } as CSSProperties)
+    : undefined;
 
   useEffect(() => {
     onRevealStartRef.current = onRevealStart;
@@ -196,10 +226,16 @@ export function CreamIntro({ onComplete, onRevealStart }: CreamIntroProps) {
     registerWebglReadyRef.current = registerWebglReady;
     registerWebglFailureRef.current = registerWebglFailure;
 
-    fallbackMinimumTimer = window.setTimeout(() => {
-      fallbackMinimumReady = true;
-      checkReadiness();
-    }, FALLBACK_MINIMUM_MS);
+    if (variant === 'navigation') {
+      // Menu changes do not wait for fonts, the hero image, shader residency,
+      // or a fake loading interval. This is only the curtain's final lift.
+      fallbackMinimumTimer = window.setTimeout(leave, NAVIGATION_COVER_MS);
+    } else {
+      fallbackMinimumTimer = window.setTimeout(() => {
+        fallbackMinimumReady = true;
+        checkReadiness();
+      }, FALLBACK_MINIMUM_MS);
+    }
 
     let acquisitionDeferrals = 0;
     const verifyWebglAcquisition = () => {
@@ -217,24 +253,29 @@ export function CreamIntro({ onComplete, onRevealStart }: CreamIntroProps) {
     };
     webglAcquisitionTimer = window.setTimeout(verifyWebglAcquisition, WEBGL_ACQUISITION_MS);
 
-    hardDeadline = window.setTimeout(leave, HARD_DEADLINE_MS);
+    hardDeadline = window.setTimeout(
+      leave,
+      variant === 'navigation' ? NAVIGATION_HARD_DEADLINE_MS : HARD_DEADLINE_MS,
+    );
 
     let resolveWindowLoad: (() => void) | null = null;
     const handleWindowLoad = () => resolveWindowLoad?.();
-    const loadPromise = document.readyState === 'complete'
-      ? Promise.resolve()
-      : new Promise<void>((resolve) => {
-          resolveWindowLoad = resolve;
-          window.addEventListener('load', handleWindowLoad, { once: true });
-        });
-    const fontsPromise = document.fonts?.ready ?? Promise.resolve();
-    const heroPromise = waitForImage(document.querySelector<HTMLImageElement>('[data-hero-image]'));
+    if (variant === 'intro') {
+      const loadPromise = document.readyState === 'complete'
+        ? Promise.resolve()
+        : new Promise<void>((resolve) => {
+            resolveWindowLoad = resolve;
+            window.addEventListener('load', handleWindowLoad, { once: true });
+          });
+      const fontsPromise = document.fonts?.ready ?? Promise.resolve();
+      const heroPromise = waitForImage(document.querySelector<HTMLImageElement>('[data-hero-image]'));
 
-    Promise.allSettled([loadPromise, fontsPromise, heroPromise]).then(() => {
-      if (disposed) return;
-      pageReady = true;
-      checkReadiness();
-    });
+      Promise.allSettled([loadPromise, fontsPromise, heroPromise]).then(() => {
+        if (disposed) return;
+        pageReady = true;
+        checkReadiness();
+      });
+    }
 
     const handleMotionChange = () => {
       if (motionQuery.matches) finish();
@@ -264,7 +305,7 @@ export function CreamIntro({ onComplete, onRevealStart }: CreamIntroProps) {
       restorePage();
     };
     return cleanupResources;
-  }, []);
+  }, [variant]);
 
   useEffect(() => {
     if (phase !== 'done' || completeNotifiedRef.current) return;
@@ -276,7 +317,8 @@ export function CreamIntro({ onComplete, onRevealStart }: CreamIntroProps) {
 
   return (
     <div
-      className={`cream-intro cream-intro--${phase} ${webglReady ? 'cream-intro--webgl' : ''}`}
+      className={`cream-intro cream-intro--${phase} cream-intro--${variant} ${webglReady ? 'cream-intro--webgl' : ''}`}
+      style={recipeStyle}
       aria-hidden="true"
     >
       <script
@@ -297,17 +339,20 @@ export function CreamIntro({ onComplete, onRevealStart }: CreamIntroProps) {
           <CreamIntroScene
             canvasId={CREAM_INTRO_CANVAS_ID}
             leaving={phase === 'leaving'}
+            recipe={recipe}
             onFirstFrame={handleFirstFrame}
             onFailure={handleSceneFailure}
           />
         </CreamSceneBoundary>
       ) : null}
 
-      <div className="cream-intro-copy">
-        <p>Casa artesanal · Desde 1962</p>
-        <p className="font-display cream-intro-wordmark">Helado Nube</p>
-        <span>Preparando la primera cucharada</span>
-      </div>
+      {variant === 'intro' ? (
+        <div className="cream-intro-copy">
+          <p>Casa artesanal · Desde 1962</p>
+          <p className="font-display cream-intro-wordmark">Helado Nube</p>
+          <span>Preparando la primera cucharada</span>
+        </div>
+      ) : null}
     </div>
   );
 }

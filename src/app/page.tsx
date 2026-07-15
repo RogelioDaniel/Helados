@@ -25,8 +25,13 @@ import {
   useState,
 } from 'react';
 import { CreamIntro } from '@/components/landing/cream-intro';
-import type { CreamSession } from '@/components/landing/cream-recipes';
+import {
+  CREAM_RECIPES,
+  type CreamRecipe,
+  type CreamSession,
+} from '@/components/landing/cream-recipes';
 import { FLAVORS, type Flavor } from '@/components/landing/flavor-data';
+import { IceCreamMascot } from '@/components/landing/ice-cream-mascot';
 import { LuxuryEffects } from '@/components/landing/luxury-effects';
 import { LuxuryHero } from '@/components/landing/luxury-hero';
 
@@ -75,6 +80,35 @@ const RECIPE_TO_FEATURED_FLAVOR: Record<string, Flavor['id']> = {
   'zarzamora-crema': 'fresa',
 };
 
+const FLAVOR_TO_TIDE_RECIPE: Record<string, CreamRecipe['id']> = {
+  fresa: 'fresa-pistache',
+  vainilla: 'vainilla-cajeta',
+  pistache: 'pistache-cacao',
+  chocolate: 'cacao-cajeta',
+  mango: 'mango-chile',
+  cajeta: 'cacao-cajeta',
+};
+
+function makeFlavorThemeStyle(flavor: Flavor) {
+  const { theme } = flavor;
+  return {
+    '--cream-base': theme.base,
+    '--cream-light': theme.light,
+    '--cream-ribbon-a': theme.ribbonA,
+    '--cream-ribbon-b': theme.ribbonB,
+    '--cream-theme-surface': theme.surface,
+    '--cream-theme-on-surface': '#fffdf8',
+    '--cream-theme-muted': `color-mix(in srgb, #fffdf8 70%, ${theme.surface})`,
+    '--cream-theme-accent': theme.accent,
+    '--cream-theme-panel': theme.panel,
+    '--nube-accent': theme.accent,
+    '--site-canvas': theme.canvas,
+    '--site-ledger': `color-mix(in srgb, ${theme.base} 74%, ${theme.light})`,
+    '--theme-highlight': theme.highlight,
+    backgroundColor: theme.canvas,
+  } as CSSProperties;
+}
+
 function getWhatsAppHref(message: string) {
   return `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`;
 }
@@ -89,12 +123,14 @@ export default function Home() {
   const [introComplete, setIntroComplete] = useState(false);
   const [introRun, setIntroRun] = useState(0);
   const [creamSession, setCreamSession] = useState<CreamSession | null>(null);
+  const [activeFlavorId, setActiveFlavorId] = useState<Flavor['id']>(FLAVORS[0]?.id ?? 'fresa');
   const closeCartRef = useRef<HTMLButtonElement>(null);
   const drawerRef = useRef<HTMLElement>(null);
   const returnFocusRef = useRef<HTMLElement | null>(null);
   const pendingDestinationRef = useRef<string | null>(null);
   const destinationPositionedRef = useRef(false);
   const navigationInFlightRef = useRef(false);
+  const flavorInitializedRef = useRef(false);
 
   useEffect(() => {
     const targetId = window.location.hash.slice(1);
@@ -176,6 +212,15 @@ export default function Home() {
 
   const itemCount = cartItems.reduce((total, item) => total + item.quantity, 0);
   const cartTotal = cartItems.reduce((total, item) => total + item.quantity * item.price, 0);
+  const activeFlavor = useMemo(
+    () => FLAVORS.find((flavor) => flavor.id === activeFlavorId) ?? FLAVORS[0]!,
+    [activeFlavorId],
+  );
+  const activeTideRecipe = useMemo(
+    () => CREAM_RECIPES.find((recipe) => recipe.id === FLAVOR_TO_TIDE_RECIPE[activeFlavor.id]) ?? creamSession?.recipe,
+    [activeFlavor.id, creamSession],
+  );
+  const flavorThemeStyle = useMemo(() => makeFlavorThemeStyle(activeFlavor), [activeFlavor]);
   const orderMessage = [
     'Hola, Helado Nube. Quiero confirmar este pedido:',
     '',
@@ -198,6 +243,10 @@ export default function Home() {
 
   const handleIntroComplete = useCallback((session: CreamSession) => {
     setCreamSession(session);
+    if (!flavorInitializedRef.current) {
+      flavorInitializedRef.current = true;
+      setActiveFlavorId(RECIPE_TO_FEATURED_FLAVOR[session.recipe.id] ?? FLAVORS[0]!.id);
+    }
     setIntroComplete(true);
 
     window.requestAnimationFrame(() => {
@@ -311,6 +360,8 @@ export default function Home() {
     <main className="min-h-[100dvh] overflow-x-clip bg-[#f5efe5] text-[#211a17]">
       <CreamIntro
         key={introRun}
+        variant={introRun === 0 ? 'intro' : 'navigation'}
+        recipe={introRun === 0 ? undefined : activeTideRecipe}
         onRevealStart={positionPendingDestination}
         onComplete={handleIntroComplete}
       />
@@ -319,7 +370,13 @@ export default function Home() {
           Preparando la primera cucharada
         </p>
       ) : null}
-      <div inert={!introComplete} aria-hidden={!introComplete}>
+      <div
+        inert={!introComplete}
+        aria-hidden={!introComplete}
+        className="flavor-theme"
+        style={flavorThemeStyle}
+        data-flavor-theme={activeFlavor.id}
+      >
         <LuxuryEffects />
       <script
         type="application/ld+json"
@@ -343,7 +400,7 @@ export default function Home() {
       </div>
 
       <header
-        className="sticky top-0 z-50 border-b border-[#211a17]/10 bg-[#f5efe5]/90 backdrop-blur-xl"
+        className="site-header sticky top-0 z-50 border-b border-[#211a17]/10 backdrop-blur-xl"
         data-site-header
       >
         <div className="mx-auto flex h-[76px] max-w-[1400px] items-center justify-between px-5 sm:px-8 lg:px-12">
@@ -399,7 +456,7 @@ export default function Home() {
         </div>
 
         <div
-          className={`absolute inset-x-0 top-full overflow-hidden border-b border-[#211a17]/10 bg-[#f5efe5] transition-[max-height,opacity] duration-500 lg:hidden ${
+          className={`site-mobile-nav absolute inset-x-0 top-full overflow-hidden border-b border-[#211a17]/10 transition-[max-height,opacity] duration-500 lg:hidden ${
             menuOpen ? 'max-h-96 opacity-100' : 'pointer-events-none max-h-0 opacity-0'
           }`}
           aria-hidden={!menuOpen}
@@ -431,7 +488,11 @@ export default function Home() {
       </header>
 
       {introComplete && creamSession ? (
-        <CreamScrollTide session={creamSession} suspended={menuOpen || cartOpen} />
+        <CreamScrollTide
+          session={creamSession}
+          themeRecipe={activeTideRecipe}
+          suspended={menuOpen || cartOpen}
+        />
       ) : null}
 
       <div id="contenido">
@@ -440,9 +501,10 @@ export default function Home() {
           featuredFlavorId={creamSession ? RECIPE_TO_FEATURED_FLAVOR[creamSession.recipe.id] : undefined}
           itemCount={itemCount}
           onOpenCart={openCart}
+          onFlavorChange={(flavor) => setActiveFlavorId(flavor.id)}
         />
 
-        <div className="border-y border-[#211a17]/10 bg-[#eee3d5]" aria-label="Ingredientes de origen">
+        <div className="site-origin-ledger border-y border-[#211a17]/10" aria-label="Ingredientes de origen">
           <dl className="ingredient-ledger mx-auto grid max-w-[1400px] grid-cols-1 px-5 sm:grid-cols-3 sm:px-8 lg:px-12">
             {[
               ['Papantla', 'Vainilla curada a mano'],
@@ -539,7 +601,7 @@ export default function Home() {
           </div>
         </section>
 
-        <section id="historia" tabIndex={-1} className="scroll-mt-24 bg-[#211a17] py-24 text-[#f8f1e8] sm:py-32">
+        <section id="historia" tabIndex={-1} className="site-history scroll-mt-24 py-24 text-[#f8f1e8] sm:py-32">
           <div className="mx-auto max-w-[1400px] px-5 sm:px-8 lg:px-12">
             <div className="grid items-center gap-14 lg:grid-cols-12 lg:gap-16">
               <div className="history-cream-wipe relative lg:col-span-6" data-cream-wipe>
@@ -564,7 +626,7 @@ export default function Home() {
               </div>
 
               <div className="lg:col-span-5 lg:col-start-8" data-reveal="copy">
-                <p className="text-xs font-bold uppercase tracking-[0.22em] text-[#dba0ae]">Nuestra historia</p>
+                <p className="text-xs font-bold uppercase tracking-[0.22em] text-[var(--theme-highlight)]">Nuestra historia</p>
                 <h2 className="font-display mt-5 max-w-[10ch] text-5xl font-medium leading-[0.92] tracking-[-0.045em] sm:text-6xl">
                   Una receta con memoria desde 1962.
                 </h2>
@@ -580,7 +642,7 @@ export default function Home() {
                   </p>
                 </div>
                 <div className="mt-10 flex items-center gap-4 border-t border-white/15 pt-6">
-                  <span className="font-display text-3xl italic text-[#dba0ae]">Nube</span>
+                  <span className="font-display text-3xl italic text-[var(--theme-highlight)]">Nube</span>
                   <span className="h-px w-10 bg-white/20" />
                   <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-white/45">Tres generaciones · México</span>
                 </div>
@@ -629,7 +691,7 @@ export default function Home() {
                       className="process-step group grid gap-5 py-8 sm:grid-cols-[64px_minmax(0,1fr)_auto] sm:items-start sm:gap-6 sm:py-10"
                       data-process-step
                     >
-                      <span className="grid h-14 w-14 place-items-center rounded-full border border-[#211a17]/15 transition-colors group-hover:border-[var(--nube-accent)] group-hover:bg-[var(--nube-accent)] group-hover:text-white">
+                      <span className="process-step-icon grid h-14 w-14 place-items-center" aria-hidden="true">
                         <step.icon className="h-5 w-5" strokeWidth={1.5} />
                       </span>
                       <div>
@@ -715,7 +777,7 @@ export default function Home() {
                       aria-controls={`faq-${index}`}
                     >
                       <span className="font-display text-2xl font-medium tracking-[-0.025em] sm:text-3xl">{faq.question}</span>
-                      <span className={`grid h-10 w-10 shrink-0 place-items-center rounded-full border border-[#211a17]/15 transition-transform duration-300 ${open ? 'rotate-180 bg-[#211a17] text-white' : ''}`}>
+                      <span className={`faq-trigger-icon grid h-11 w-11 shrink-0 place-items-center ${open ? 'faq-trigger-icon--open' : ''}`}>
                         <ChevronDown className="h-4 w-4" />
                       </span>
                     </button>
@@ -747,11 +809,12 @@ export default function Home() {
                 <span className="rounded-full bg-white/14 px-2 py-0.5 text-[10px]">{itemCount}</span>
               </button>
             </div>
+            <IceCreamMascot />
           </div>
         </section>
       </div>
 
-      <footer className="bg-[#211a17] pb-28 pt-16 text-[#f8f1e8] sm:pb-10 sm:pt-20">
+      <footer className="site-footer pb-28 pt-16 text-[#f8f1e8] sm:pb-10 sm:pt-20">
         <div className="mx-auto max-w-[1400px] px-5 sm:px-8 lg:px-12">
           <div className="grid gap-12 border-b border-white/12 pb-14 lg:grid-cols-12">
             <div className="lg:col-span-5">
@@ -763,7 +826,7 @@ export default function Home() {
             </div>
             <div className="grid grid-cols-2 gap-8 lg:col-span-4 lg:col-start-9">
               <div>
-                <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#dba0ae]">Explorar</p>
+                <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--theme-highlight)]">Explorar</p>
                 <div className="mt-5 grid gap-3 text-sm text-white/60">
                   <a href="#sabores" className="hover:text-white">Sabores</a>
                   <a href="#historia" className="hover:text-white">Historia</a>
@@ -771,7 +834,7 @@ export default function Home() {
                 </div>
               </div>
               <div>
-                <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#dba0ae]">Pedir</p>
+                <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--theme-highlight)]">Pedir</p>
                 <div className="mt-5 grid gap-3 text-sm text-white/60">
                   <button type="button" onClick={openCart} className="text-left hover:text-white">Mi pedido</button>
                   <a href="#preguntas" className="hover:text-white">Preguntas</a>
@@ -803,7 +866,7 @@ export default function Home() {
           role="dialog"
           aria-modal="true"
           aria-labelledby="cart-title"
-          className={`cart-drawer absolute inset-y-0 right-0 flex w-full max-w-[520px] flex-col bg-[#faf5ed] shadow-[-28px_0_80px_-40px_rgba(33,26,23,0.5)] transition-transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+          className={`site-cart-drawer cart-drawer absolute inset-y-0 right-0 flex w-full max-w-[520px] flex-col shadow-[-28px_0_80px_-40px_rgba(33,26,23,0.5)] transition-transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] ${
             cartOpen ? 'cart-drawer-open translate-x-0' : 'translate-x-full'
           }`}
         >
@@ -884,7 +947,7 @@ export default function Home() {
           </div>
 
           {cartItems.length > 0 && (
-            <div className="border-t border-[#211a17]/12 bg-[#f4ecdf] px-5 py-6 sm:px-7">
+            <div className="site-cart-total border-t border-[#211a17]/12 px-5 py-6 sm:px-7">
               <div className="flex items-end justify-between">
                 <div>
                   <p className="text-[9px] font-bold uppercase tracking-[0.18em] text-[#211a17]/45">Total estimado</p>
@@ -933,7 +996,7 @@ export default function Home() {
         role="status"
         aria-live="polite"
       >
-        <Check className="h-4 w-4 text-[#dba0ae]" />
+        <Check className="h-4 w-4 text-[var(--theme-highlight)]" />
         {recentlyAdded ? `${recentlyAdded} se añadió a tu pedido` : ''}
       </div>
       </div>

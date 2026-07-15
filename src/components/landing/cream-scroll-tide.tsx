@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
-import type { CreamSession } from './cream-recipes';
+import type { CreamRecipe, CreamSession, Rgb } from './cream-recipes';
 import {
   creamScrollTideFragmentShader,
   creamScrollTideVertexShader,
@@ -14,6 +14,11 @@ type NavigatorWithConnection = Navigator & {
 
 type CreamScrollTideProps = {
   session: CreamSession;
+  /**
+   * The hero catalogue can change the house flavour without recreating the
+   * WebGL scene. The shader interpolates toward this recipe in place.
+   */
+  themeRecipe?: CreamRecipe;
   suspended?: boolean;
 };
 
@@ -45,20 +50,33 @@ function createSeededRandom(seed: number) {
   };
 }
 
+function lerpColor(vector: THREE.Vector3, target: Rgb, amount: number) {
+  vector.x += (target[0] - vector.x) * amount;
+  vector.y += (target[1] - vector.y) * amount;
+  vector.z += (target[2] - vector.z) * amount;
+}
+
 export default function CreamScrollTide({
   session,
+  themeRecipe,
   suspended = false,
 }: CreamScrollTideProps) {
   const hostRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const suspendedRef = useRef(suspended);
   const wakeRef = useRef<() => void>(() => undefined);
+  const visualRecipeRef = useRef<CreamRecipe>(themeRecipe ?? session.recipe);
   const [motionReduced, setMotionReduced] = useState<boolean | null>(null);
 
   useEffect(() => {
     suspendedRef.current = suspended;
     wakeRef.current();
   }, [suspended]);
+
+  useEffect(() => {
+    visualRecipeRef.current = themeRecipe ?? session.recipe;
+    wakeRef.current();
+  }, [session.recipe, themeRecipe]);
 
   useEffect(() => {
     const motionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -109,6 +127,7 @@ export default function CreamScrollTide({
     let lastDropletSpawn = Number.NEGATIVE_INFINITY;
     let nextDropletDistance = 720;
 
+    const initialVisualRecipe = visualRecipeRef.current;
     const random = createSeededRandom(session.dropletSeed);
     const dropletSlots: DropletSlot[] = Array.from(
       { length: DROP_COUNT },
@@ -191,6 +210,23 @@ export default function CreamScrollTide({
       renderer.render(scene, camera);
     };
 
+    const blendVisualRecipe = (deltaTime: number) => {
+      if (!material) return;
+      const target = visualRecipeRef.current;
+      const colorEase = 1 - Math.exp(-4.8 * deltaTime);
+      const detailEase = 1 - Math.exp(-5.8 * deltaTime);
+      lerpColor(material.uniforms.uBaseColor.value, target.base, colorEase);
+      lerpColor(material.uniforms.uLightColor.value, target.light, colorEase);
+      lerpColor(material.uniforms.uRibbonAColor.value, target.ribbonA, colorEase);
+      lerpColor(material.uniforms.uRibbonBColor.value, target.ribbonB, colorEase);
+      material.uniforms.uRibbonWeights.value.x += (target.ribbonWeights[0] - material.uniforms.uRibbonWeights.value.x) * detailEase;
+      material.uniforms.uRibbonWeights.value.y += (target.ribbonWeights[1] - material.uniforms.uRibbonWeights.value.y) * detailEase;
+      material.uniforms.uRidge.value += (target.ridge - material.uniforms.uRidge.value) * detailEase;
+      material.uniforms.uGloss.value += (target.gloss - material.uniforms.uGloss.value) * detailEase;
+      material.uniforms.uFlowRate.value += (target.flowRate - material.uniforms.uFlowRate.value) * detailEase;
+      material.uniforms.uFlowStrength.value += (target.flowStrength - material.uniforms.uFlowStrength.value) * detailEase;
+    };
+
     const resize = () => {
       if (!renderer || !material) return;
       const width = Math.max(host.clientWidth, 1);
@@ -261,6 +297,7 @@ export default function CreamScrollTide({
       direction += (directionTarget - direction) * directionEase;
       opacity += (opacityTarget - opacity) * (1 - Math.exp(-11 * deltaTime));
       creamTime += deltaTime;
+      blendVisualRecipe(deltaTime);
       updateDroplets(deltaTime);
       renderCurrentFrame();
 
@@ -383,17 +420,17 @@ export default function CreamScrollTide({
           uDirection: { value: 0 },
           uAspect: { value: 1 },
           uOpacity: { value: 0 },
-          uBaseColor: { value: new THREE.Vector3(...session.recipe.base) },
-          uLightColor: { value: new THREE.Vector3(...session.recipe.light) },
-          uRibbonAColor: { value: new THREE.Vector3(...session.recipe.ribbonA) },
-          uRibbonBColor: { value: new THREE.Vector3(...session.recipe.ribbonB) },
+          uBaseColor: { value: new THREE.Vector3(...initialVisualRecipe.base) },
+          uLightColor: { value: new THREE.Vector3(...initialVisualRecipe.light) },
+          uRibbonAColor: { value: new THREE.Vector3(...initialVisualRecipe.ribbonA) },
+          uRibbonBColor: { value: new THREE.Vector3(...initialVisualRecipe.ribbonB) },
           uRibbonWeights: {
-            value: new THREE.Vector2(...session.recipe.ribbonWeights),
+            value: new THREE.Vector2(...initialVisualRecipe.ribbonWeights),
           },
-          uRidge: { value: session.recipe.ridge },
-          uGloss: { value: session.recipe.gloss },
-          uFlowRate: { value: session.recipe.flowRate },
-          uFlowStrength: { value: session.recipe.flowStrength },
+          uRidge: { value: initialVisualRecipe.ridge },
+          uGloss: { value: initialVisualRecipe.gloss },
+          uFlowRate: { value: initialVisualRecipe.flowRate },
+          uFlowStrength: { value: initialVisualRecipe.flowStrength },
           uMaterialSeed: { value: session.materialPhase },
           uDropletSeed: { value: session.dropletSeed / 0xffffffff },
           uDrops: { value: dropletUniforms },

@@ -7,6 +7,7 @@ type LuxuryHeroProps = {
   featuredFlavorId?: string;
   itemCount: number;
   onOpenCart: () => void;
+  onFlavorChange: (flavor: Flavor) => void;
 };
 
 export function LuxuryHero({
@@ -14,6 +15,7 @@ export function LuxuryHero({
   featuredFlavorId,
   itemCount,
   onOpenCart,
+  onFlavorChange,
 }: LuxuryHeroProps) {
   return (
     <section id="inicio" className="scroll-mt-28 px-3 py-3 sm:px-5 sm:py-5 lg:px-7">
@@ -76,6 +78,7 @@ export function LuxuryHero({
             key={featuredFlavorId ?? 'default'}
             flavors={flavors}
             initialFlavorId={featuredFlavorId}
+            onFlavorChange={onFlavorChange}
           />
         </div>
 
