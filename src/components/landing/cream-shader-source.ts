@@ -105,7 +105,10 @@ export const creamFragmentShader = /* glsl */ `
 
     float revealEdge = uReveal * 1.32 - 0.16;
     float edgeNoise = (
-      noise(vec2(uv.x * 4.8 + uDropletSeed * 9.0, materialTime * 0.1)) - 0.5
+      noise(vec2(
+        uv.x * 4.8 + uDropletSeed * 9.0,
+        materialTime * 0.15 + uReveal * 1.6
+      )) - 0.5
     ) * 0.088;
     float dripWindow = smoothstep(0.08, 0.28, uReveal) * (1.0 - smoothstep(0.76, 0.98, uReveal));
     float dripA = mix(0.13, 0.27, hash(vec2(uDropletSeed, 1.17)));

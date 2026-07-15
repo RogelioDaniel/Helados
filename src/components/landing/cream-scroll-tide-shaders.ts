@@ -71,26 +71,46 @@ export const creamScrollTideFragmentShader = /* glsl */ `
     float seed = uDropletSeed * 91.73 + uMaterialSeed * 0.071;
     float phase = hash(vec2(seed, 6.17)) * TAU;
     float shapeGate = mix(0.35, 1.0, fill);
+    float slowPulse = sin(uTime * 0.21 + phase);
 
     // The canvas remains tall enough for falling drops, while the attached
     // layer itself is deliberately shallow.
     float base = mix(0.045, 0.205, fill);
     float broad =
-      sin(TAU * x * 1.12 + phase + sin(uTime * 0.15) * 0.16) * 0.031 +
-      sin(TAU * x * 2.05 - phase * 0.63 - uTime * 0.11) * 0.016;
+      sin(
+        TAU * x * 1.12 + phase +
+        sin(uTime * 0.18 + phase * 0.37) * 0.28
+      ) * (0.031 + slowPulse * 0.005) +
+      sin(
+        TAU * x * 2.05 - phase * 0.63 +
+        sin(uTime * 0.14 - phase * 0.29) * 0.34
+      ) * (0.016 - slowPulse * 0.003);
 
-    float c0 = 0.12 + hash(vec2(seed, 1.13)) * 0.16;
-    float c1 = 0.38 + hash(vec2(seed, 2.71)) * 0.20;
-    float c2 = 0.70 + hash(vec2(seed, 4.93)) * 0.18;
+    float c0 =
+      0.12 + hash(vec2(seed, 1.13)) * 0.16 +
+      sin(uTime * 0.16 + phase * 1.17) * 0.010;
+    float c1 =
+      0.38 + hash(vec2(seed, 2.71)) * 0.20 +
+      sin(uTime * 0.13 - phase * 0.73) * 0.013;
+    float c2 =
+      0.70 + hash(vec2(seed, 4.93)) * 0.18 +
+      sin(uTime * 0.19 + phase * 0.41) * 0.009;
     float lobes =
-      bell(x, c0, 0.105) * 0.064 +
-      bell(x, c1, 0.145) * 0.047 +
-      bell(x, c2, 0.095) * 0.073 -
+      bell(x, c0, 0.105) * (0.064 + slowPulse * 0.007) +
+      bell(x, c1, 0.145) * (0.047 - slowPulse * 0.005) +
+      bell(x, c2, 0.095) *
+        (0.073 + sin(uTime * 0.17 - phase) * 0.007) -
       bell(x, mix(c0, c1, 0.52), 0.075) * 0.022;
 
     float knead =
-      sin(TAU * x * 1.45 + uTime * 0.28 + phase) * 0.007 +
-      sin(TAU * x * 3.10 - uTime * 0.19 - phase * 0.31) * 0.004;
+      sin(
+        TAU * x * 1.45 + phase +
+        sin(uTime * 0.27 + phase * 0.23) * 0.42
+      ) * 0.010 +
+      sin(
+        TAU * x * 3.10 - phase * 0.31 +
+        sin(uTime * 0.20 - phase * 0.19) * 0.38
+      ) * 0.006;
     float deposit = max(uDirection, 0.0) * uSpeed *
       bell(x, c2 + 0.03 * sin(uTime * 0.72 + phase), 0.075) * 0.045;
     float scrape = max(-uDirection, 0.0) * uSpeed *

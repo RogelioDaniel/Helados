@@ -339,7 +339,7 @@ export default function Home() {
         Ir al contenido
       </a>
 
-      <div className="relative z-40 bg-[#76283c] px-5 py-2.5 text-[#fff8f1]">
+      <div className="relative z-40 bg-[var(--nube-accent)] px-5 py-2.5 text-[#fff8f1]">
         <div className="mx-auto flex max-w-[1400px] items-center justify-center gap-3 text-center text-[11px] font-semibold uppercase tracking-[0.18em] sm:text-xs">
           <span>Edición de temporada</span>
           <span className="h-1 w-1 rounded-full bg-[#fff8f1]/45" />
@@ -357,7 +357,7 @@ export default function Home() {
           <a href="#inicio" className="group flex items-center gap-3" aria-label="Helado Nube, inicio">
             <Image src="/logo.svg" alt="" width={42} height={42} className="transition-transform duration-500 group-hover:-rotate-6" />
             <span className="leading-none">
-              <span className="block text-[10px] font-semibold uppercase tracking-[0.24em] text-[#76283c]">Casa artesanal</span>
+              <span className="block text-[10px] font-semibold uppercase tracking-[0.24em] text-[var(--nube-accent)]">Casa artesanal</span>
               <span className="font-display mt-1 block text-xl font-semibold tracking-[-0.03em]">Helado Nube</span>
             </span>
           </a>
@@ -372,7 +372,7 @@ export default function Home() {
               <a
                 key={href}
                 href={href}
-                className="text-sm font-medium text-[#211a17]/70 transition-colors hover:text-[#76283c]"
+                className="text-sm font-medium text-[#211a17]/70 transition-colors hover:text-[var(--nube-accent)]"
               >
                 {label}
               </a>
@@ -383,12 +383,12 @@ export default function Home() {
             <button
               type="button"
               onClick={openCart}
-              className="group relative inline-flex min-h-11 items-center gap-2 rounded-full border border-[#211a17]/15 px-4 text-sm font-semibold transition-colors hover:border-[#76283c] hover:bg-[#76283c] hover:text-white active:scale-[0.98]"
+              className="group relative inline-flex min-h-11 items-center gap-2 rounded-full border border-[#211a17]/15 px-4 text-sm font-semibold transition-colors hover:border-[var(--nube-accent)] hover:bg-[var(--nube-accent)] hover:text-white active:scale-[0.98]"
               aria-label={`Abrir pedido, ${itemCount} productos`}
             >
               <ShoppingBag className="h-4 w-4" strokeWidth={1.8} />
               <span className="hidden sm:inline">Mi pedido</span>
-              <span className="inline-grid min-h-5 min-w-5 place-items-center rounded-full bg-[#76283c] px-1 text-[10px] text-white transition-colors group-hover:bg-white group-hover:text-[#76283c]">
+              <span className="inline-grid min-h-5 min-w-5 place-items-center rounded-full bg-[var(--nube-accent)] px-1 text-[10px] text-white transition-colors group-hover:bg-white group-hover:text-[var(--nube-accent)]">
                 {itemCount}
               </span>
             </button>
@@ -426,7 +426,7 @@ export default function Home() {
                 className="font-display flex min-h-14 items-center justify-between border-b border-[#211a17]/10 text-2xl"
               >
                 {label}
-                <span className="font-sans text-[10px] font-semibold tracking-[0.2em] text-[#76283c]">0{index + 1}</span>
+                <span className="font-sans text-[10px] font-semibold tracking-[0.2em] text-[var(--nube-accent)]">0{index + 1}</span>
               </a>
             ))}
           </nav>
@@ -448,7 +448,7 @@ export default function Home() {
               ['Oaxaca', 'Cacao tostado'],
             ].map(([place, ingredient]) => (
               <div key={place} className="flex items-center justify-between border-b border-[#211a17]/10 py-5 last:border-b-0 sm:border-b-0 sm:border-r sm:px-6 sm:first:pl-0 sm:last:border-r-0 sm:last:pr-0">
-                <dt className="text-[10px] font-bold uppercase tracking-[0.22em] text-[#76283c]">{place}</dt>
+                <dt className="text-[10px] font-bold uppercase tracking-[0.22em] text-[var(--nube-accent)]">{place}</dt>
                 <dd className="font-display text-lg text-[#211a17]/72">{ingredient}</dd>
               </div>
             ))}
@@ -460,7 +460,7 @@ export default function Home() {
             <div className="grid gap-10 lg:grid-cols-12 lg:gap-8">
               <div className="lg:col-span-4">
                 <div className="lg:sticky lg:top-32" data-reveal="copy">
-                  <p className="text-xs font-bold uppercase tracking-[0.22em] text-[#76283c]">La carta</p>
+                  <p className="text-xs font-bold uppercase tracking-[0.22em] text-[var(--nube-accent)]">La carta</p>
                   <h2 className="font-display mt-5 max-w-[9ch] text-5xl font-medium leading-[0.93] tracking-[-0.045em] sm:text-6xl">
                     Seis sabores con lugar de origen.
                   </h2>
@@ -470,7 +470,7 @@ export default function Home() {
                   <button
                     type="button"
                     onClick={openCart}
-                    className="mt-8 inline-flex min-h-12 items-center gap-3 border-b border-[#211a17] text-sm font-bold transition-colors hover:border-[#76283c] hover:text-[#76283c]"
+                    className="mt-8 inline-flex min-h-12 items-center gap-3 border-b border-[#211a17] text-sm font-bold transition-colors hover:border-[var(--nube-accent)] hover:text-[var(--nube-accent)]"
                   >
                     Ver mi pedido
                     <span className="grid h-6 min-w-6 place-items-center rounded-full bg-[#211a17] px-1.5 text-[10px] text-white">{itemCount}</span>
@@ -501,11 +501,11 @@ export default function Home() {
                         </span>
                       </div>
                       <div className="self-center">
-                        <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-[#76283c] sm:text-[10px]">{flavor.eyebrow}</p>
+                        <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-[var(--nube-accent)] sm:text-[10px]">{flavor.eyebrow}</p>
                         <h3 className="font-display mt-2 text-[1.75rem] font-medium leading-none tracking-[-0.035em] sm:text-[2.15rem]">{flavor.name}</h3>
                         <p className="mt-3 hidden max-w-[46ch] text-sm leading-6 text-[#211a17]/60 sm:block">{flavor.description}</p>
                         <p className="mt-3 flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#211a17]/45">
-                          <span className="h-1 w-1 rounded-full bg-[#76283c]" />
+                          <span className="h-1 w-1 rounded-full bg-[var(--nube-accent)]" />
                           {flavor.origin}
                         </p>
                       </div>
@@ -516,7 +516,7 @@ export default function Home() {
                       <button
                         type="button"
                         onClick={(event) => addFlavor(flavor, event)}
-                        className="scoop-add-button col-start-2 inline-flex min-h-11 items-center justify-center gap-2 rounded-full border border-[#211a17]/20 px-5 text-xs font-bold uppercase tracking-[0.08em] hover:border-[#76283c] hover:bg-[#76283c] hover:text-white lg:col-auto"
+                        className="scoop-add-button col-start-2 inline-flex min-h-11 items-center justify-center gap-2 rounded-full border border-[#211a17]/20 px-5 text-xs font-bold uppercase tracking-[0.08em] hover:border-[var(--nube-accent)] hover:bg-[var(--nube-accent)] hover:text-white lg:col-auto"
                       >
                         <span className="scoop-add-dot" data-scoop-dot aria-hidden="true" />
                         {recentlyAdded === flavor.name ? (
@@ -591,7 +591,7 @@ export default function Home() {
           <div className="mx-auto max-w-[1400px] px-5 sm:px-8 lg:px-12">
             <div className="grid gap-12 lg:grid-cols-12 lg:gap-10">
               <div className="lg:col-span-5" data-reveal="copy">
-                <p className="text-xs font-bold uppercase tracking-[0.22em] text-[#76283c]">El proceso</p>
+                <p className="text-xs font-bold uppercase tracking-[0.22em] text-[var(--nube-accent)]">El proceso</p>
                 <h2 className="font-display mt-5 max-w-[9ch] text-5xl font-medium leading-[0.92] tracking-[-0.045em] sm:text-6xl">
                   Lo premium también se puede explicar.
                 </h2>
@@ -627,14 +627,14 @@ export default function Home() {
                       className="process-step group grid gap-5 py-8 sm:grid-cols-[64px_minmax(0,1fr)_auto] sm:items-start sm:gap-6 sm:py-10"
                       data-process-step
                     >
-                      <span className="grid h-14 w-14 place-items-center rounded-full border border-[#211a17]/15 transition-colors group-hover:border-[#76283c] group-hover:bg-[#76283c] group-hover:text-white">
+                      <span className="grid h-14 w-14 place-items-center rounded-full border border-[#211a17]/15 transition-colors group-hover:border-[var(--nube-accent)] group-hover:bg-[var(--nube-accent)] group-hover:text-white">
                         <step.icon className="h-5 w-5" strokeWidth={1.5} />
                       </span>
                       <div>
                         <h3 className="font-display text-3xl font-medium tracking-[-0.035em]">{step.title}</h3>
                         <p className="mt-3 max-w-[50ch] text-sm leading-6 text-[#211a17]/58">{step.text}</p>
                       </div>
-                      <span className="text-[10px] font-bold tracking-[0.2em] text-[#76283c]">{step.number}</span>
+                      <span className="text-[10px] font-bold tracking-[0.2em] text-[var(--nube-accent)]">{step.number}</span>
                     </article>
                   ))}
                 </div>
@@ -647,7 +647,7 @@ export default function Home() {
           <div className="mx-auto max-w-[1400px] px-5 sm:px-8 lg:px-12">
             <div className="mb-10 flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between" data-reveal="copy">
               <div>
-                <p className="text-xs font-bold uppercase tracking-[0.22em] text-[#76283c]">La mesa Nube</p>
+                <p className="text-xs font-bold uppercase tracking-[0.22em] text-[var(--nube-accent)]">La mesa Nube</p>
                 <h2 id="momentos-title" className="font-display mt-4 text-4xl font-medium tracking-[-0.04em] sm:text-5xl">Hecho para mirar de cerca.</h2>
               </div>
               <p className="max-w-[38ch] text-sm leading-6 text-[#211a17]/55">Textura, ingrediente y servicio. Tres formas de reconocer un helado bien hecho.</p>
@@ -669,21 +669,21 @@ export default function Home() {
           </div>
         </section>
 
-        <section className="melting-section relative bg-[#76283c] py-20 text-white sm:py-24">
+        <section className="melting-section relative bg-[var(--cream-theme-surface)] py-20 text-[var(--cream-theme-on-surface)] sm:py-24">
           <div className="mx-auto grid max-w-[1400px] gap-10 px-5 sm:px-8 lg:grid-cols-12 lg:items-center lg:px-12">
             <div className="lg:col-span-8" data-reveal="copy">
-              <p className="text-xs font-bold uppercase tracking-[0.22em] text-white/55">Bodas · Celebraciones · Eventos de marca</p>
+              <p className="text-xs font-bold uppercase tracking-[0.22em] text-[var(--cream-theme-muted)]">Bodas · Celebraciones · Eventos de marca</p>
               <h2 className="font-display mt-5 max-w-[13ch] text-5xl font-medium leading-[0.92] tracking-[-0.045em] sm:text-6xl">
                 Una mesa de helado que sí pertenece a la ocasión.
               </h2>
             </div>
             <div className="lg:col-span-4 lg:pl-10" data-reveal="copy">
-              <p className="text-sm leading-7 text-white/68">Curamos sabores, cantidades y servicio según tu evento. Cuéntanos fecha, zona y número de invitados.</p>
+              <p className="text-sm leading-7 text-[var(--cream-theme-muted)]">Curamos sabores, cantidades y servicio según tu evento. Cuéntanos fecha, zona y número de invitados.</p>
               <a
                 href={getWhatsAppHref('Hola, Helado Nube. Quiero cotizar helado para un evento. Fecha: ____. Zona: ____. Invitados: ____.')}
                 target="_blank"
                 rel="noreferrer"
-                className="mt-7 inline-flex min-h-12 items-center gap-3 rounded-full bg-white px-6 text-sm font-bold text-[#76283c] transition-transform hover:-translate-y-0.5 active:translate-y-0"
+                className="mt-7 inline-flex min-h-12 items-center gap-3 rounded-full bg-[var(--cream-theme-on-surface)] px-6 text-sm font-bold text-[var(--cream-theme-surface)] transition-transform hover:-translate-y-0.5 active:translate-y-0"
               >
                 Cotizar mi evento
                 <ArrowRight className="h-4 w-4" />
@@ -696,7 +696,7 @@ export default function Home() {
         <section id="preguntas" className="scroll-mt-24 py-24 sm:py-32">
           <div className="mx-auto grid max-w-[1400px] gap-12 px-5 sm:px-8 lg:grid-cols-12 lg:gap-16 lg:px-12">
             <div className="lg:col-span-4" data-reveal="copy">
-              <p className="text-xs font-bold uppercase tracking-[0.22em] text-[#76283c]">Antes de pedir</p>
+              <p className="text-xs font-bold uppercase tracking-[0.22em] text-[var(--cream-theme-accent)]">Antes de pedir</p>
               <h2 className="font-display mt-5 text-5xl font-medium leading-[0.92] tracking-[-0.045em] sm:text-6xl">Todo claro desde el primer antojo.</h2>
               <p className="mt-6 max-w-[38ch] text-sm leading-7 text-[#211a17]/60">Si tu pregunta no aparece aquí, inclúyela al compartir tu pedido.</p>
             </div>
@@ -730,9 +730,9 @@ export default function Home() {
         </section>
 
         <section className="px-5 pb-6 sm:px-8 lg:px-12">
-          <div className="closing-cta relative mx-auto max-w-[1400px] overflow-hidden rounded-[2rem] bg-[#ded0c1] px-6 py-20 sm:px-12 sm:py-24 lg:px-20" data-reveal="cream-cta">
+          <div className="closing-cta relative mx-auto max-w-[1400px] overflow-hidden rounded-[2rem] bg-[var(--cream-theme-panel)] px-6 py-20 sm:px-12 sm:py-24 lg:px-20" data-reveal="cream-cta">
             <div className="relative z-10 max-w-3xl">
-              <p className="text-xs font-bold uppercase tracking-[0.22em] text-[#76283c]">Tu próxima sobremesa</p>
+              <p className="text-xs font-bold uppercase tracking-[0.22em] text-[var(--cream-theme-accent)]">Tu próxima sobremesa</p>
               <h2 className="font-display mt-5 text-5xl font-medium leading-[0.9] tracking-[-0.05em] sm:text-7xl">Elige el sabor. Nosotros cuidamos el frío.</h2>
               <p className="mt-6 max-w-[52ch] text-sm leading-7 text-[#211a17]/64 sm:text-base">Arma tu selección y confirma por WhatsApp disponibilidad, cobertura y horario de entrega.</p>
               <button
@@ -807,7 +807,7 @@ export default function Home() {
         >
           <div className="flex h-[82px] items-center justify-between border-b border-[#211a17]/12 px-5 sm:px-7">
             <div>
-              <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-[#76283c]">Selección actual</p>
+              <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-[var(--nube-accent)]">Selección actual</p>
               <h2 id="cart-title" className="font-display mt-1 text-2xl font-medium">Mi pedido</h2>
             </div>
             <button
@@ -825,7 +825,7 @@ export default function Home() {
             {cartItems.length === 0 ? (
               <div className="grid min-h-full place-items-center py-16 text-center">
                 <div>
-                  <span className="mx-auto grid h-16 w-16 place-items-center rounded-full border border-[#211a17]/15 text-[#76283c]">
+                  <span className="mx-auto grid h-16 w-16 place-items-center rounded-full border border-[#211a17]/15 text-[var(--nube-accent)]">
                     <ShoppingBag className="h-6 w-6" strokeWidth={1.4} />
                   </span>
                   <h3 className="font-display mt-6 text-3xl font-medium">Tu selección está vacía.</h3>
@@ -894,7 +894,7 @@ export default function Home() {
                 href={getWhatsAppHref(orderMessage)}
                 target="_blank"
                 rel="noreferrer"
-                className="mt-5 inline-flex min-h-14 w-full items-center justify-center gap-3 rounded-full bg-[#76283c] px-6 text-sm font-bold text-white transition-transform hover:-translate-y-0.5 active:translate-y-0"
+                className="mt-5 inline-flex min-h-14 w-full items-center justify-center gap-3 rounded-full bg-[var(--nube-accent)] px-6 text-sm font-bold text-white transition-transform hover:-translate-y-0.5 active:translate-y-0"
               >
                 {whatsappNumber ? 'Confirmar por WhatsApp' : 'Compartir pedido en WhatsApp'}
                 <ArrowRight className="h-4 w-4" />

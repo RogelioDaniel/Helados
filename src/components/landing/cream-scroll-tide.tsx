@@ -107,7 +107,7 @@ export default function CreamScrollTide({
     let renderDpr = 0;
     let downwardTravel = 0;
     let lastDropletSpawn = Number.NEGATIVE_INFINITY;
-    let nextDropletDistance = 100;
+    let nextDropletDistance = 720;
 
     const random = createSeededRandom(session.dropletSeed);
     const dropletSlots: DropletSlot[] = Array.from(
@@ -129,9 +129,11 @@ export default function CreamScrollTide({
     const chooseNextDropletDistance = () => {
       const mobile = (renderWidth || window.innerWidth) < 768;
       nextDropletDistance = mobile
-        ? 72 + random() * 28
-        : 100 + random() * 34;
+        ? 680 + random() * 360
+        : 520 + random() * 360;
     };
+    const getDropletCooldown = () =>
+      (renderWidth || window.innerWidth) < 768 ? 1_250 : 950;
     chooseNextDropletDistance();
 
     const stop = () => {
@@ -288,12 +290,12 @@ export default function CreamScrollTide({
       pendingDelta = clamp(pendingDelta + delta, -240, 240);
 
       if (delta > 0.25) {
-        downwardTravel = clamp(downwardTravel + delta, 0, 360);
+        downwardTravel = clamp(downwardTravel + delta, 0, 1_200);
         const now = performance.now();
         const reachedDistance = nextDropletDistance;
         if (
           downwardTravel >= reachedDistance &&
-          now - lastDropletSpawn >= 180 &&
+          now - lastDropletSpawn >= getDropletCooldown() &&
           spawnDroplet(now)
         ) {
           downwardTravel = Math.max(0, downwardTravel - reachedDistance);
