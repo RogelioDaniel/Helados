@@ -26,7 +26,9 @@
 
 ## Firma: La Mantecación
 
-La experiencia abre en cada carga completa, por petición explícita de marca, con una superficie cremosa que mezcla vainilla, fresa y pistache. No se guarda ninguna bandera en `sessionStorage`: cada recarga vuelve a presentar “La Mantecación”. Three.js genera pliegues y surcos de helado mediante un único shader; la masa permanece asentada, sin deriva lateral, durante 2.2 segundos de contemplación y después se retira durante 1.68 segundos con un borde viscoso para revelar la fotografía. El respaldo CSS aparece desde SSR, pero es estático y permanece detrás del canvas: el primer frame 3D lo cubre sin crossfade ni transparencia intermedia. El buffer se conserva mientras la masa está quieta para evitar descarte por mosaicos en GPU móviles, con DPR limitado. La salida fija una sola fuente visual para evitar saltos si el chunk llega tarde y existe un límite duro para no bloquear el contenido.
+La experiencia abre en cada carga completa, por petición explícita de marca, con una superficie cremosa que mezcla vainilla, fresa y pistache. No se guarda ninguna bandera en `sessionStorage`: cada recarga vuelve a presentar “La Mantecación”. En escritorio, Three.js genera pliegues y surcos mediante un único shader que se amasa lentamente en el sitio, sin traslación global; el reloj del primer render se entrega al runtime para impedir saltos de fase. La masa permanece 2.2 segundos y después se retira durante 1.68 segundos con un borde viscoso para revelar la fotografía.
+
+En móvil se usa una interpretación DOM + CSS específica: cinco pasadas de espátula de vainilla y fresa se mueven únicamente mediante `transform`. El canvas de WebGL y el SVG con filtros no participan en esa ruta, porque algunos compositores Android rasterizan superficies filtradas de gran tamaño por mosaicos visibles. Ambas variantes están presentes desde SSR y la media query elige la correcta desde el primer *paint*, sin hidratación tardía ni reajuste lateral.
 
 La huella del cucharón queda como gesto secundario y funcional: aparece sobre la fotografía de un sabor al enfocarlo y en la compresión breve del botón “Servir”. No se representa mediante órbitas, partículas ni objetos flotantes.
 
@@ -46,15 +48,16 @@ desktop
 └──────────────────────────────────────────────────────────┘
 ```
 
-En móvil, copy y fotografía se separan para preservar legibilidad; la escena 3D se reduce y la barra del pedido respeta `safe-area-inset-bottom`.
+En móvil, copy y fotografía se separan para preservar legibilidad; la introducción cambia a crema CSS estable y la barra del pedido respeta `safe-area-inset-bottom`.
 
 ## Movimiento
 
 - Feedback: `140ms`; UI: `240ms`; reveals secundarios: `520–800ms`; salida principal: `1680ms` con *smootherstep* para acelerar y asentarse sin un corte lineal.
 - Un solo momento coreografiado principal: la introducción Three.js “La Mantecación”; se reproduce en cada recarga completa y se omite únicamente por `prefers-reduced-motion` o `Save-Data`.
 - Las fotografías importantes se revelan como una cucharada circular; el cuerpo permanece estable y legible.
+- En pantallas táctiles, la fila de sabor que cruza el centro recibe una única huella de cucharón; no hay seis animaciones compitiendo a la vez.
 - Al servir un sabor, una pequeña muestra del color correspondiente sube y vuelve al botón mientras el carrito se actualiza de inmediato.
-- La sección de eventos termina en un borde derretido sobrio y el carrito marca la cadena de frío con una línea de escarcha breve.
+- La sección de eventos termina en un borde derretido que se asienta una sola vez y el carrito marca la cadena de frío con una línea de escarcha breve.
 - Los botones se comprimen levemente al presionar; nunca rebotan de forma caricaturesca ni se mueven sin interacción.
 - `prefers-reduced-motion` conserva todas las funciones, detiene RAF y elimina transformaciones no esenciales.
 

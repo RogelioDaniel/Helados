@@ -95,6 +95,7 @@ export function CreamIntro() {
     leavingRef.current = false;
     webglReadyRef.current = false;
     const motionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const mobileFallback = window.matchMedia('(max-width: 767px), (hover: none) and (pointer: coarse)').matches;
     const saveData = (navigator as NavigatorWithConnection).connection?.saveData === true;
 
     if (motionQuery.matches || saveData) {
@@ -102,14 +103,16 @@ export function CreamIntro() {
       return () => window.cancelAnimationFrame(skipFrame);
     }
 
-    const enableFrame = window.requestAnimationFrame(() => setAllowWebgl(true));
+    const enableFrame = mobileFallback
+      ? 0
+      : window.requestAnimationFrame(() => setAllowWebgl(true));
 
     const root = document.documentElement;
     let disposed = false;
     let leaving = false;
     let fallbackMinimumReady = false;
     let shaderResidencyReady = false;
-    let fallbackMode = false;
+    let fallbackMode = mobileFallback;
     let pageReady = false;
     let exitTimer = 0;
     let shaderResidencyTimer = 0;
@@ -176,13 +179,15 @@ export function CreamIntro() {
       checkReadiness();
     }, FALLBACK_MINIMUM_MS);
 
-    const webglAcquisitionTimer = window.setTimeout(() => {
-      if (webglReadyRef.current) return;
-      disposeBootstrapCanvas();
-      setCanvasFailed(true);
-      setAllowWebgl(false);
-      registerWebglFailure();
-    }, WEBGL_ACQUISITION_MS);
+    const webglAcquisitionTimer = mobileFallback
+      ? 0
+      : window.setTimeout(() => {
+          if (webglReadyRef.current) return;
+          disposeBootstrapCanvas();
+          setCanvasFailed(true);
+          setAllowWebgl(false);
+          registerWebglFailure();
+        }, WEBGL_ACQUISITION_MS);
 
     const hardDeadline = window.setTimeout(leave, HARD_DEADLINE_MS);
 
@@ -244,6 +249,13 @@ export function CreamIntro() {
         dangerouslySetInnerHTML={{ __html: creamBootstrapScript }}
       />
       <CreamIntroPoster />
+      <div className="cream-intro-mobile-cream" aria-hidden="true">
+        <span className="mobile-cream-stroke mobile-cream-stroke--berry-left" />
+        <span className="mobile-cream-stroke mobile-cream-stroke--vanilla-center" />
+        <span className="mobile-cream-stroke mobile-cream-stroke--berry-right" />
+        <span className="mobile-cream-stroke mobile-cream-stroke--fold-top" />
+        <span className="mobile-cream-stroke mobile-cream-stroke--fold-bottom" />
+      </div>
       <canvas
         id={CREAM_INTRO_CANVAS_ID}
         suppressHydrationWarning

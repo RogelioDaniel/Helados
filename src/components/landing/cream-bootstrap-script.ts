@@ -22,6 +22,9 @@ export const creamBootstrapScript = `(() => {
     }
   }, 7400);
 
+  const mobileFallback = window.matchMedia('(max-width: 767px), (hover: none) and (pointer: coarse)').matches;
+  if (mobileFallback) return;
+
   let complete = false;
 
   const boot = () => {
@@ -37,12 +40,35 @@ export const creamBootstrapScript = `(() => {
     let fragment;
     let vao;
     let resizeObserver;
+    let frame = 0;
     let disposed = false;
+    let pageVisible = !document.hidden;
+    let lastFrame = performance.now();
+    let creamTime = 0;
+    let handleVisibility = () => undefined;
+    let handleMotionPreference = () => undefined;
+    const desktopMotionQuery = window.matchMedia('(min-width: 768px) and (hover: hover) and (pointer: fine)');
+
+    const stopAnimation = () => {
+      if (frame) window.cancelAnimationFrame(frame);
+      frame = 0;
+    };
+
+    const stop = () => {
+      stopAnimation();
+      resizeObserver?.disconnect();
+      return {
+        timeSeconds: creamTime,
+        wasAnimating: desktopMotionQuery.matches,
+      };
+    };
 
     const release = () => {
       if (disposed) return;
       disposed = true;
-      resizeObserver?.disconnect();
+      stop();
+      document.removeEventListener('visibilitychange', handleVisibility);
+      desktopMotionQuery.removeEventListener('change', handleMotionPreference);
       if (vao) gl?.deleteVertexArray(vao);
       if (program) gl?.deleteProgram(program);
       if (vertex) gl?.deleteShader(vertex);
@@ -95,7 +121,7 @@ export const creamBootstrapScript = `(() => {
       const timeLocation = gl.getUniformLocation(program, 'uTime');
       const revealLocation = gl.getUniformLocation(program, 'uReveal');
       const aspectLocation = gl.getUniformLocation(program, 'uAspect');
-      const draw = () => {
+      const draw = (time = creamTime) => {
         const width = Math.max(host.clientWidth, 1);
         const height = Math.max(host.clientHeight, 1);
         const dprCap = width < 768 ? 1.1 : 1.35;
@@ -109,20 +135,54 @@ export const creamBootstrapScript = `(() => {
         gl.viewport(0, 0, pixelWidth, pixelHeight);
         gl.useProgram(program);
         gl.bindVertexArray(vao);
-        gl.uniform1f(timeLocation, 0);
+        gl.uniform1f(timeLocation, time);
         gl.uniform1f(revealLocation, 0);
         gl.uniform1f(aspectLocation, width / height);
         gl.drawArrays(gl.TRIANGLES, 0, 3);
       };
 
-      draw();
-      resizeObserver = new ResizeObserver(draw);
+      const render = (now) => {
+        frame = 0;
+        if (disposed || !pageVisible || !desktopMotionQuery.matches) return;
+        if (now - lastFrame < 1000 / 30) {
+          frame = window.requestAnimationFrame(render);
+          return;
+        }
+        const delta = Math.min((now - lastFrame) / 1000, 0.05);
+        lastFrame = now;
+        creamTime += delta;
+        draw(creamTime);
+        frame = window.requestAnimationFrame(render);
+      };
+
+      const start = () => {
+        if (frame || disposed || !pageVisible || !desktopMotionQuery.matches) return;
+        lastFrame = performance.now();
+        frame = window.requestAnimationFrame(render);
+      };
+
+      handleVisibility = () => {
+        pageVisible = !document.hidden;
+        if (pageVisible) start();
+        else stopAnimation();
+      };
+
+      handleMotionPreference = () => {
+        if (desktopMotionQuery.matches) start();
+        else stopAnimation();
+      };
+
+      draw(0);
+      resizeObserver = new ResizeObserver(() => draw(creamTime));
       resizeObserver.observe(host);
+      document.addEventListener('visibilitychange', handleVisibility);
+      desktopMotionQuery.addEventListener('change', handleMotionPreference);
       canvas.__creamPrepaint = {
         context: gl,
-        stop: () => resizeObserver?.disconnect(),
+        stop,
         dispose: release,
       };
+      start();
     } catch {
       release();
     }

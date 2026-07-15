@@ -51,9 +51,14 @@ export const creamFragmentShader = /* glsl */ `
   void main() {
     vec2 uv = vUv;
     vec2 p = vec2((uv.x - 0.5) * uAspect + 0.5, uv.y);
-    float drift = uTime * 0.045;
-    float churn = fbm(p * vec2(2.2, 3.4) + vec2(drift, -drift * 0.7));
-    float folds = sin(p.x * 6.4 + p.y * 2.7 + churn * 4.8 - uTime * 0.16);
+    float flowGate = smoothstep(0.0, 0.6, uTime);
+    vec2 flow = vec2(
+      sin(p.y * 2.7 + uTime * 0.26) - sin(p.y * 2.7),
+      cos(p.x * 2.2 - uTime * 0.21) - cos(p.x * 2.2)
+    ) * (0.035 * flowGate);
+    float churn = fbm((p + flow) * vec2(2.2, 3.4));
+    float foldMotion = (sin(p.y * 1.9 + uTime * 0.20) - sin(p.y * 1.9)) * 0.18;
+    float folds = sin(p.x * 6.4 + p.y * 2.7 + churn * 4.8 + foldMotion);
     float softFold = folds * 0.5 + 0.5;
 
     vec3 vanilla = vec3(0.953, 0.894, 0.788);
