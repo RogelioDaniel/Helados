@@ -18,7 +18,7 @@ export function LuxuryHero({
   onFlavorChange,
 }: LuxuryHeroProps) {
   return (
-    <section id="inicio" className="scroll-mt-28 px-3 py-3 sm:px-5 sm:py-5 lg:px-7">
+    <section id="inicio" tabIndex={-1} className="scroll-mt-28 px-3 py-3 sm:px-5 sm:py-5 lg:px-7">
       <div
         className="nube-hero relative mx-auto grid max-w-[1540px] overflow-hidden rounded-[1.7rem] bg-[var(--cream-base)] sm:rounded-[2.2rem] lg:min-h-[calc(100dvh-126px)] lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] lg:rounded-[2.8rem]"
         data-hero-stage

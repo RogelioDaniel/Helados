@@ -24,7 +24,10 @@ import {
   useRef,
   useState,
 } from 'react';
-import { CreamIntro } from '@/components/landing/cream-intro';
+import {
+  CreamIntro,
+  type CreamNavigationDirection,
+} from '@/components/landing/cream-intro';
 import {
   CREAM_RECIPES,
   type CreamRecipe,
@@ -122,6 +125,7 @@ export default function Home() {
   const [cartReady, setCartReady] = useState(false);
   const [introComplete, setIntroComplete] = useState(false);
   const [introRun, setIntroRun] = useState(0);
+  const [navigationDirection, setNavigationDirection] = useState<CreamNavigationDirection>('down');
   const [creamSession, setCreamSession] = useState<CreamSession | null>(null);
   const [activeFlavorId, setActiveFlavorId] = useState<Flavor['id']>(FLAVORS[0]?.id ?? 'fresa');
   const closeCartRef = useRef<HTMLButtonElement>(null);
@@ -241,12 +245,33 @@ export default function Home() {
     return true;
   }, []);
 
-  const handleIntroComplete = useCallback((session: CreamSession) => {
+  const applyInitialCreamSession = useCallback((session: CreamSession) => {
     setCreamSession(session);
     if (!flavorInitializedRef.current) {
       flavorInitializedRef.current = true;
       setActiveFlavorId(RECIPE_TO_FEATURED_FLAVOR[session.recipe.id] ?? FLAVORS[0]!.id);
     }
+  }, []);
+
+  const handleCreamRevealStart = useCallback((session: CreamSession) => {
+    applyInitialCreamSession(session);
+
+    // On a direct /#section load the child curtain can reach its first frame
+    // before this page's mount effect has recorded the hash. Resolve it here
+    // as well, while the cream still covers every pixel of the viewport.
+    if (!pendingDestinationRef.current) {
+      const hashTarget = window.location.hash.slice(1);
+      if (hashTarget && document.getElementById(hashTarget)) {
+        pendingDestinationRef.current = hashTarget;
+      }
+    }
+    positionPendingDestination();
+  }, [applyInitialCreamSession, positionPendingDestination]);
+
+  const handleIntroComplete = useCallback((session: CreamSession) => {
+    // Reduced-motion and data-saving paths can finish without a reveal phase,
+    // so keep this idempotent fallback for those users.
+    applyInitialCreamSession(session);
     setIntroComplete(true);
 
     window.requestAnimationFrame(() => {
@@ -259,9 +284,9 @@ export default function Home() {
       destinationPositionedRef.current = false;
       navigationInFlightRef.current = false;
     });
-  }, [positionPendingDestination]);
+  }, [applyInitialCreamSession, positionPendingDestination]);
 
-  const handleCreamNavigation = useCallback((event: ReactMouseEvent<HTMLAnchorElement>) => {
+  const handleInternalAnchorClick = useCallback((event: MouseEvent) => {
     if (
       event.defaultPrevented
       || event.button !== 0
@@ -271,7 +296,16 @@ export default function Home() {
       || event.altKey
     ) return;
 
-    const href = event.currentTarget.getAttribute('href');
+    const origin = event.target;
+    const anchor = origin instanceof Element ? origin.closest<HTMLAnchorElement>('a[href]') : null;
+    if (
+      !anchor
+      || anchor.dataset.skipCreamTransition === 'true'
+      || anchor.hasAttribute('download')
+      || anchor.target === '_blank'
+    ) return;
+
+    const href = anchor.getAttribute('href');
     const targetId = href?.startsWith('#') ? href.slice(1) : '';
     const target = targetId ? document.getElementById(targetId) : null;
     if (!href || !target) return;
@@ -282,12 +316,21 @@ export default function Home() {
     navigationInFlightRef.current = true;
     pendingDestinationRef.current = targetId;
     destinationPositionedRef.current = false;
+    const targetTop = target.getBoundingClientRect().top + window.scrollY;
+    setNavigationDirection(targetTop >= window.scrollY ? 'down' : 'up');
     if (window.location.hash !== href) window.history.pushState(null, '', href);
 
     setMenuOpen(false);
     setIntroComplete(false);
     setIntroRun((run) => run + 1);
   }, []);
+
+  useEffect(() => {
+    document.addEventListener('click', handleInternalAnchorClick, { capture: true });
+    return () => {
+      document.removeEventListener('click', handleInternalAnchorClick, { capture: true });
+    };
+  }, [handleInternalAnchorClick]);
 
   function addFlavor(flavor: Flavor, event?: ReactMouseEvent<HTMLButtonElement>) {
     setCart((current) => ({ ...current, [flavor.id]: (current[flavor.id] ?? 0) + 1 }));
@@ -362,7 +405,8 @@ export default function Home() {
         key={introRun}
         variant={introRun === 0 ? 'intro' : 'navigation'}
         recipe={introRun === 0 ? undefined : activeTideRecipe}
-        onRevealStart={positionPendingDestination}
+        direction={navigationDirection}
+        onRevealStart={handleCreamRevealStart}
         onComplete={handleIntroComplete}
       />
       {!introComplete ? (
@@ -376,6 +420,7 @@ export default function Home() {
         className="flavor-theme"
         style={flavorThemeStyle}
         data-flavor-theme={activeFlavor.id}
+        data-session-ready={creamSession ? 'true' : 'false'}
       >
         <LuxuryEffects />
       <script
@@ -384,6 +429,7 @@ export default function Home() {
       />
       <a
         href="#contenido"
+        data-skip-cream-transition="true"
         className="fixed left-4 top-4 z-[100] -translate-y-24 bg-[#211a17] px-4 py-3 text-sm font-semibold text-[#f8f1e8] transition-transform focus:translate-y-0"
       >
         Ir al contenido
@@ -422,7 +468,6 @@ export default function Home() {
               <a
                 key={href}
                 href={href}
-                onClick={handleCreamNavigation}
                 className="text-sm font-medium text-[#211a17]/70 transition-colors hover:text-[var(--nube-accent)]"
               >
                 {label}
@@ -472,10 +517,6 @@ export default function Home() {
               <a
                 key={href}
                 href={href}
-                onClick={(event) => {
-                  setMenuOpen(false);
-                  handleCreamNavigation(event);
-                }}
                 tabIndex={menuOpen ? 0 : -1}
                 className="font-display flex min-h-14 items-center justify-between border-b border-[#211a17]/10 text-2xl"
               >
@@ -495,7 +536,7 @@ export default function Home() {
         />
       ) : null}
 
-      <div id="contenido">
+      <div id="contenido" tabIndex={-1}>
         <LuxuryHero
           flavors={FLAVORS}
           featuredFlavorId={creamSession ? RECIPE_TO_FEATURED_FLAVOR[creamSession.recipe.id] : undefined}
@@ -550,6 +591,7 @@ export default function Home() {
                       className="flavor-row group grid grid-cols-[92px_minmax(0,1fr)] gap-x-4 gap-y-5 border-t border-[#211a17]/15 py-6 sm:grid-cols-[128px_minmax(0,1fr)] sm:gap-x-6 sm:py-8 lg:grid-cols-[150px_minmax(0,1fr)_100px_142px] lg:items-center lg:gap-7"
                       data-flavor-row
                       data-reveal="row"
+                      data-served={recentlyAdded === flavor.name ? 'true' : undefined}
                       style={{ '--flavor-color': flavor.color } as CSSProperties}
                     >
                       <div className="flavor-scoop-thumb relative aspect-square overflow-hidden rounded-full bg-[#e5d8ca]">

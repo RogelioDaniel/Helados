@@ -185,6 +185,83 @@ html.cream-intro-active {
   animation: cream-intro-failsafe 1ms linear 7.2s forwards;
 }
 
+.cream-intro--navigation {
+  overflow: visible;
+  isolation: isolate;
+  transform: translate3d(0, 0, 0);
+  transition-property: transform;
+  transition-duration: 860ms;
+  transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: transform;
+}
+
+.cream-intro--navigation::before,
+.cream-intro--navigation::after {
+  position: absolute;
+  z-index: 0;
+  right: -3%;
+  left: -3%;
+  height: clamp(3.8rem, 8vw, 7.2rem);
+  pointer-events: none;
+  content: "";
+  opacity: 0;
+  transition: opacity 160ms ease;
+}
+
+.cream-intro--navigation::before {
+  top: calc(clamp(3.8rem, 8vw, 7.2rem) * -0.96);
+  background:
+    radial-gradient(ellipse 11% 94% at 7% 100%, var(--cream-base) 0 67%, transparent 69%),
+    radial-gradient(ellipse 17% 76% at 25% 100%, color-mix(in srgb, var(--cream-ribbon-a) 20%, var(--cream-base)) 0 67%, transparent 69%),
+    radial-gradient(ellipse 13% 88% at 46% 100%, var(--cream-light) 0 66%, transparent 68%),
+    radial-gradient(ellipse 19% 70% at 69% 100%, color-mix(in srgb, var(--cream-ribbon-b) 18%, var(--cream-base)) 0 67%, transparent 69%),
+    radial-gradient(ellipse 12% 92% at 91% 100%, var(--cream-base) 0 67%, transparent 69%);
+  filter: drop-shadow(0 -10px 12px rgb(42 25 19 / 0.12));
+}
+
+.cream-intro--navigation::after {
+  bottom: calc(clamp(3.8rem, 8vw, 7.2rem) * -0.96);
+  background:
+    radial-gradient(ellipse 14% 88% at 9% 0, var(--cream-base) 0 67%, transparent 69%),
+    radial-gradient(ellipse 18% 72% at 29% 0, color-mix(in srgb, var(--cream-ribbon-b) 18%, var(--cream-base)) 0 67%, transparent 69%),
+    radial-gradient(ellipse 12% 96% at 53% 0, var(--cream-light) 0 66%, transparent 68%),
+    radial-gradient(ellipse 17% 75% at 74% 0, color-mix(in srgb, var(--cream-ribbon-a) 20%, var(--cream-base)) 0 67%, transparent 69%),
+    radial-gradient(ellipse 13% 90% at 93% 0, var(--cream-base) 0 67%, transparent 69%);
+  filter: drop-shadow(0 10px 12px rgb(42 25 19 / 0.12));
+}
+
+.cream-intro--navigation.cream-intro--entering[data-navigation-direction="down"] {
+  transform: translate3d(0, 108%, 0);
+}
+
+.cream-intro--navigation.cream-intro--entering[data-navigation-direction="up"] {
+  transform: translate3d(0, -108%, 0);
+}
+
+.cream-intro--navigation.cream-intro--covered {
+  transform: translate3d(0, 0, 0);
+}
+
+.cream-intro--navigation.cream-intro--leaving {
+  transition-duration: 1280ms;
+  transition-timing-function: cubic-bezier(0.65, 0, 0.35, 1);
+}
+
+.cream-intro--navigation.cream-intro--leaving[data-navigation-direction="down"] {
+  transform: translate3d(0, -108%, 0);
+}
+
+.cream-intro--navigation.cream-intro--leaving[data-navigation-direction="up"] {
+  transform: translate3d(0, 108%, 0);
+}
+
+.cream-intro--navigation.cream-intro--entering[data-navigation-direction="down"]::before,
+.cream-intro--navigation.cream-intro--leaving[data-navigation-direction="up"]::before,
+.cream-intro--navigation.cream-intro--entering[data-navigation-direction="up"]::after,
+.cream-intro--navigation.cream-intro--leaving[data-navigation-direction="down"]::after {
+  opacity: 1;
+}
+
 html.cream-intro-revealing .cream-intro {
   background: transparent;
 }
@@ -303,8 +380,8 @@ html.cream-intro-revealing .cream-intro {
   transform: translateY(-12px) scale(0.985);
 }
 
-.cream-intro--leaving:not(.cream-intro--webgl) .cream-intro-fallback,
-.cream-intro--leaving:not(.cream-intro--webgl) .cream-intro-flat-fallback {
+.cream-intro--intro.cream-intro--leaving:not(.cream-intro--webgl) .cream-intro-fallback,
+.cream-intro--intro.cream-intro--leaving:not(.cream-intro--webgl) .cream-intro-flat-fallback {
   transform: translate3d(0, -108%, 0);
 }
 
@@ -318,12 +395,144 @@ html.cream-intro-revealing .cream-intro {
   overflow: hidden;
   pointer-events: none;
   isolation: isolate;
+  opacity: 0;
+  transition: opacity 260ms ease;
 }
 
 .cream-scroll-tide__canvas {
+  position: absolute;
+  z-index: 1;
+  inset: 0;
   display: block;
   width: 100%;
   height: 100%;
+}
+
+.cream-scroll-tide[data-active="true"][data-suspended="false"] {
+  opacity: 1;
+}
+
+.cream-scroll-tide__melt-edge {
+  position: absolute;
+  z-index: 2;
+  top: -1px;
+  right: -1.5%;
+  left: -1.5%;
+  width: 103%;
+  height: clamp(3.25rem, 5vw, 4.35rem);
+  overflow: visible;
+  filter: drop-shadow(0 9px 8px rgb(42 25 19 / 0.16));
+  opacity: 0.9;
+  transform-origin: 50% 0;
+  transition:
+    filter 260ms ease,
+    opacity 260ms ease,
+    transform 420ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.cream-scroll-tide[data-direction="down"] .cream-scroll-tide__melt-edge {
+  transform: translateY(1px) scaleY(1.04);
+}
+
+.cream-scroll-tide[data-direction="up"] .cream-scroll-tide__melt-edge {
+  transform: translateY(-2px) scaleY(0.92);
+}
+
+.cream-scroll-tide[data-active="true"][data-suspended="false"] .cream-scroll-tide__melt-edge {
+  animation: tide-lip-knead 6.4s ease-in-out infinite alternate;
+}
+
+.cream-scroll-tide__melt-body {
+  fill: color-mix(in srgb, var(--tide-base) 90%, transparent);
+  stroke: color-mix(in srgb, var(--tide-light) 46%, transparent);
+  stroke-width: 1.4px;
+}
+
+.flavor-theme[data-session-ready="false"] {
+  opacity: 0;
+}
+
+.cream-scroll-tide__melt-ribbon {
+  opacity: 0.46;
+  transition: opacity 420ms ease;
+}
+
+.cream-scroll-tide__melt-ribbon--a {
+  stroke: color-mix(in srgb, var(--tide-ribbon-a) 68%, transparent);
+}
+
+.cream-scroll-tide__melt-ribbon--b {
+  stroke: color-mix(in srgb, var(--tide-ribbon-b) 62%, transparent);
+}
+
+.cream-scroll-tide__melt-highlight {
+  opacity: 0.52;
+}
+
+.cream-scroll-tide__neck {
+  opacity: 0.78;
+  transform-box: fill-box;
+  transform-origin: 50% 0;
+  transition:
+    opacity 280ms ease,
+    transform 520ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.cream-scroll-tide[data-direction="down"] .cream-scroll-tide__neck--short {
+  transform: scaleY(1.08);
+}
+
+.cream-scroll-tide[data-direction="down"] .cream-scroll-tide__neck--deep {
+  transform: scaleY(1.16);
+}
+
+.cream-scroll-tide[data-direction="down"] .cream-scroll-tide__neck--fine {
+  transform: scaleY(1.04);
+}
+
+.cream-scroll-tide[data-direction="up"] .cream-scroll-tide__neck {
+  opacity: 0.5;
+  transform: scaleY(0.62);
+}
+
+.cream-scroll-tide__drops {
+  position: absolute;
+  z-index: 3;
+  inset: 0;
+  overflow: hidden;
+}
+
+.cream-scroll-tide__drop-track {
+  position: absolute;
+  top: clamp(2.55rem, 4.4vw, 3.9rem);
+  left: var(--tide-drop-x, 50%);
+  width: 0.72rem;
+  height: calc(100% - clamp(2.55rem, 4.4vw, 3.9rem));
+  opacity: 0;
+  transform: translateX(-50%);
+}
+
+.cream-scroll-tide__drop {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: clamp(0.38rem, 0.7vw, 0.62rem);
+  aspect-ratio: 0.76;
+  border-radius: 55% 45% 62% 38% / 37% 43% 57% 63%;
+  background:
+    radial-gradient(circle at 37% 28%, rgb(255 253 248 / 0.6) 0 10%, transparent 31%),
+    var(--tide-base);
+  box-shadow: 0 7px 11px -8px rgb(42 25 19 / 0.58);
+  transform: translateX(-50%) scale(0.28, 0.16);
+  transform-origin: 50% 0;
+}
+
+.cream-scroll-tide__drop-track[data-falling="true"] {
+  opacity: 1;
+}
+
+.cream-scroll-tide__drop-track[data-falling="true"] .cream-scroll-tide__drop {
+  animation: tide-drop-fall var(--tide-drop-duration, 1.2s) cubic-bezier(0.33, 0, 0.67, 1) both;
 }
 
 .history-cream-wipe {
@@ -576,21 +785,74 @@ html.cream-intro-active:not(.cream-intro-revealing) .hero-flavor-catalogue * {
 
 .catalogue-cream-sweep {
   position: absolute;
-  z-index: 2;
-  top: -24%;
-  bottom: -22%;
-  left: -62%;
-  width: 64%;
+  z-index: 12;
+  inset: -16% -18%;
   pointer-events: none;
-  border-radius: 44% 56% 48% 52% / 53% 43% 57% 47%;
+  overflow: hidden;
+}
+
+.catalogue-cream-sweep > span {
+  position: absolute;
+  display: block;
+  pointer-events: none;
+}
+
+.catalogue-cream-sweep__body {
+  top: 0;
+  bottom: 0;
+  left: 13%;
+  width: 74%;
+  border-radius: 42% 58% 46% 54% / 54% 42% 58% 46%;
   background:
-    radial-gradient(ellipse at 52% 25%, rgb(255 253 248 / 0.68) 0 10%, transparent 42%),
-    radial-gradient(ellipse at 34% 74%, color-mix(in srgb, var(--catalogue-tone) 24%, var(--cream-light)) 0 14%, transparent 54%),
-    linear-gradient(104deg, color-mix(in srgb, var(--cream-light) 80%, var(--catalogue-tone)) 0%, rgb(255 253 248 / 0.56) 48%, transparent 78%);
-  filter: blur(1px);
+    radial-gradient(ellipse at 28% 24%, rgb(255 253 248 / 0.74) 0 9%, transparent 35%),
+    radial-gradient(ellipse at 74% 72%, color-mix(in srgb, var(--catalogue-tone) 26%, var(--cream-light)) 0 12%, transparent 46%),
+    linear-gradient(112deg, var(--cream-light), color-mix(in srgb, var(--catalogue-tone) 24%, var(--cream-base)) 54%, var(--cream-light));
+  box-shadow:
+    inset 18px 14px 34px rgb(255 253 248 / 0.24),
+    inset -18px -10px 30px color-mix(in srgb, var(--catalogue-tone) 14%, transparent);
+  will-change: transform, border-radius;
+}
+
+.catalogue-cream-sweep[data-direction="forward"] .catalogue-cream-sweep__body {
+  animation: catalogue-cream-cover-forward 820ms cubic-bezier(0.65, 0, 0.35, 1) both;
+}
+
+.catalogue-cream-sweep[data-direction="backward"] .catalogue-cream-sweep__body {
+  animation: catalogue-cream-cover-backward 820ms cubic-bezier(0.65, 0, 0.35, 1) both;
+}
+
+.catalogue-cream-sweep__fold {
+  top: 8%;
+  bottom: 9%;
+  left: 44%;
+  width: 18%;
+  border-radius: 48% 52% 44% 56% / 58% 40% 60% 42%;
+  background: linear-gradient(96deg, transparent, rgb(255 253 248 / 0.5), transparent);
+  filter: blur(7px);
   opacity: 0;
-  transform: translate3d(-10%, 2%, 0) rotate(-10deg) scale(0.72, 1.14);
-  animation: catalogue-cream-sweep 760ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation: catalogue-cream-fold 820ms cubic-bezier(0.65, 0, 0.35, 1) both;
+}
+
+.catalogue-cream-sweep__drop {
+  top: 67%;
+  width: clamp(0.55rem, 1.2vw, 0.95rem);
+  aspect-ratio: 0.78;
+  border-radius: 58% 42% 62% 38% / 40% 45% 55% 60%;
+  background: color-mix(in srgb, var(--catalogue-tone) 24%, var(--cream-light));
+  opacity: 0;
+  transform-origin: 50% 0;
+  animation: catalogue-cream-drop 820ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.catalogue-cream-sweep__drop--one {
+  left: 38%;
+}
+
+.catalogue-cream-sweep__drop--two {
+  left: 63%;
+  top: 31%;
+  width: clamp(0.38rem, 0.9vw, 0.72rem);
+  animation-delay: 70ms;
 }
 
 .catalogue-topline {
@@ -627,12 +889,15 @@ html.cream-intro-active:not(.cream-intro-revealing) .hero-flavor-catalogue * {
 }
 
 .catalogue-arrow {
+  position: relative;
+  isolation: isolate;
   display: grid;
   width: 2.7rem;
   height: 2.7rem;
+  overflow: hidden;
   place-items: center;
   border: 1px solid rgb(255 253 248 / 0.42);
-  border-radius: 999px;
+  border-radius: 47% 53% 43% 57% / 56% 42% 58% 44%;
   color: #fffdf8;
   background: rgb(42 25 19 / 0.12);
   transition:
@@ -642,11 +907,31 @@ html.cream-intro-active:not(.cream-intro-revealing) .hero-flavor-catalogue * {
     border-color 180ms ease;
 }
 
+.catalogue-arrow::before {
+  position: absolute;
+  z-index: -1;
+  inset: 8%;
+  border-radius: 62% 38% 54% 46% / 43% 60% 40% 57%;
+  content: "";
+  background: linear-gradient(145deg, var(--cream-light), color-mix(in srgb, var(--catalogue-tone) 42%, var(--cream-base)));
+  opacity: 0;
+  transform: translateY(38%) rotate(-18deg) scale(0.3, 0.5);
+  transition:
+    opacity 180ms ease,
+    transform 360ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
 .catalogue-arrow:hover {
   color: var(--nube-ink);
   border-color: #fffdf8;
-  background: #fffdf8;
+  background: rgb(255 253 248 / 0.34);
   transform: translateY(-1px);
+}
+
+.catalogue-arrow:hover::before,
+.catalogue-arrow:focus-visible::before {
+  opacity: 1;
+  transform: translateY(0) rotate(-4deg) scale(1);
 }
 
 .catalogue-arrow:active {
@@ -683,11 +968,17 @@ html.cream-intro-active:not(.cream-intro-revealing) .hero-flavor-catalogue * {
   position: absolute;
   z-index: 1;
   display: block;
-  border: 1px solid rgb(255 253 248 / 0.34);
-  border-radius: 48% 52% 44% 56% / 52% 44% 56% 48%;
-  opacity: 0.75;
+  border: 0;
+  border-radius: 62% 38% 54% 46% / 42% 58% 42% 58%;
+  background:
+    radial-gradient(ellipse at 34% 29%, rgb(255 253 248 / 0.34) 0 11%, transparent 34%),
+    linear-gradient(132deg, color-mix(in srgb, var(--cream-light) 24%, transparent), color-mix(in srgb, var(--catalogue-tone) 34%, transparent));
+  filter: blur(4px);
+  opacity: 0.62;
   transform: rotate(var(--catalogue-orbit-rotation));
-  animation: catalogue-orbit-in 760ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation:
+    catalogue-lava-in 760ms cubic-bezier(0.16, 1, 0.3, 1) both,
+    catalogue-lava-drift 7.4s ease-in-out 820ms infinite alternate;
 }
 
 .catalogue-orbit--one {
@@ -703,7 +994,10 @@ html.cream-intro-active:not(.cream-intro-revealing) .hero-flavor-catalogue * {
   left: 14%;
   width: 30%;
   height: 18%;
-  border-color: color-mix(in srgb, var(--catalogue-tone) 30%, #fffdf8);
+  border-radius: 44% 56% 62% 38% / 61% 40% 60% 39%;
+  background:
+    radial-gradient(ellipse at 67% 37%, rgb(255 253 248 / 0.28) 0 12%, transparent 36%),
+    color-mix(in srgb, var(--catalogue-tone) 26%, transparent);
 }
 
 .catalogue-product {
@@ -852,10 +1146,10 @@ html.cream-intro-active:not(.cream-intro-revealing) .hero-flavor-catalogue * {
   min-height: 2.75rem;
   align-items: center;
   gap: 0.42rem;
-  overflow: hidden;
+  overflow: visible;
   padding: 0.35rem 0.42rem;
   border: 1px solid transparent;
-  border-radius: 0.75rem;
+  border-radius: 48% 52% 45% 55% / 58% 43% 57% 42%;
   color: rgb(42 25 19 / 0.66);
   font-size: 0.56rem;
   font-weight: 760;
@@ -875,17 +1169,7 @@ html.cream-intro-active:not(.cream-intro-revealing) .hero-flavor-catalogue * {
 }
 
 .catalogue-flavor-tab::before {
-  position: absolute;
-  z-index: 0;
-  inset: -34% -18%;
-  pointer-events: none;
-  border-radius: 48% 52% 43% 57% / 57% 43% 57% 43%;
-  content: "";
-  background:
-    radial-gradient(ellipse at 31% 33%, rgb(255 253 248 / 0.7) 0 11%, transparent 42%),
-    linear-gradient(106deg, color-mix(in srgb, var(--catalogue-tone) 54%, var(--cream-light)), color-mix(in srgb, var(--catalogue-tone) 22%, #fffdf8));
-  opacity: 0;
-  transform: translateX(-120%) rotate(-11deg) scale(0.74, 1.2);
+  content: none;
 }
 
 .catalogue-flavor-tab:hover {
@@ -898,13 +1182,117 @@ html.cream-intro-active:not(.cream-intro-revealing) .hero-flavor-catalogue * {
 }
 
 .catalogue-flavor-tab--active {
-  border-color: color-mix(in srgb, var(--catalogue-tone) 38%, transparent);
+  z-index: 3;
+  border-color: transparent;
   color: var(--nube-ink);
-  background: color-mix(in srgb, var(--cream-light) 68%, var(--catalogue-tone));
+  background: transparent;
 }
 
-.catalogue-flavor-tab--active::before {
-  animation: catalogue-tab-churn 620ms cubic-bezier(0.16, 1, 0.3, 1) both;
+.catalogue-flavor-tab[data-pending="true"] {
+  z-index: 4;
+  color: var(--nube-ink);
+}
+
+.catalogue-tab-cream,
+.catalogue-tab-churn {
+  position: absolute;
+  z-index: 0;
+  inset: -16% -8%;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.catalogue-tab-cream > span,
+.catalogue-tab-churn > span {
+  position: absolute;
+  display: block;
+}
+
+.catalogue-tab-cream__sheet {
+  inset: 7% 2% 14%;
+  border: 1px solid color-mix(in srgb, var(--catalogue-tab-tone) 28%, transparent);
+  border-radius: 54% 46% 58% 42% / 43% 61% 39% 57%;
+  background:
+    radial-gradient(ellipse at 27% 26%, rgb(255 253 248 / 0.6) 0 10%, transparent 34%),
+    linear-gradient(108deg, color-mix(in srgb, var(--cream-light) 72%, var(--catalogue-tab-tone)), color-mix(in srgb, var(--catalogue-tab-tone) 20%, var(--cream-base)));
+  opacity: 0;
+  transform-origin: 82% 50%;
+}
+
+.catalogue-flavor-tab--active .catalogue-tab-cream__sheet {
+  animation: catalogue-tab-cream-retract 680ms cubic-bezier(0.65, 0, 0.35, 1) both;
+}
+
+.catalogue-tab-cream__lip {
+  right: 10%;
+  bottom: 5%;
+  width: 42%;
+  height: 25%;
+  border-radius: 37% 63% 58% 42% / 34% 43% 57% 66%;
+  background: color-mix(in srgb, var(--catalogue-tab-tone) 22%, var(--cream-light));
+  opacity: 0;
+}
+
+.catalogue-flavor-tab--active .catalogue-tab-cream__lip {
+  animation: catalogue-tab-lip-settle 680ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.catalogue-tab-cream__drop {
+  right: 22%;
+  bottom: -2%;
+  width: 0.34rem;
+  aspect-ratio: 0.72;
+  border-radius: 58% 42% 55% 45% / 36% 42% 58% 64%;
+  background: color-mix(in srgb, var(--catalogue-tab-tone) 28%, var(--cream-light));
+  opacity: 0;
+}
+
+.catalogue-flavor-tab--active .catalogue-tab-cream__drop {
+  animation: catalogue-tab-drop-settle 680ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.catalogue-tab-churn {
+  inset: 3% 4% 8%;
+  opacity: 0;
+}
+
+.catalogue-flavor-tab--active .catalogue-tab-churn {
+  opacity: 0.72;
+}
+
+.catalogue-tab-churn__lobe {
+  border-radius: 58% 42% 48% 52% / 46% 60% 40% 54%;
+  background: color-mix(in srgb, var(--catalogue-tab-tone) 20%, var(--cream-light));
+  transform: scale(0.1);
+}
+
+.catalogue-flavor-tab--active .catalogue-tab-churn__lobe {
+  animation:
+    catalogue-tab-lava-settle 620ms cubic-bezier(0.16, 1, 0.3, 1) both,
+    catalogue-tab-lava-breathe 4.8s ease-in-out 680ms infinite alternate;
+}
+
+.catalogue-tab-churn__lobe--one {
+  top: 12%;
+  left: 7%;
+  width: 38%;
+  height: 70%;
+}
+
+.catalogue-tab-churn__lobe--two {
+  top: 5%;
+  left: 35%;
+  width: 43%;
+  height: 82%;
+  animation-delay: 45ms, 820ms !important;
+}
+
+.catalogue-tab-churn__lobe--three {
+  right: 1%;
+  bottom: 12%;
+  width: 31%;
+  height: 54%;
+  animation-delay: 90ms, 940ms !important;
 }
 
 .catalogue-tab-image {
@@ -914,7 +1302,7 @@ html.cream-intro-active:not(.cream-intro-revealing) .hero-flavor-catalogue * {
   height: 1.68rem;
   flex: none;
   overflow: hidden;
-  border-radius: 50%;
+  border-radius: 48% 52% 43% 57% / 57% 42% 58% 43%;
   border: 1px solid rgb(42 25 19 / 0.1);
   transition:
     border-radius 440ms cubic-bezier(0.16, 1, 0.3, 1),
@@ -922,10 +1310,31 @@ html.cream-intro-active:not(.cream-intro-revealing) .hero-flavor-catalogue * {
     box-shadow 360ms ease;
 }
 
+.catalogue-tab-image__glaze {
+  position: absolute;
+  inset: 9%;
+  border: 1px solid rgb(255 253 248 / 0.52);
+  border-radius: 57% 43% 52% 48% / 45% 60% 40% 55%;
+  opacity: 0;
+  transform: rotate(-14deg) scale(0.72);
+  transition:
+    opacity 220ms ease,
+    transform 420ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
 .catalogue-flavor-tab--active .catalogue-tab-image {
   border-radius: 48% 52% 44% 56% / 57% 45% 55% 43%;
   box-shadow: 0 6px 14px -9px color-mix(in srgb, var(--catalogue-tone) 80%, #211a17);
   transform: rotate(-5deg) scale(1.08);
+}
+
+.catalogue-flavor-tab--active .catalogue-tab-image__glaze {
+  opacity: 0.82;
+  transform: rotate(-5deg) scale(1);
+}
+
+.catalogue-tab-label {
+  z-index: 2;
 }
 
 @keyframes hero-catalogue-in {
@@ -972,17 +1381,75 @@ html.cream-intro-active:not(.cream-intro-revealing) .hero-flavor-catalogue * {
   }
 }
 
-@keyframes catalogue-cream-sweep {
+@keyframes catalogue-cream-cover-forward {
   0% {
     opacity: 0;
-    transform: translate3d(-10%, 2%, 0) rotate(-10deg) scale(0.72, 1.14);
+    border-radius: 62% 38% 54% 46% / 46% 61% 39% 54%;
+    transform: translate3d(-190%, 1%, 0) rotate(-5deg) scale(0.84, 1.08);
   }
-  18% {
-    opacity: 0.72;
+  15%,
+  58% {
+    opacity: 1;
+  }
+  46% {
+    border-radius: 43% 57% 39% 61% / 58% 42% 58% 42%;
+    transform: translate3d(0, 0, 0) rotate(0) scale(1.02, 1);
   }
   100% {
     opacity: 0;
-    transform: translate3d(258%, -2%, 0) rotate(8deg) scale(1.2, 0.92);
+    border-radius: 38% 62% 47% 53% / 60% 39% 61% 40%;
+    transform: translate3d(190%, -1%, 0) rotate(4deg) scale(0.88, 1.06);
+  }
+}
+
+@keyframes catalogue-cream-cover-backward {
+  0% {
+    opacity: 0;
+    border-radius: 38% 62% 47% 53% / 60% 39% 61% 40%;
+    transform: translate3d(190%, -1%, 0) rotate(4deg) scale(0.88, 1.06);
+  }
+  15%,
+  58% {
+    opacity: 1;
+  }
+  46% {
+    border-radius: 43% 57% 39% 61% / 58% 42% 58% 42%;
+    transform: translate3d(0, 0, 0) rotate(0) scale(1.02, 1);
+  }
+  100% {
+    opacity: 0;
+    border-radius: 62% 38% 54% 46% / 46% 61% 39% 54%;
+    transform: translate3d(-190%, 1%, 0) rotate(-5deg) scale(0.84, 1.08);
+  }
+}
+
+@keyframes catalogue-cream-fold {
+  0%,
+  100% {
+    opacity: 0;
+    transform: translateX(-80%) scaleX(0.42);
+  }
+  42%,
+  58% {
+    opacity: 0.68;
+    transform: translateX(0) scaleX(1);
+  }
+}
+
+@keyframes catalogue-cream-drop {
+  0%,
+  31% {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.3, 0.15);
+  }
+  48% {
+    opacity: 0.8;
+    transform: translateY(0) scale(0.72, 1.12);
+  }
+  72%,
+  100% {
+    opacity: 0;
+    transform: translateY(18px) scale(0.42, 0.72);
   }
 }
 
@@ -997,14 +1464,43 @@ html.cream-intro-active:not(.cream-intro-revealing) .hero-flavor-catalogue * {
   }
 }
 
-@keyframes catalogue-orbit-in {
+@keyframes catalogue-lava-in {
   from {
     opacity: 0;
-    transform: rotate(calc(var(--catalogue-orbit-rotation) - 10deg)) scale(0.8);
+    border-radius: 38% 62% 43% 57% / 61% 41% 59% 39%;
+    transform: rotate(calc(var(--catalogue-orbit-rotation) - 8deg)) scale(0.42, 0.7);
+  }
+  62% {
+    opacity: 0.72;
+    border-radius: 67% 33% 58% 42% / 38% 62% 38% 62%;
+    transform: rotate(calc(var(--catalogue-orbit-rotation) + 3deg)) scale(1.06, 0.96);
   }
   to {
-    opacity: 0.75;
+    opacity: 0.62;
+    border-radius: 62% 38% 54% 46% / 42% 58% 42% 58%;
     transform: rotate(var(--catalogue-orbit-rotation)) scale(1);
+  }
+}
+
+@keyframes catalogue-lava-drift {
+  0% {
+    border-radius: 62% 38% 54% 46% / 42% 58% 42% 58%;
+    transform: translate3d(-2%, 1%, 0) rotate(calc(var(--catalogue-orbit-rotation) - 2deg)) scale(0.97, 1.04);
+  }
+  100% {
+    border-radius: 39% 61% 44% 56% / 61% 37% 63% 39%;
+    transform: translate3d(3%, -2%, 0) rotate(calc(var(--catalogue-orbit-rotation) + 3deg)) scale(1.05, 0.96);
+  }
+}
+
+@keyframes catalogue-tab-lava-breathe {
+  0% {
+    border-radius: 58% 42% 48% 52% / 46% 60% 40% 54%;
+    transform: translate3d(-3%, 2%, 0) rotate(-3deg) scale(0.96, 1.04);
+  }
+  100% {
+    border-radius: 38% 62% 59% 41% / 62% 39% 61% 38%;
+    transform: translate3d(4%, -3%, 0) rotate(4deg) scale(1.06, 0.94);
   }
 }
 
@@ -1034,17 +1530,68 @@ html.cream-intro-active:not(.cream-intro-revealing) .hero-flavor-catalogue * {
   }
 }
 
-@keyframes catalogue-tab-churn {
+@keyframes catalogue-tab-cream-retract {
   0% {
     opacity: 0;
-    transform: translateX(-120%) rotate(-11deg) scale(0.74, 1.2);
+    border-radius: 34% 66% 43% 57% / 62% 38% 62% 38%;
+    transform: translateX(-106%) rotate(-7deg) scale(0.72, 1.16);
   }
-  36% {
-    opacity: 0.9;
+  34% {
+    opacity: 0.96;
+    border-radius: 57% 43% 64% 36% / 43% 60% 40% 57%;
+    transform: translateX(-1%) rotate(1deg) scale(1.06, 1);
   }
   100% {
+    opacity: 0.92;
+    border-radius: 54% 46% 58% 42% / 43% 61% 39% 57%;
+    transform: translateX(18%) rotate(-1deg) scale(0.82, 0.93);
+  }
+}
+
+@keyframes catalogue-tab-lip-settle {
+  0%,
+  34% {
     opacity: 0;
-    transform: translateX(116%) rotate(8deg) scale(1.08, 0.9);
+    transform: translateX(-50%) scale(0.2, 0.45);
+  }
+  67% {
+    opacity: 0.8;
+    transform: translateX(0) scale(1.08, 0.92);
+  }
+  100% {
+    opacity: 0.64;
+    transform: translateX(0) scale(1);
+  }
+}
+
+@keyframes catalogue-tab-drop-settle {
+  0%,
+  46% {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.35, 0.2);
+  }
+  70% {
+    opacity: 0.74;
+    transform: translateY(0) scale(0.88, 1.1);
+  }
+  100% {
+    opacity: 0.46;
+    transform: translateY(2px) scale(0.7, 0.86);
+  }
+}
+
+@keyframes catalogue-tab-lava-settle {
+  0% {
+    border-radius: 72% 28% 54% 46% / 37% 68% 32% 63%;
+    transform: translateX(-30%) scale(0.1, 0.35);
+  }
+  62% {
+    border-radius: 38% 62% 65% 35% / 62% 41% 59% 38%;
+    transform: translateX(4%) scale(1.08, 0.94);
+  }
+  100% {
+    border-radius: 58% 42% 48% 52% / 46% 60% 40% 54%;
+    transform: translateX(0) scale(1);
   }
 }
 
@@ -1166,26 +1713,50 @@ html.cream-intro-active:not(.cream-intro-revealing) .hero-flavor-catalogue * {
   isolation: isolate;
 }
 
-.flavor-row::before {
+.flavor-row::before,
+.flavor-row::after {
   position: absolute;
   z-index: 0;
-  top: 50%;
-  right: 3%;
-  width: clamp(9rem, 30vw, 21rem);
-  height: clamp(3.5rem, 8vw, 6.2rem);
-  border: 1px solid color-mix(in srgb, var(--flavor-color) 18%, transparent);
-  border-radius: 48% 52% 46% 54% / 57% 43% 58% 42%;
   pointer-events: none;
   content: "";
+}
+
+.flavor-row::before {
+  top: 50%;
+  right: -3%;
+  width: clamp(13rem, 42vw, 34rem);
+  height: clamp(4.4rem, 10vw, 8.4rem);
+  border: 1px solid color-mix(in srgb, var(--flavor-color) 22%, transparent);
+  border-radius: 63% 37% 54% 46% / 42% 61% 39% 58%;
   background:
-    radial-gradient(ellipse at 34% 34%, rgb(255 253 248 / 0.34), transparent 38%),
-    color-mix(in srgb, var(--flavor-color) 9%, transparent);
+    radial-gradient(ellipse 34% 68% at 18% 45%, color-mix(in srgb, var(--cream-light) 80%, var(--flavor-color)) 0 62%, transparent 65%),
+    radial-gradient(ellipse 38% 80% at 48% 54%, color-mix(in srgb, var(--flavor-color) 16%, var(--cream-light)) 0 62%, transparent 65%),
+    radial-gradient(ellipse 35% 70% at 79% 43%, color-mix(in srgb, var(--flavor-color) 25%, var(--cream-base)) 0 61%, transparent 64%);
+  box-shadow:
+    inset 12px 10px 22px rgb(255 253 248 / 0.22),
+    0 18px 36px -32px color-mix(in srgb, var(--flavor-color) 70%, transparent);
   opacity: 0;
-  transform: translateY(-50%) rotate(-3deg) scaleX(0.58);
-  transform-origin: 70% 50%;
+  transform: translate3d(34%, -50%, 0) rotate(-3deg) scale(0.22, 0.62);
+  transform-origin: 88% 50%;
   transition:
     opacity 220ms ease,
-    transform 520ms cubic-bezier(0.16, 1, 0.3, 1);
+    transform 620ms cubic-bezier(0.16, 1, 0.3, 1),
+    border-radius 620ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.flavor-row::after {
+  right: clamp(1.4rem, 8vw, 7rem);
+  bottom: 15%;
+  width: clamp(0.6rem, 1.4vw, 1rem);
+  aspect-ratio: 0.78;
+  border-radius: 58% 42% 62% 38% / 38% 43% 57% 62%;
+  background: color-mix(in srgb, var(--flavor-color) 24%, var(--cream-light));
+  opacity: 0;
+  transform: translateY(-10px) scale(0.2, 0.12);
+  transform-origin: 50% 0;
+  transition:
+    opacity 220ms ease,
+    transform 460ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .flavor-row > * {
@@ -1193,14 +1764,42 @@ html.cream-intro-active:not(.cream-intro-revealing) .hero-flavor-catalogue * {
   z-index: 1;
 }
 
-.flavor-row:focus-within::before {
+.flavor-row:focus-within::before,
+.flavor-row[data-tasting="true"]::before,
+.flavor-row[data-served="true"]::before {
   opacity: 1;
-  transform: translateY(-50%) rotate(-3deg) scaleX(1);
+  border-radius: 54% 46% 62% 38% / 47% 58% 42% 53%;
+  transform: translate3d(0, -50%, 0) rotate(-2deg) scale(1);
 }
 
-.flavor-row[data-tasting="true"]::before {
-  opacity: 1;
-  transform: translateY(-50%) rotate(-3deg) scaleX(1);
+.flavor-row[data-tasting="true"]::before,
+.flavor-row[data-served="true"]::before {
+  animation: flavor-cream-retract 880ms cubic-bezier(0.65, 0, 0.35, 1) both;
+}
+
+.flavor-row:focus-within::after {
+  opacity: 0.52;
+  transform: translateY(2px) scale(0.72, 0.86);
+}
+
+.flavor-row[data-tasting="true"]::after,
+.flavor-row[data-served="true"]::after {
+  animation: flavor-lava-satellite 880ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.flavor-scoop-thumb {
+  border-radius: 56% 44% 49% 51% / 43% 59% 41% 57%;
+  box-shadow: 0 18px 32px -28px rgb(42 25 19 / 0.7);
+  transition:
+    border-radius 520ms cubic-bezier(0.16, 1, 0.3, 1),
+    transform 520ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.flavor-row:focus-within .flavor-scoop-thumb,
+.flavor-row[data-tasting="true"] .flavor-scoop-thumb,
+.flavor-row[data-served="true"] .flavor-scoop-thumb {
+  border-radius: 45% 55% 58% 42% / 57% 42% 58% 43%;
+  transform: rotate(-2deg) scale(1.015);
 }
 
 .flavor-scoop-thumb::after {
@@ -1230,6 +1829,11 @@ html.cream-intro-active:not(.cream-intro-revealing) .hero-flavor-catalogue * {
   transform: rotate(-5deg) scale(1);
 }
 
+.flavor-row[data-served="true"] .flavor-scoop-thumb::after {
+  opacity: 0.84;
+  transform: rotate(-3deg) scale(1);
+}
+
 .scoop-add-button {
   transition:
     color 220ms ease,
@@ -1246,16 +1850,53 @@ html.cream-intro-active:not(.cream-intro-revealing) .hero-flavor-catalogue * {
   width: 0.62rem;
   height: 0.62rem;
   flex: none;
-  border-radius: 50%;
+  border-radius: 58% 42% 62% 38% / 42% 57% 43% 58%;
   background: var(--flavor-color);
   box-shadow:
     inset -2px -2px 3px rgb(42 25 19 / 0.16),
     inset 2px 2px 3px rgb(255 253 248 / 0.42);
-  transition: transform 220ms cubic-bezier(0.16, 1, 0.3, 1);
+  transition:
+    border-radius 260ms cubic-bezier(0.16, 1, 0.3, 1),
+    transform 220ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .scoop-add-button:hover .scoop-add-dot {
-  transform: scale(1.18);
+  border-radius: 38% 62% 44% 56% / 63% 37% 63% 37%;
+  transform: rotate(9deg) scale(1.18, 0.94);
+}
+
+@keyframes flavor-cream-retract {
+  0% {
+    opacity: 0;
+    border-radius: 68% 32% 44% 56% / 38% 65% 35% 62%;
+    transform: translate3d(54%, -50%, 0) rotate(3deg) scale(0.12, 0.54);
+  }
+  43% {
+    opacity: 0.94;
+    border-radius: 42% 58% 66% 34% / 62% 39% 61% 38%;
+    transform: translate3d(-1%, -50%, 0) rotate(-1deg) scale(1.08, 1.04);
+  }
+  100% {
+    opacity: 0.82;
+    border-radius: 54% 46% 62% 38% / 47% 58% 42% 53%;
+    transform: translate3d(16%, -50%, 0) rotate(-2deg) scale(0.84, 0.9);
+  }
+}
+
+@keyframes flavor-lava-satellite {
+  0%,
+  38% {
+    opacity: 0;
+    transform: translateY(-10px) scale(0.2, 0.12);
+  }
+  62% {
+    opacity: 0.72;
+    transform: translateY(0) scale(0.92, 1.14);
+  }
+  100% {
+    opacity: 0.5;
+    transform: translateY(3px) scale(0.68, 0.82);
+  }
 }
 
 .gallery-frame::after {
@@ -1476,23 +2117,42 @@ html.cream-intro-active:not(.cream-intro-revealing) .hero-flavor-catalogue * {
   right: 3%;
   bottom: 12%;
   left: clamp(3.15rem, 8vw, 5.8rem);
-  border-radius: 49% 51% 43% 57% / 57% 38% 62% 43%;
   background:
-    radial-gradient(ellipse 34% 84% at 17% 48%, color-mix(in srgb, var(--cream-light) 68%, transparent), transparent 72%),
-    radial-gradient(ellipse 38% 92% at 74% 50%, color-mix(in srgb, var(--cream-ribbon-a) 27%, var(--cream-base)), transparent 73%),
-    linear-gradient(100deg, color-mix(in srgb, var(--cream-light) 36%, transparent), color-mix(in srgb, var(--cream-ribbon-b) 17%, var(--cream-base)) 54%, transparent 97%);
-  box-shadow:
-    inset 15px 8px 20px rgb(255 253 248 / 0.38),
-    inset -13px -8px 18px color-mix(in srgb, var(--cream-ribbon-a) 10%, transparent);
+    radial-gradient(ellipse 29% 78% at 17% 48%, color-mix(in srgb, var(--cream-light) 72%, transparent) 0 66%, transparent 72%),
+    radial-gradient(ellipse 37% 94% at 48% 50%, color-mix(in srgb, var(--cream-ribbon-a) 22%, var(--cream-base)) 0 64%, transparent 70%),
+    radial-gradient(ellipse 31% 73% at 79% 51%, color-mix(in srgb, var(--cream-ribbon-b) 18%, var(--cream-light)) 0 65%, transparent 71%);
+  background-repeat: no-repeat;
+  filter: drop-shadow(0 9px 13px color-mix(in srgb, var(--cream-ribbon-a) 9%, transparent));
   transform: rotate(var(--process-tilt)) scaleX(0.07) scaleY(0.64);
   transition: opacity 200ms ease;
   will-change: transform, opacity;
+}
+
+.process-step::after {
+  position: absolute;
+  z-index: 0;
+  right: 13%;
+  bottom: 12%;
+  width: clamp(0.55rem, 1vw, 0.9rem);
+  aspect-ratio: 0.78;
+  border-radius: 58% 42% 64% 36% / 37% 43% 57% 63%;
+  pointer-events: none;
+  content: "";
+  background: color-mix(in srgb, var(--cream-ribbon-a) 28%, var(--cream-light));
+  opacity: 0;
+  transform: translateY(-10px) scale(0.2, 0.12);
 }
 
 .process-step[data-churned="true"]::before {
   opacity: 0.5;
   transform: rotate(var(--process-tilt)) scaleX(1) scaleY(1);
   animation: process-cream-settle 780ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.process-step[data-churned="true"]::after {
+  animation:
+    process-lava-drop 920ms cubic-bezier(0.22, 1, 0.36, 1) 210ms both,
+    process-lava-float 5.8s ease-in-out 1.13s infinite alternate;
 }
 
 .process-step:hover::before,
@@ -1505,7 +2165,7 @@ html.cream-intro-active:not(.cream-intro-revealing) .hero-flavor-catalogue * {
   isolation: isolate;
   overflow: hidden;
   border: 1px solid color-mix(in srgb, var(--nube-ink) 18%, transparent);
-  border-radius: 47% 53% 44% 56% / 54% 42% 58% 46%;
+  border-radius: 63% 37% 54% 46% / 42% 61% 39% 58%;
   color: var(--nube-ink);
   background: color-mix(in srgb, var(--nube-surface) 74%, transparent);
   box-shadow: 0 9px 18px -17px rgb(42 25 19 / 0.65);
@@ -1567,6 +2227,10 @@ html.cream-intro-active:not(.cream-intro-revealing) .hero-flavor-catalogue * {
   transform: rotate(-3deg) translateY(-2px);
 }
 
+.process-step[data-churned="true"] .process-step-icon {
+  animation: process-icon-churn 760ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
 .process-step[data-churned="true"] .process-step-icon::before,
 .process-step:hover .process-step-icon::before,
 .process-step:focus-within .process-step-icon::before {
@@ -1587,7 +2251,7 @@ html.cream-intro-active:not(.cream-intro-revealing) .hero-flavor-catalogue * {
   isolation: isolate;
   overflow: hidden;
   border: 1px solid color-mix(in srgb, var(--nube-ink) 18%, transparent);
-  border-radius: 48% 52% 42% 58% / 55% 40% 60% 45%;
+  border-radius: 64% 36% 53% 47% / 41% 62% 38% 59%;
   color: var(--nube-ink);
   background: color-mix(in srgb, var(--nube-surface) 76%, transparent);
   box-shadow: 0 8px 16px -16px rgb(42 25 19 / 0.62);
@@ -1648,6 +2312,10 @@ html.cream-intro-active:not(.cream-intro-revealing) .hero-flavor-catalogue * {
   color: var(--nube-ink);
   box-shadow: 0 13px 22px -18px color-mix(in srgb, var(--nube-accent) 78%, transparent);
   transform: rotate(-4deg) scale(1.04);
+}
+
+.faq-trigger-icon--open {
+  animation: faq-lava-open 560ms cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 .faq-trigger:hover .faq-trigger-icon::before,
@@ -1951,6 +2619,17 @@ html.cream-intro-active:not(.cream-intro-revealing) .hero-flavor-catalogue * {
   }
 }
 
+@keyframes process-lava-float {
+  0% {
+    opacity: 0.3;
+    transform: translate3d(-4px, 3px, 0) rotate(-5deg) scale(0.58, 0.82);
+  }
+  100% {
+    opacity: 0.52;
+    transform: translate3d(7px, -8px, 0) rotate(7deg) scale(0.82, 1.08);
+  }
+}
+
 @keyframes mascot-top-scoop {
   0% {
     transform: translateY(0) rotate(0) scale(1);
@@ -2019,6 +2698,37 @@ html.cream-intro-active:not(.cream-intro-revealing) .hero-flavor-catalogue * {
   }
 }
 
+@keyframes tide-lip-knead {
+  0% {
+    transform: translate3d(-0.35%, 0, 0) scale(1.012, 0.96);
+  }
+  44% {
+    transform: translate3d(0.28%, 1px, 0) scale(0.996, 1.055);
+  }
+  100% {
+    transform: translate3d(-0.12%, -1px, 0) scale(1.006, 1.01);
+  }
+}
+
+@keyframes tide-drop-fall {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -6px) scale(0.28, 0.14);
+  }
+  12% {
+    opacity: 0.9;
+    transform: translate(-50%, 0) scale(0.62, 1.15);
+  }
+  74% {
+    opacity: 0.78;
+    transform: translate(-50%, calc(100% + 1.6rem)) scale(0.86, 1.04);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, calc(100% + 2.4rem)) scale(0.48, 0.68);
+  }
+}
+
 @keyframes served-drop {
   0% {
     opacity: 0;
@@ -2046,6 +2756,52 @@ html.cream-intro-active:not(.cream-intro-revealing) .hero-flavor-catalogue * {
   100% {
     opacity: 0;
     transform: translateY(8px) scale(0.52);
+  }
+}
+
+@keyframes process-icon-churn {
+  0% {
+    border-radius: 72% 28% 46% 54% / 35% 68% 32% 65%;
+    transform: rotate(7deg) translateY(1px) scale(0.82, 1.12);
+  }
+  58% {
+    border-radius: 39% 61% 68% 32% / 64% 38% 62% 36%;
+    transform: rotate(-5deg) translateY(-3px) scale(1.06, 0.94);
+  }
+  100% {
+    border-radius: 63% 37% 54% 46% / 42% 61% 39% 58%;
+    transform: rotate(-3deg) translateY(-2px) scale(1);
+  }
+}
+
+@keyframes process-lava-drop {
+  0%,
+  38% {
+    opacity: 0;
+    transform: translateY(-10px) scale(0.2, 0.12);
+  }
+  62% {
+    opacity: 0.62;
+    transform: translateY(0) scale(0.84, 1.12);
+  }
+  100% {
+    opacity: 0.38;
+    transform: translateY(3px) scale(0.62, 0.78);
+  }
+}
+
+@keyframes faq-lava-open {
+  0% {
+    border-radius: 68% 32% 45% 55% / 34% 69% 31% 66%;
+    transform: rotate(7deg) scale(0.82, 1.1);
+  }
+  64% {
+    border-radius: 37% 63% 67% 33% / 65% 37% 63% 35%;
+    transform: rotate(-6deg) scale(1.07, 0.95);
+  }
+  100% {
+    border-radius: 64% 36% 53% 47% / 41% 62% 38% 59%;
+    transform: rotate(-4deg) scale(1.04);
   }
 }
 
@@ -2119,13 +2875,27 @@ html.cream-intro-active:not(.cream-intro-revealing) .hero-flavor-catalogue * {
 
 @media (hover: hover) and (pointer: fine) {
   .flavor-row:hover::before {
-    opacity: 1;
-    transform: translateY(-50%) rotate(-3deg) scaleX(1);
+    opacity: 0.86;
+    border-radius: 54% 46% 62% 38% / 47% 58% 42% 53%;
+    transform: translate3d(10%, -50%, 0) rotate(-2deg) scale(0.9, 0.94);
+  }
+
+  .flavor-row:hover::after {
+    opacity: 0.46;
+    transform: translateY(2px) scale(0.72, 0.86);
+    transition:
+      opacity 220ms ease,
+      transform 460ms cubic-bezier(0.16, 1, 0.3, 1);
   }
 
   .flavor-row:hover .flavor-scoop-thumb::after {
     opacity: 0.78;
     transform: rotate(-5deg) scale(1);
+  }
+
+  .flavor-row:hover .flavor-scoop-thumb {
+    border-radius: 45% 55% 58% 42% / 57% 42% 58% 43%;
+    transform: rotate(-2deg) scale(1.015);
   }
 }
 

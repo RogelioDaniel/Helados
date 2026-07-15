@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import * as THREE from 'three';
 import type { CreamRecipe, CreamSession, Rgb } from './cream-recipes';
 import {
@@ -35,6 +35,13 @@ const DROP_COUNT = 4;
 const MIN_FILL = 0.06;
 const MAX_FILL = 1;
 
+type TideStyle = CSSProperties & {
+  '--tide-base': string;
+  '--tide-light': string;
+  '--tide-ribbon-a': string;
+  '--tide-ribbon-b': string;
+};
+
 function clamp(value: number, minimum: number, maximum: number) {
   return Math.min(maximum, Math.max(minimum, value));
 }
@@ -48,6 +55,10 @@ function createSeededRandom(seed: number) {
     value ^= value + Math.imul(value ^ (value >>> 7), value | 61);
     return ((value ^ (value >>> 14)) >>> 0) / 4_294_967_296;
   };
+}
+
+function rgbToCss(color: Rgb) {
+  return `rgb(${color.map((channel) => Math.round(channel * 255)).join(' ')})`;
 }
 
 function lerpColor(vector: THREE.Vector3, target: Rgb, amount: number) {
@@ -67,6 +78,13 @@ export default function CreamScrollTide({
   const wakeRef = useRef<() => void>(() => undefined);
   const visualRecipeRef = useRef<CreamRecipe>(themeRecipe ?? session.recipe);
   const [motionReduced, setMotionReduced] = useState<boolean | null>(null);
+  const visualRecipe = themeRecipe ?? session.recipe;
+  const tideStyle: TideStyle = {
+    '--tide-base': rgbToCss(visualRecipe.base),
+    '--tide-light': rgbToCss(visualRecipe.light),
+    '--tide-ribbon-a': rgbToCss(visualRecipe.ribbonA),
+    '--tide-ribbon-b': rgbToCss(visualRecipe.ribbonB),
+  };
 
   useEffect(() => {
     suspendedRef.current = suspended;
@@ -89,6 +107,9 @@ export default function CreamScrollTide({
   useEffect(() => {
     const host = hostRef.current;
     const canvas = canvasRef.current;
+    const domDroplets = Array.from(
+      host?.querySelectorAll<HTMLElement>('[data-tide-drop]') ?? [],
+    );
     const header = document.querySelector<HTMLElement>('[data-site-header]');
     const saveData = (navigator as NavigatorWithConnection).connection?.saveData === true;
     if (!host || !canvas || !header || motionReduced !== false || saveData) return;
@@ -126,6 +147,7 @@ export default function CreamScrollTide({
     let downwardTravel = 0;
     let lastDropletSpawn = Number.NEGATIVE_INFINITY;
     let nextDropletDistance = 720;
+    const dropletDomTimers = new Map<number, number>();
 
     const initialVisualRecipe = visualRecipeRef.current;
     const random = createSeededRandom(session.dropletSeed);
@@ -148,11 +170,11 @@ export default function CreamScrollTide({
     const chooseNextDropletDistance = () => {
       const mobile = (renderWidth || window.innerWidth) < 768;
       nextDropletDistance = mobile
-        ? 680 + random() * 360
-        : 520 + random() * 360;
+        ? 1_300 + random() * 760
+        : 980 + random() * 680;
     };
     const getDropletCooldown = () =>
-      (renderWidth || window.innerWidth) < 768 ? 1_250 : 950;
+      (renderWidth || window.innerWidth) < 768 ? 3_600 : 2_800;
     chooseNextDropletDistance();
 
     const stop = () => {
@@ -192,6 +214,23 @@ export default function CreamScrollTide({
       slot.radius = 0.018 + random() * 0.013;
       slot.strength = 0.72 + random() * 0.28;
       dropletUniforms[slotIndex].set(slot.x, 0, slot.radius, 0);
+
+      const domDroplet = domDroplets[slotIndex];
+      if (domDroplet) {
+        const existingTimer = dropletDomTimers.get(slotIndex);
+        if (existingTimer) window.clearTimeout(existingTimer);
+        domDroplet.style.setProperty('--tide-drop-x', `${slot.x * 100}%`);
+        domDroplet.style.setProperty('--tide-drop-duration', `${slot.duration}s`);
+        domDroplet.dataset.falling = 'false';
+        void domDroplet.offsetWidth;
+        domDroplet.dataset.falling = 'true';
+        const timer = window.setTimeout(() => {
+          domDroplet.dataset.falling = 'false';
+          dropletDomTimers.delete(slotIndex);
+        }, slot.duration * 1_000 + 120);
+        dropletDomTimers.set(slotIndex, timer);
+      }
+
       lastDropletSpawn = now;
       chooseNextDropletDistance();
       return true;
@@ -264,6 +303,7 @@ export default function CreamScrollTide({
       }
 
       active = nextActive;
+      host.dataset.active = String(nextActive);
       pendingDelta = 0;
       scrollDirty = false;
     };
@@ -272,7 +312,8 @@ export default function CreamScrollTide({
       frame = 0;
       if (disposed || failed || !renderer || !material || !pageVisible) return;
 
-      const fps = renderWidth < 768 ? 24 : 30;
+      const moving = Math.abs(speed) > 0.045 || Math.abs(direction) > 0.04 || Math.abs(targetFill - fill) > 0.004;
+      const fps = renderWidth < 768 ? (moving ? 24 : 16) : (moving ? 30 : 24);
       if (lastPaintTime && now - lastPaintTime < 1000 / fps) {
         frame = window.requestAnimationFrame(render);
         return;
@@ -344,13 +385,16 @@ export default function CreamScrollTide({
       if (Math.abs(delta) > 0.25) {
         speedTarget = Math.max(speedTarget, clamp(Math.abs(delta) / 96, 0, 1));
         directionTarget = Math.sign(delta);
+        host.dataset.direction = delta > 0 ? 'down' : 'up';
       }
       scrollDirty = true;
+      if (failed) updateScrollState();
       start();
     };
 
     const handleResize = () => {
       resize();
+      if (failed) updateScrollState();
       start();
     };
 
@@ -359,6 +403,7 @@ export default function CreamScrollTide({
       if (pageVisible) {
         lastScrollY = Math.max(0, window.scrollY);
         scrollDirty = true;
+        if (failed) updateScrollState();
         start();
       } else {
         stop();
@@ -369,13 +414,16 @@ export default function CreamScrollTide({
       event.preventDefault();
       failed = true;
       stop();
-      host.hidden = true;
+      canvas.hidden = true;
+      host.dataset.webgl = 'failed';
+      updateScrollState();
     };
 
     const handleContextRestored = () => {
       if (disposed) return;
       failed = false;
-      host.hidden = false;
+      canvas.hidden = false;
+      host.dataset.webgl = 'full';
       lastScrollY = Math.max(0, window.scrollY);
       scrollDirty = true;
       resize();
@@ -405,6 +453,7 @@ export default function CreamScrollTide({
       });
       renderer.setClearColor(0x000000, 0);
       renderer.outputColorSpace = THREE.SRGBColorSpace;
+      host.dataset.webgl = 'full';
 
       geometry = new THREE.PlaneGeometry(2, 2);
       material = new THREE.ShaderMaterial({
@@ -453,6 +502,8 @@ export default function CreamScrollTide({
         disposed = true;
         wakeRef.current = () => undefined;
         stop();
+        dropletDomTimers.forEach((timer) => window.clearTimeout(timer));
+        dropletDomTimers.clear();
         removeListeners();
         geometry?.dispose();
         material?.dispose();
@@ -461,17 +512,110 @@ export default function CreamScrollTide({
     } catch {
       failed = true;
       wakeRef.current = () => undefined;
-      host.hidden = true;
-      removeListeners();
+      canvas.hidden = true;
+      host.dataset.webgl = 'failed';
+      lastScrollY = Math.max(0, window.scrollY);
+      scrollDirty = true;
+      updateScrollState();
+      window.addEventListener('scroll', handleScroll, { passive: true });
+      window.addEventListener('resize', handleResize, { passive: true });
+      window.visualViewport?.addEventListener('resize', handleResize, { passive: true });
+      document.addEventListener('visibilitychange', handleVisibility);
       geometry?.dispose();
       material?.dispose();
       renderer?.dispose();
+
+      return () => {
+        disposed = true;
+        wakeRef.current = () => undefined;
+        dropletDomTimers.forEach((timer) => window.clearTimeout(timer));
+        dropletDomTimers.clear();
+        removeListeners();
+      };
     }
   }, [motionReduced, session]);
 
   return (
-    <div ref={hostRef} className="cream-scroll-tide" aria-hidden="true">
+    <div
+      ref={hostRef}
+      className="cream-scroll-tide"
+      aria-hidden="true"
+      data-active="false"
+      data-direction="down"
+      data-motion={motionReduced === true ? 'reduced' : motionReduced === false ? 'full' : 'pending'}
+      data-webgl="pending"
+      data-recipe={visualRecipe.id}
+      data-suspended={suspended}
+      style={tideStyle}
+    >
       <canvas ref={canvasRef} className="cream-scroll-tide__canvas" />
+      <svg
+        className="cream-scroll-tide__melt-edge"
+        viewBox="0 0 1200 96"
+        preserveAspectRatio="none"
+        focusable="false"
+        role="presentation"
+      >
+        <path
+          className="cream-scroll-tide__melt-body"
+          d="M0 0H1200V17C1160 14 1125 18 1087 25C1048 32 1031 25 991 20C954 15 909 20 875 28C842 36 823 54 790 51C755 48 746 24 707 21C669 18 627 26 594 31C552 38 521 22 482 18C441 14 408 19 375 29C339 40 318 69 281 67C244 65 235 33 199 27C159 20 126 32 91 36C56 40 29 25 0 24V0Z"
+          fill="var(--tide-base, var(--cream-base))"
+        />
+        <path
+          className="cream-scroll-tide__melt-ribbon cream-scroll-tide__melt-ribbon--a"
+          d="M0 11C59 22 113 19 170 15C230 11 257 20 302 36C343 50 373 31 419 22C467 13 515 28 557 30C607 33 645 17 693 14C753 10 781 33 823 37C862 40 894 23 936 19C1001 13 1047 30 1099 27C1136 25 1169 18 1200 20"
+          fill="none"
+          stroke="var(--tide-ribbon-a, var(--cream-ribbon-a))"
+          strokeWidth="9"
+          strokeLinecap="round"
+        />
+        <path
+          className="cream-scroll-tide__melt-ribbon cream-scroll-tide__melt-ribbon--b"
+          d="M0 3C54 13 107 10 158 8C215 6 258 18 306 25C358 33 392 17 438 12C494 6 532 22 581 22C630 22 666 8 711 8C758 8 792 19 833 23C885 28 925 12 978 10C1035 8 1085 18 1136 15C1160 14 1182 10 1200 9"
+          fill="none"
+          stroke="var(--tide-ribbon-b, var(--cream-ribbon-b))"
+          strokeWidth="5"
+          strokeLinecap="round"
+        />
+        <path
+          className="cream-scroll-tide__melt-highlight"
+          d="M15 8C73 17 121 14 172 11C224 8 258 16 305 28M390 16C444 7 493 14 535 21M884 16C936 7 987 13 1032 18"
+          fill="none"
+          stroke="var(--tide-light, var(--cream-light))"
+          strokeWidth="4"
+          strokeLinecap="round"
+        />
+        <g className="cream-scroll-tide__necks">
+          <path
+            className="cream-scroll-tide__neck cream-scroll-tide__neck--short"
+            d="M270 52C267 68 271 81 280 87C289 81 292 67 289 52Z"
+            fill="var(--tide-base, var(--cream-base))"
+          />
+          <path
+            className="cream-scroll-tide__neck cream-scroll-tide__neck--deep"
+            d="M777 43C772 61 774 84 786 94C799 82 802 59 796 42Z"
+            fill="var(--tide-base, var(--cream-base))"
+          />
+          <path
+            className="cream-scroll-tide__neck cream-scroll-tide__neck--fine"
+            d="M1081 25C1078 38 1080 49 1087 55C1094 49 1096 38 1093 25Z"
+            fill="var(--tide-base, var(--cream-base))"
+          />
+        </g>
+      </svg>
+      <div className="cream-scroll-tide__drops" aria-hidden="true">
+        {Array.from({ length: DROP_COUNT }, (_, index) => (
+          <span
+            className="cream-scroll-tide__drop-track"
+            data-tide-drop
+            data-falling="false"
+            data-slot={index + 1}
+            key={index}
+          >
+            <span className="cream-scroll-tide__drop" />
+          </span>
+        ))}
+      </div>
     </div>
   );
 }

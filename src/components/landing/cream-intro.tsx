@@ -29,8 +29,9 @@ type NavigatorWithConnection = Navigator & {
   connection?: { saveData?: boolean };
 };
 
-type IntroPhase = 'loading' | 'leaving' | 'done';
+type IntroPhase = 'loading' | 'entering' | 'covered' | 'leaving' | 'done';
 type CreamIntroVariant = 'intro' | 'navigation';
+export type CreamNavigationDirection = 'down' | 'up';
 
 type CreamIntroProps = {
   /**
@@ -41,8 +42,14 @@ type CreamIntroProps = {
   variant?: CreamIntroVariant;
   /** Keeps the short navigation curtain in the palette of the active scoop. */
   recipe?: CreamRecipe;
+  /**
+   * Preserves spatial continuity: travelling down enters from the bottom and
+   * exits through the top; travelling up performs the inverse gesture.
+   */
+  direction?: CreamNavigationDirection;
   onComplete?: (session: CreamSession) => void;
-  onRevealStart?: () => void;
+  /** Runs only once the destination is fully covered, before the cream lifts. */
+  onRevealStart?: (session: CreamSession) => void;
 };
 
 class CreamSceneBoundary extends Component<
@@ -69,8 +76,9 @@ const SHADER_RESIDENCY_MS = 2200;
 const WEBGL_ACQUISITION_MS = 2400;
 const EXIT_DURATION_MS = 1780;
 const HARD_DEADLINE_MS = 5000;
-const NAVIGATION_COVER_MS = 140;
-const NAVIGATION_HARD_DEADLINE_MS = 420;
+const NAVIGATION_ENTER_MS = 860;
+const NAVIGATION_EXIT_MS = 1280;
+const NAVIGATION_HARD_DEADLINE_MS = 3600;
 
 function waitForImage(image: HTMLImageElement | null) {
   if (!image) return Promise.resolve();
@@ -94,10 +102,13 @@ function disposeBootstrapCanvas() {
 export function CreamIntro({
   variant = 'intro',
   recipe,
+  direction = 'down',
   onComplete,
   onRevealStart,
 }: CreamIntroProps) {
-  const [phase, setPhase] = useState<IntroPhase>('loading');
+  const [phase, setPhase] = useState<IntroPhase>(() =>
+    variant === 'navigation' ? 'entering' : 'loading',
+  );
   const [allowWebgl, setAllowWebgl] = useState(false);
   const [webglReady, setWebglReady] = useState(false);
   const [canvasFailed, setCanvasFailed] = useState(false);
@@ -153,6 +164,7 @@ export function CreamIntro({
     const root = document.documentElement;
     let disposed = false;
     let leaving = false;
+    let leavePrepared = false;
     let fallbackMinimumReady = false;
     let shaderResidencyReady = false;
     let fallbackMode = false;
@@ -162,6 +174,9 @@ export function CreamIntro({
     let fallbackMinimumTimer = 0;
     let webglAcquisitionTimer = 0;
     let hardDeadline = 0;
+    let navigationEnterFrame = 0;
+    let navigationCoverTimer = 0;
+    let leaveCommitFrame = 0;
     let cleanupResources = () => undefined;
 
     root.classList.add('cream-intro-active');
@@ -180,7 +195,7 @@ export function CreamIntro({
       cleanupResources();
     };
 
-    const leave = () => {
+    const commitLeave = () => {
       if (disposed || leaving) return;
       leaving = true;
       leavingRef.current = true;
@@ -190,18 +205,34 @@ export function CreamIntro({
         setAllowWebgl(false);
       }
       root.classList.add('cream-intro-revealing');
-      if (!revealNotifiedRef.current) {
-        revealNotifiedRef.current = true;
-        onRevealStartRef.current?.();
-      }
       setPhase('leaving');
-      exitTimer = window.setTimeout(finish, EXIT_DURATION_MS);
+      exitTimer = window.setTimeout(
+        finish,
+        variant === 'navigation' ? NAVIGATION_EXIT_MS : EXIT_DURATION_MS,
+      );
+    };
+
+    const notifyCovered = () => {
+      if (disposed || revealNotifiedRef.current) return;
+      revealNotifiedRef.current = true;
+      onRevealStartRef.current?.(getOrCreateCreamSession());
+    };
+
+    const prepareLeave = () => {
+      if (disposed || leaving || leavePrepared) return;
+      leavePrepared = true;
+
+      // Apply the random first flavor (or position the requested section)
+      // while the viewport is still completely covered. Waiting one paint
+      // prevents the former fresa -> random flavor flash during the reveal.
+      notifyCovered();
+      leaveCommitFrame = window.requestAnimationFrame(commitLeave);
     };
 
     const checkReadiness = () => {
       if (!pageReady) return;
-      if (webglReadyRef.current && shaderResidencyReady) leave();
-      if (fallbackMode && fallbackMinimumReady) leave();
+      if (webglReadyRef.current && shaderResidencyReady) prepareLeave();
+      if (fallbackMode && fallbackMinimumReady) prepareLeave();
     };
 
     const registerWebglReady = () => {
@@ -227,10 +258,21 @@ export function CreamIntro({
     registerWebglFailureRef.current = registerWebglFailure;
 
     if (variant === 'navigation') {
-      // Menu changes do not wait for fonts, the hero image, shader residency,
-      // or a fake loading interval. This is only the curtain's final lift.
-      fallbackMinimumTimer = window.setTimeout(leave, NAVIGATION_COVER_MS);
+      // Start off-canvas. The following frame lets CSS interpolate the cream
+      // into a fully covered viewport before any scroll position changes.
+      navigationEnterFrame = window.requestAnimationFrame(() => {
+        if (disposed) return;
+        setPhase('covered');
+        navigationCoverTimer = window.setTimeout(() => {
+          notifyCovered();
+          prepareLeave();
+        }, NAVIGATION_ENTER_MS);
+      });
     } else {
+      // The initial curtain already covers the viewport. Resolve the random
+      // flavor now, during its residency, so catalogue entrance animations
+      // have settled long before the first pixel of the hero is revealed.
+      notifyCovered();
       fallbackMinimumTimer = window.setTimeout(() => {
         fallbackMinimumReady = true;
         checkReadiness();
@@ -254,7 +296,7 @@ export function CreamIntro({
     webglAcquisitionTimer = window.setTimeout(verifyWebglAcquisition, WEBGL_ACQUISITION_MS);
 
     hardDeadline = window.setTimeout(
-      leave,
+      prepareLeave,
       variant === 'navigation' ? NAVIGATION_HARD_DEADLINE_MS : HARD_DEADLINE_MS,
     );
 
@@ -277,11 +319,20 @@ export function CreamIntro({
       });
     }
 
+    let hiddenFinishTimer = 0;
     const handleMotionChange = () => {
       if (motionQuery.matches) finish();
     };
     const handleVisibility = () => {
-      if (document.hidden) finish();
+      window.clearTimeout(hiddenFinishTimer);
+      if (!document.hidden) return;
+
+      // Some mobile browsers briefly toggle visibility while promoting the
+      // WebGL canvas. Give that hand-off a beat before treating it as a real
+      // tab change, otherwise a navigation curtain can disappear mid-pour.
+      hiddenFinishTimer = window.setTimeout(() => {
+        if (document.hidden) finish();
+      }, 260);
     };
 
     motionQuery.addEventListener('change', handleMotionChange);
@@ -291,11 +342,15 @@ export function CreamIntro({
       if (disposed) return;
       disposed = true;
       window.cancelAnimationFrame(enableFrame);
+      window.cancelAnimationFrame(navigationEnterFrame);
+      window.cancelAnimationFrame(leaveCommitFrame);
       window.clearTimeout(fallbackMinimumTimer);
+      window.clearTimeout(navigationCoverTimer);
       window.clearTimeout(webglAcquisitionTimer);
       window.clearTimeout(shaderResidencyTimer);
       window.clearTimeout(hardDeadline);
       window.clearTimeout(exitTimer);
+      window.clearTimeout(hiddenFinishTimer);
       motionQuery.removeEventListener('change', handleMotionChange);
       document.removeEventListener('visibilitychange', handleVisibility);
       window.removeEventListener('load', handleWindowLoad);
@@ -319,6 +374,7 @@ export function CreamIntro({
     <div
       className={`cream-intro cream-intro--${phase} cream-intro--${variant} ${webglReady ? 'cream-intro--webgl' : ''}`}
       style={recipeStyle}
+      data-navigation-direction={variant === 'navigation' ? direction : undefined}
       aria-hidden="true"
     >
       <script
