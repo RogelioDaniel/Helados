@@ -13,6 +13,10 @@ import {
 import { creamBootstrapScript } from './cream-bootstrap-script';
 import { CREAM_INTRO_CANVAS_ID } from './cream-canvas-id';
 import { CreamIntroPoster } from './cream-intro-poster';
+import {
+  type CreamSession,
+  getOrCreateCreamSession,
+} from './cream-recipes';
 
 const CreamIntroScene = dynamic(() => import('./cream-intro-scene'), {
   ssr: false,
@@ -26,7 +30,7 @@ type NavigatorWithConnection = Navigator & {
 type IntroPhase = 'loading' | 'leaving' | 'done';
 
 type CreamIntroProps = {
-  onComplete?: () => void;
+  onComplete?: (session: CreamSession) => void;
 };
 
 class CreamSceneBoundary extends Component<
@@ -254,7 +258,7 @@ export function CreamIntro({ onComplete }: CreamIntroProps) {
   useEffect(() => {
     if (phase !== 'done' || completeNotifiedRef.current) return;
     completeNotifiedRef.current = true;
-    onComplete?.();
+    onComplete?.(getOrCreateCreamSession());
   }, [onComplete, phase]);
 
   if (phase === 'done') return null;

@@ -3,17 +3,71 @@ import {
   creamBootstrapVertexShader,
 } from './cream-shader-source';
 import { CREAM_INTRO_CANVAS_ID } from './cream-canvas-id';
+import { CREAM_RECIPES } from './cream-recipes';
 
 const canvasId = JSON.stringify(CREAM_INTRO_CANVAS_ID);
 const vertexSource = JSON.stringify(creamBootstrapVertexShader);
 const fragmentSource = JSON.stringify(creamBootstrapFragmentShader);
+const recipeSource = JSON.stringify(CREAM_RECIPES);
 
 export const creamBootstrapScript = `(() => {
+  const creamRecipes = ${recipeSource};
+  const root = document.documentElement;
+
+  const mixUint32 = (value) => {
+    let mixed = (value + 0x6d2b79f5) >>> 0;
+    mixed = Math.imul(mixed ^ (mixed >>> 15), mixed | 1);
+    mixed ^= mixed + Math.imul(mixed ^ (mixed >>> 7), mixed | 61);
+    return (mixed ^ (mixed >>> 14)) >>> 0;
+  };
+
+  const createRandomSeed = () => {
+    const words = new Uint32Array(1);
+    try {
+      window.crypto.getRandomValues(words);
+      return words[0] >>> 0;
+    } catch {
+      return (
+        Date.now()
+        ^ Math.floor(performance.now() * 1000)
+        ^ (window.screen.width << 16)
+        ^ window.screen.height
+      ) >>> 0;
+    }
+  };
+
+  const createCreamSession = (seed) => {
+    const recipeRoll = mixUint32(seed);
+    const phaseRoll = mixUint32(recipeRoll);
+    const dropletSeed = mixUint32(phaseRoll);
+    const recipeIndex = recipeRoll % creamRecipes.length;
+    return Object.freeze({
+      version: 1,
+      seed,
+      recipeIndex,
+      recipe: Object.freeze(creamRecipes[recipeIndex]),
+      materialPhase: 0.5 + (phaseRoll / 0x100000000) * 97,
+      dropletSeed,
+    });
+  };
+
+  const toCssRgb = (color) =>
+    'rgb(' + color.map((channel) => Math.round(channel * 255)).join(', ') + ')';
+  const existingSession = window.__HELADO_CREAM_SESSION__;
+  const creamSession = existingSession?.version === 1
+    ? existingSession
+    : createCreamSession(createRandomSeed());
+  window.__HELADO_CREAM_SESSION__ = creamSession;
+  root.dataset.creamRecipe = creamSession.recipe.id;
+  root.style.setProperty('--cream-base', toCssRgb(creamSession.recipe.base));
+  root.style.setProperty('--cream-light', toCssRgb(creamSession.recipe.light));
+  root.style.setProperty('--cream-ribbon-a', toCssRgb(creamSession.recipe.ribbonA));
+  root.style.setProperty('--cream-ribbon-b', toCssRgb(creamSession.recipe.ribbonB));
+
   const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const saveData = navigator.connection?.saveData === true;
   if (reduceMotion || saveData) return;
 
-  const root = document.documentElement;
   root.classList.add('cream-intro-active');
   window.setTimeout(() => {
     const intro = document.querySelector('.cream-intro');
@@ -57,6 +111,7 @@ export const creamBootstrapScript = `(() => {
       return {
         timeSeconds: creamTime,
         wasAnimating: ambientMotionQuery.matches,
+        session: creamSession,
       };
     };
 
@@ -118,6 +173,17 @@ export const creamBootstrapScript = `(() => {
       const timeLocation = gl.getUniformLocation(program, 'uTime');
       const revealLocation = gl.getUniformLocation(program, 'uReveal');
       const aspectLocation = gl.getUniformLocation(program, 'uAspect');
+      const baseColorLocation = gl.getUniformLocation(program, 'uBaseColor');
+      const lightColorLocation = gl.getUniformLocation(program, 'uLightColor');
+      const ribbonAColorLocation = gl.getUniformLocation(program, 'uRibbonAColor');
+      const ribbonBColorLocation = gl.getUniformLocation(program, 'uRibbonBColor');
+      const ribbonWeightsLocation = gl.getUniformLocation(program, 'uRibbonWeights');
+      const ridgeLocation = gl.getUniformLocation(program, 'uRidge');
+      const glossLocation = gl.getUniformLocation(program, 'uGloss');
+      const flowRateLocation = gl.getUniformLocation(program, 'uFlowRate');
+      const flowStrengthLocation = gl.getUniformLocation(program, 'uFlowStrength');
+      const materialSeedLocation = gl.getUniformLocation(program, 'uMaterialSeed');
+      const dropletSeedLocation = gl.getUniformLocation(program, 'uDropletSeed');
       const draw = (time = creamTime) => {
         const width = Math.max(host.clientWidth, 1);
         const height = Math.max(host.clientHeight, 1);
@@ -135,6 +201,17 @@ export const creamBootstrapScript = `(() => {
         gl.uniform1f(timeLocation, time);
         gl.uniform1f(revealLocation, 0);
         gl.uniform1f(aspectLocation, width / height);
+        gl.uniform3fv(baseColorLocation, creamSession.recipe.base);
+        gl.uniform3fv(lightColorLocation, creamSession.recipe.light);
+        gl.uniform3fv(ribbonAColorLocation, creamSession.recipe.ribbonA);
+        gl.uniform3fv(ribbonBColorLocation, creamSession.recipe.ribbonB);
+        gl.uniform2fv(ribbonWeightsLocation, creamSession.recipe.ribbonWeights);
+        gl.uniform1f(ridgeLocation, creamSession.recipe.ridge);
+        gl.uniform1f(glossLocation, creamSession.recipe.gloss);
+        gl.uniform1f(flowRateLocation, creamSession.recipe.flowRate);
+        gl.uniform1f(flowStrengthLocation, creamSession.recipe.flowStrength);
+        gl.uniform1f(materialSeedLocation, creamSession.materialPhase);
+        gl.uniform1f(dropletSeedLocation, creamSession.dropletSeed / 0xffffffff);
         gl.drawArrays(gl.TRIANGLES, 0, 3);
       };
 
@@ -148,7 +225,7 @@ export const creamBootstrapScript = `(() => {
         }
         const delta = Math.min((now - lastFrame) / 1000, 0.05);
         lastFrame = now;
-        creamTime += delta;
+        creamTime += delta * 1.15;
         draw(creamTime);
         frame = window.requestAnimationFrame(render);
       };

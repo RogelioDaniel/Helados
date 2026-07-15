@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
+import type { CreamSession } from './cream-recipes';
 import {
   creamScrollTideFragmentShader,
   creamScrollTideVertexShader,
@@ -12,24 +13,51 @@ type NavigatorWithConnection = Navigator & {
 };
 
 type CreamScrollTideProps = {
+  session: CreamSession;
   suspended?: boolean;
 };
 
-const MIN_FILL = 0.055;
-const MAX_FILL = 0.82;
+type DropletSlot = {
+  active: boolean;
+  x: number;
+  age: number;
+  duration: number;
+  radius: number;
+  strength: number;
+};
+
+const DROP_COUNT = 4;
+const MIN_FILL = 0.06;
+const MAX_FILL = 1;
 
 function clamp(value: number, minimum: number, maximum: number) {
   return Math.min(maximum, Math.max(minimum, value));
 }
 
-export default function CreamScrollTide({ suspended = false }: CreamScrollTideProps) {
+function createSeededRandom(seed: number) {
+  let state = seed >>> 0;
+  return () => {
+    state = (state + 0x6d2b79f5) >>> 0;
+    let value = state;
+    value = Math.imul(value ^ (value >>> 15), value | 1);
+    value ^= value + Math.imul(value ^ (value >>> 7), value | 61);
+    return ((value ^ (value >>> 14)) >>> 0) / 4_294_967_296;
+  };
+}
+
+export default function CreamScrollTide({
+  session,
+  suspended = false,
+}: CreamScrollTideProps) {
   const hostRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const suspendedRef = useRef(suspended);
+  const wakeRef = useRef<() => void>(() => undefined);
   const [motionReduced, setMotionReduced] = useState<boolean | null>(null);
 
   useEffect(() => {
     suspendedRef.current = suspended;
+    wakeRef.current();
   }, [suspended]);
 
   useEffect(() => {
@@ -50,6 +78,7 @@ export default function CreamScrollTide({ suspended = false }: CreamScrollTidePr
     let renderer: THREE.WebGLRenderer | null = null;
     let geometry: THREE.PlaneGeometry | null = null;
     let material: THREE.ShaderMaterial | null = null;
+    let resizeObserver: ResizeObserver | null = null;
     let frame = 0;
     let disposed = false;
     let pageVisible = !document.hidden;
@@ -60,7 +89,7 @@ export default function CreamScrollTide({ suspended = false }: CreamScrollTidePr
     let lastPaintTime = 0;
     let lastScrollY = Math.max(0, window.scrollY);
     let pendingDelta = 0;
-    const initialTravel = Math.max(window.innerHeight * 0.78, 460);
+    const initialTravel = Math.max(window.innerHeight * 2.2, 1_200);
     const initialHeaderRect = header.getBoundingClientRect();
     const initiallyActive = initialHeaderRect.top <= 0.5 && lastScrollY > 2;
     let targetFill = initiallyActive
@@ -76,11 +105,79 @@ export default function CreamScrollTide({ suspended = false }: CreamScrollTidePr
     let renderWidth = 0;
     let renderHeight = 0;
     let renderDpr = 0;
+    let downwardTravel = 0;
+    let lastDropletSpawn = Number.NEGATIVE_INFINITY;
+    let nextDropletDistance = 100;
+
+    const random = createSeededRandom(session.dropletSeed);
+    const dropletSlots: DropletSlot[] = Array.from(
+      { length: DROP_COUNT },
+      () => ({
+        active: false,
+        x: 0,
+        age: 0,
+        duration: 1,
+        radius: 0,
+        strength: 0,
+      }),
+    );
+    const dropletUniforms = Array.from(
+      { length: DROP_COUNT },
+      () => new THREE.Vector4(0, 0, 0, 0),
+    );
+
+    const chooseNextDropletDistance = () => {
+      const mobile = (renderWidth || window.innerWidth) < 768;
+      nextDropletDistance = mobile
+        ? 72 + random() * 28
+        : 100 + random() * 34;
+    };
+    chooseNextDropletDistance();
 
     const stop = () => {
       if (frame) window.cancelAnimationFrame(frame);
       frame = 0;
     };
+
+    const updateDroplets = (deltaTime: number) => {
+      for (let index = 0; index < DROP_COUNT; index += 1) {
+        const slot = dropletSlots[index];
+        const uniform = dropletUniforms[index];
+        if (!slot.active) {
+          uniform.set(0, 0, 0, 0);
+          continue;
+        }
+
+        slot.age += deltaTime;
+        const progress = slot.age / slot.duration;
+        if (progress >= 1) {
+          slot.active = false;
+          uniform.set(0, 0, 0, 0);
+          continue;
+        }
+        uniform.set(slot.x, progress, slot.radius, slot.strength);
+      }
+    };
+
+    const spawnDroplet = (now: number) => {
+      const slotIndex = dropletSlots.findIndex((slot) => !slot.active);
+      if (slotIndex < 0) return false;
+
+      const slot = dropletSlots[slotIndex];
+      slot.active = true;
+      slot.x = 0.07 + random() * 0.86;
+      slot.age = 0;
+      slot.duration = 0.9 + random() * 0.55;
+      slot.radius = 0.018 + random() * 0.013;
+      slot.strength = 0.72 + random() * 0.28;
+      dropletUniforms[slotIndex].set(slot.x, 0, slot.radius, 0);
+      lastDropletSpawn = now;
+      chooseNextDropletDistance();
+      return true;
+    };
+
+    const scene = new THREE.Scene();
+    const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
 
     const renderCurrentFrame = () => {
       if (!renderer || !material) return;
@@ -117,8 +214,13 @@ export default function CreamScrollTide({ suspended = false }: CreamScrollTidePr
       host.style.top = `${Math.max(0, Math.round(headerRect.bottom - 1))}px`;
 
       if (nextActive) {
-        const travel = Math.max(window.innerHeight * 0.78, 460);
-        targetFill = clamp(targetFill + pendingDelta / travel, MIN_FILL, MAX_FILL);
+        const travel = Math.max(window.innerHeight * 2.2, 1_200);
+        const response = pendingDelta < 0 ? 1.25 : 1;
+        targetFill = clamp(
+          targetFill + (pendingDelta * response) / travel,
+          MIN_FILL,
+          MAX_FILL,
+        );
       } else {
         targetFill = MIN_FILL;
       }
@@ -144,21 +246,26 @@ export default function CreamScrollTide({ suspended = false }: CreamScrollTidePr
 
       if (scrollDirty) updateScrollState();
 
-      speedTarget *= Math.exp(-8 * deltaTime);
-      directionTarget *= Math.exp(-7 * deltaTime);
-      const fillEase = 1 - Math.exp(-8.5 * deltaTime);
-      const speedEase = 1 - Math.exp(-13 * deltaTime);
-      const directionEase = 1 - Math.exp(-9 * deltaTime);
+      speedTarget *= Math.exp(-4.4 * deltaTime);
+      directionTarget *= Math.exp(-4.0 * deltaTime);
+      const fillRate = targetFill >= fill ? 4 : 6;
+      const fillEase = 1 - Math.exp(-fillRate * deltaTime);
+      const speedEase = 1 - Math.exp(-10 * deltaTime);
+      const directionEase = 1 - Math.exp(-7 * deltaTime);
       const opacityTarget = active && !suspendedRef.current ? 1 : 0;
 
       fill += (targetFill - fill) * fillEase;
       speed += (speedTarget - speed) * speedEase;
       direction += (directionTarget - direction) * directionEase;
       opacity += (opacityTarget - opacity) * (1 - Math.exp(-11 * deltaTime));
-      creamTime += deltaTime * 0.72;
+      creamTime += deltaTime;
+      updateDroplets(deltaTime);
       renderCurrentFrame();
 
-      if (!active && opacity < 0.002 && Math.abs(fill - MIN_FILL) < 0.002) {
+      if (
+        (suspendedRef.current && opacity < 0.002) ||
+        (!active && opacity < 0.002 && Math.abs(fill - MIN_FILL) < 0.002)
+      ) {
         opacity = 0;
         renderCurrentFrame();
         return;
@@ -172,14 +279,31 @@ export default function CreamScrollTide({ suspended = false }: CreamScrollTidePr
       lastPaintTime = 0;
       frame = window.requestAnimationFrame(render);
     };
+    wakeRef.current = start;
 
     const handleScroll = () => {
       const nextScrollY = Math.max(0, window.scrollY);
       const delta = clamp(nextScrollY - lastScrollY, -160, 160);
       lastScrollY = nextScrollY;
       pendingDelta = clamp(pendingDelta + delta, -240, 240);
+
+      if (delta > 0.25) {
+        downwardTravel = clamp(downwardTravel + delta, 0, 360);
+        const now = performance.now();
+        const reachedDistance = nextDropletDistance;
+        if (
+          downwardTravel >= reachedDistance &&
+          now - lastDropletSpawn >= 180 &&
+          spawnDroplet(now)
+        ) {
+          downwardTravel = Math.max(0, downwardTravel - reachedDistance);
+        }
+      } else if (delta < -0.25) {
+        downwardTravel = Math.max(0, downwardTravel + delta * 0.8);
+      }
+
       if (Math.abs(delta) > 0.25) {
-        speedTarget = Math.max(speedTarget, clamp(Math.abs(delta) / 92, 0, 1));
+        speedTarget = Math.max(speedTarget, clamp(Math.abs(delta) / 96, 0, 1));
         directionTarget = Math.sign(delta);
       }
       scrollDirty = true;
@@ -219,8 +343,15 @@ export default function CreamScrollTide({ suspended = false }: CreamScrollTidePr
       start();
     };
 
-    const scene = new THREE.Scene();
-    const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+    const removeListeners = () => {
+      resizeObserver?.disconnect();
+      window.removeEventListener('scroll', handleScroll);
+      window.removeEventListener('resize', handleResize);
+      window.visualViewport?.removeEventListener('resize', handleResize);
+      document.removeEventListener('visibilitychange', handleVisibility);
+      canvas.removeEventListener('webglcontextlost', handleContextLost);
+      canvas.removeEventListener('webglcontextrestored', handleContextRestored);
+    };
 
     try {
       renderer = new THREE.WebGLRenderer({
@@ -250,11 +381,25 @@ export default function CreamScrollTide({ suspended = false }: CreamScrollTidePr
           uDirection: { value: 0 },
           uAspect: { value: 1 },
           uOpacity: { value: 0 },
+          uBaseColor: { value: new THREE.Vector3(...session.recipe.base) },
+          uLightColor: { value: new THREE.Vector3(...session.recipe.light) },
+          uRibbonAColor: { value: new THREE.Vector3(...session.recipe.ribbonA) },
+          uRibbonBColor: { value: new THREE.Vector3(...session.recipe.ribbonB) },
+          uRibbonWeights: {
+            value: new THREE.Vector2(...session.recipe.ribbonWeights),
+          },
+          uRidge: { value: session.recipe.ridge },
+          uGloss: { value: session.recipe.gloss },
+          uFlowRate: { value: session.recipe.flowRate },
+          uFlowStrength: { value: session.recipe.flowStrength },
+          uMaterialSeed: { value: session.materialPhase },
+          uDropletSeed: { value: session.dropletSeed / 0xffffffff },
+          uDrops: { value: dropletUniforms },
         },
       });
       scene.add(new THREE.Mesh(geometry, material));
 
-      const resizeObserver = new ResizeObserver(handleResize);
+      resizeObserver = new ResizeObserver(handleResize);
       resizeObserver.observe(host);
       window.addEventListener('scroll', handleScroll, { passive: true });
       window.addEventListener('resize', handleResize, { passive: true });
@@ -267,26 +412,23 @@ export default function CreamScrollTide({ suspended = false }: CreamScrollTidePr
 
       return () => {
         disposed = true;
+        wakeRef.current = () => undefined;
         stop();
-        resizeObserver.disconnect();
-        window.removeEventListener('scroll', handleScroll);
-        window.removeEventListener('resize', handleResize);
-        window.visualViewport?.removeEventListener('resize', handleResize);
-        document.removeEventListener('visibilitychange', handleVisibility);
-        canvas.removeEventListener('webglcontextlost', handleContextLost);
-        canvas.removeEventListener('webglcontextrestored', handleContextRestored);
+        removeListeners();
         geometry?.dispose();
         material?.dispose();
         renderer?.dispose();
       };
     } catch {
       failed = true;
+      wakeRef.current = () => undefined;
       host.hidden = true;
+      removeListeners();
       geometry?.dispose();
       material?.dispose();
       renderer?.dispose();
     }
-  }, [motionReduced]);
+  }, [motionReduced, session]);
 
   return (
     <div ref={hostRef} className="cream-scroll-tide" aria-hidden="true">

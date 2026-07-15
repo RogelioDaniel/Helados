@@ -6,6 +6,10 @@ import {
   creamFragmentShader,
   creamVertexShader,
 } from './cream-shader-source';
+import {
+  type CreamSession,
+  getOrCreateCreamSession,
+} from './cream-recipes';
 
 type CreamIntroSceneProps = {
   canvasId: string;
@@ -16,7 +20,11 @@ type CreamIntroSceneProps = {
 
 type CreamPrepaint = {
   context: WebGL2RenderingContext;
-  stop: () => { timeSeconds: number; wasAnimating: boolean };
+  stop: () => {
+    timeSeconds: number;
+    wasAnimating: boolean;
+    session: CreamSession;
+  };
   dispose: () => void;
 };
 
@@ -60,6 +68,7 @@ export default function CreamIntroScene({
     };
     const prepaint = canvas.__creamPrepaint;
     const handoff = prepaint?.stop();
+    const session = handoff?.session ?? getOrCreateCreamSession();
     const context = prepaint?.context ?? canvas.getContext('webgl2', contextAttributes);
 
     if (!context) {
@@ -114,6 +123,17 @@ export default function CreamIntroScene({
           uTime: { value: 0 },
           uReveal: { value: reveal },
           uAspect: { value: 1 },
+          uBaseColor: { value: new THREE.Vector3(...session.recipe.base) },
+          uLightColor: { value: new THREE.Vector3(...session.recipe.light) },
+          uRibbonAColor: { value: new THREE.Vector3(...session.recipe.ribbonA) },
+          uRibbonBColor: { value: new THREE.Vector3(...session.recipe.ribbonB) },
+          uRibbonWeights: { value: new THREE.Vector2(...session.recipe.ribbonWeights) },
+          uRidge: { value: session.recipe.ridge },
+          uGloss: { value: session.recipe.gloss },
+          uFlowRate: { value: session.recipe.flowRate },
+          uFlowStrength: { value: session.recipe.flowStrength },
+          uMaterialSeed: { value: session.materialPhase },
+          uDropletSeed: { value: session.dropletSeed / 0xffffffff },
         },
       });
 
@@ -156,7 +176,7 @@ export default function CreamIntroScene({
         }
 
         lastFrame = now;
-        creamTime += delta;
+        creamTime += delta * 1.15;
         if (leavingRef.current) {
           revealElapsed = Math.min(REVEAL_DURATION_SECONDS, revealElapsed + delta);
           const progress = revealElapsed / REVEAL_DURATION_SECONDS;

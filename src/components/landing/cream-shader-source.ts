@@ -13,6 +13,17 @@ export const creamFragmentShader = /* glsl */ `
   uniform float uTime;
   uniform float uReveal;
   uniform float uAspect;
+  uniform vec3 uBaseColor;
+  uniform vec3 uLightColor;
+  uniform vec3 uRibbonAColor;
+  uniform vec3 uRibbonBColor;
+  uniform vec2 uRibbonWeights;
+  uniform float uRidge;
+  uniform float uGloss;
+  uniform float uFlowRate;
+  uniform float uFlowStrength;
+  uniform float uMaterialSeed;
+  uniform float uDropletSeed;
   varying vec2 vUv;
 
   float hash(vec2 p) {
@@ -51,41 +62,61 @@ export const creamFragmentShader = /* glsl */ `
   void main() {
     vec2 uv = vUv;
     vec2 p = vec2((uv.x - 0.5) * uAspect + 0.5, uv.y);
-    float flowGate = smoothstep(0.0, 0.6, uTime);
+    float materialTime = uTime * uFlowRate;
+    vec2 seedOffset = vec2(
+      fract(uMaterialSeed * 0.754877),
+      fract(uMaterialSeed * 0.569841)
+    ) * 4.0;
+    float flowGate = smoothstep(0.0, 0.72, materialTime);
     vec2 flow = vec2(
-      sin(p.y * 2.7 + uTime * 0.26) - sin(p.y * 2.7),
-      cos(p.x * 2.2 - uTime * 0.21) - cos(p.x * 2.2)
-    ) * (0.035 * flowGate);
-    float churn = fbm((p + flow) * vec2(2.2, 3.4));
-    float foldMotion = (sin(p.y * 1.9 + uTime * 0.20) - sin(p.y * 1.9)) * 0.18;
-    float folds = sin(p.x * 6.4 + p.y * 2.7 + churn * 4.8 + foldMotion);
+      sin(p.y * 2.7 + materialTime * 0.34) - sin(p.y * 2.7),
+      cos(p.x * 2.2 - materialTime * 0.27) - cos(p.x * 2.2)
+    ) * (uFlowStrength * flowGate);
+    vec2 knead = vec2(
+      sin(p.y * 4.1 - materialTime * 0.19) - sin(p.y * 4.1),
+      sin(p.x * 3.3 + materialTime * 0.17) - sin(p.x * 3.3)
+    ) * (uFlowStrength * 0.46 * flowGate);
+    float churn = fbm((p + seedOffset + flow + knead) * vec2(2.2, 3.4));
+    float foldMotion =
+      (sin(p.y * 1.9 + materialTime * 0.27) - sin(p.y * 1.9)) * 0.22
+      + (cos(p.x * 2.6 - materialTime * 0.18) - cos(p.x * 2.6)) * 0.085;
+    float folds = sin(
+      (p.x + seedOffset.x) * 6.4
+      + (p.y + seedOffset.y) * 2.7
+      + churn * 4.8
+      + foldMotion
+    );
     float softFold = folds * 0.5 + 0.5;
-
-    vec3 vanilla = vec3(0.953, 0.894, 0.788);
-    vec3 milk = vec3(1.0, 0.976, 0.918);
-    vec3 strawberry = vec3(0.674, 0.224, 0.302);
-    vec3 pistachio = vec3(0.416, 0.522, 0.365);
 
     float berryRibbon = smoothstep(0.62, 0.93, softFold + (churn - 0.5) * 0.32);
     float greenRibbon = smoothstep(0.70, 0.96, (1.0 - softFold) + (churn - 0.5) * 0.24);
     float ridge = pow(1.0 - abs(folds), 8.0);
-    float gloss = pow(abs(folds), 12.0) * 0.08 + smoothstep(0.72, 0.98, churn) * 0.05;
+    float gloss = (
+      pow(abs(folds), 12.0) * 0.72
+      + smoothstep(0.72, 0.98, churn) * 0.42
+    ) * uGloss;
 
-    vec3 color = mix(vanilla, milk, 0.28 + churn * 0.24);
-    color = mix(color, strawberry, berryRibbon * 0.31);
-    color = mix(color, pistachio, greenRibbon * 0.18);
-    color *= 1.0 - ridge * 0.11;
+    vec3 color = mix(uBaseColor, uLightColor, 0.28 + churn * 0.24);
+    color = mix(color, uRibbonAColor, berryRibbon * uRibbonWeights.x);
+    color = mix(color, uRibbonBColor, greenRibbon * uRibbonWeights.y);
+    color *= 1.0 - ridge * uRidge;
     color += vec3(gloss);
-    color += (noise(uv * 120.0) - 0.5) * 0.012;
+    color += (noise(uv * 120.0 + seedOffset * 13.0) - 0.5) * 0.012;
 
     float revealEdge = uReveal * 1.32 - 0.16;
-    float edgeNoise = (noise(vec2(uv.x * 4.8, uTime * 0.08)) - 0.5) * 0.075;
+    float edgeNoise = (
+      noise(vec2(uv.x * 4.8 + uDropletSeed * 9.0, materialTime * 0.1)) - 0.5
+    ) * 0.088;
     float dripWindow = smoothstep(0.08, 0.28, uReveal) * (1.0 - smoothstep(0.76, 0.98, uReveal));
+    float dripA = mix(0.13, 0.27, hash(vec2(uDropletSeed, 1.17)));
+    float dripB = mix(0.43, 0.61, hash(vec2(uDropletSeed, 2.83)));
+    float dripC = mix(0.73, 0.88, hash(vec2(uDropletSeed, 4.41)));
+    float dripPulse = 0.9 + sin(materialTime * 0.92 + uDropletSeed * 6.2831) * 0.1;
     float drips = (
-      bell(uv.x, 0.19, 0.055) * 0.095 +
-      bell(uv.x, 0.54, 0.08) * 0.052 +
-      bell(uv.x, 0.81, 0.045) * 0.078
-    ) * dripWindow;
+      bell(uv.x, dripA, 0.055) * 0.105 +
+      bell(uv.x, dripB, 0.08) * 0.058 +
+      bell(uv.x, dripC, 0.045) * 0.087
+    ) * dripWindow * dripPulse;
     float creamLip = uv.y + edgeNoise + drips;
     float alpha = smoothstep(revealEdge - 0.038, revealEdge + 0.038, creamLip);
     float edgeLight = exp(-abs(creamLip - revealEdge) * 48.0) * dripWindow;

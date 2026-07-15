@@ -25,6 +25,7 @@ import {
   useState,
 } from 'react';
 import { CreamIntro } from '@/components/landing/cream-intro';
+import type { CreamSession } from '@/components/landing/cream-recipes';
 import { LuxuryEffects } from '@/components/landing/luxury-effects';
 import { LuxuryHero } from '@/components/landing/luxury-hero';
 
@@ -157,6 +158,7 @@ export default function Home() {
   const [recentlyAdded, setRecentlyAdded] = useState<string | null>(null);
   const [cartReady, setCartReady] = useState(false);
   const [introComplete, setIntroComplete] = useState(false);
+  const [creamSession, setCreamSession] = useState<CreamSession | null>(null);
   const closeCartRef = useRef<HTMLButtonElement>(null);
   const drawerRef = useRef<HTMLElement>(null);
   const returnFocusRef = useRef<HTMLElement | null>(null);
@@ -244,7 +246,10 @@ export default function Home() {
     '¿Me ayudan a confirmar disponibilidad, entrega y forma de pago?',
   ].join('\n');
 
-  const handleIntroComplete = useCallback(() => setIntroComplete(true), []);
+  const handleIntroComplete = useCallback((session: CreamSession) => {
+    setCreamSession(session);
+    setIntroComplete(true);
+  }, []);
 
   function addFlavor(flavor: Flavor, event?: ReactMouseEvent<HTMLButtonElement>) {
     setCart((current) => ({ ...current, [flavor.id]: (current[flavor.id] ?? 0) + 1 }));
@@ -316,7 +321,13 @@ export default function Home() {
   return (
     <main className="min-h-[100dvh] overflow-x-clip bg-[#f5efe5] text-[#211a17]">
       <CreamIntro onComplete={handleIntroComplete} />
-      <LuxuryEffects />
+      {!introComplete ? (
+        <p className="sr-only" role="status" aria-live="polite">
+          Preparando la primera cucharada
+        </p>
+      ) : null}
+      <div inert={!introComplete} aria-hidden={!introComplete}>
+        <LuxuryEffects />
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
@@ -422,7 +433,9 @@ export default function Home() {
         </div>
       </header>
 
-      {introComplete ? <CreamScrollTide suspended={menuOpen || cartOpen} /> : null}
+      {introComplete && creamSession ? (
+        <CreamScrollTide session={creamSession} suspended={menuOpen || cartOpen} />
+      ) : null}
 
       <div id="contenido">
         <LuxuryHero itemCount={itemCount} onOpenCart={openCart} />
@@ -527,7 +540,7 @@ export default function Home() {
         <section id="historia" className="scroll-mt-24 bg-[#211a17] py-24 text-[#f8f1e8] sm:py-32">
           <div className="mx-auto max-w-[1400px] px-5 sm:px-8 lg:px-12">
             <div className="grid items-center gap-14 lg:grid-cols-12 lg:gap-16">
-              <div className="relative lg:col-span-6" data-reveal="image">
+              <div className="history-cream-wipe relative lg:col-span-6" data-cream-wipe>
                 <div className="relative aspect-[4/5] max-h-[760px] overflow-hidden rounded-[2rem] bg-[#55483e]">
                   <Image
                     src="/img/historia-2.png"
@@ -609,7 +622,11 @@ export default function Home() {
                       text: 'Empacamos cada pedido para que llegue listo para servir, con instrucciones simples de conservación.',
                     },
                   ].map((step) => (
-                    <article key={step.number} className="group grid gap-5 py-8 sm:grid-cols-[64px_minmax(0,1fr)_auto] sm:items-start sm:gap-6 sm:py-10">
+                    <article
+                      key={step.number}
+                      className="process-step group grid gap-5 py-8 sm:grid-cols-[64px_minmax(0,1fr)_auto] sm:items-start sm:gap-6 sm:py-10"
+                      data-process-step
+                    >
                       <span className="grid h-14 w-14 place-items-center rounded-full border border-[#211a17]/15 transition-colors group-hover:border-[#76283c] group-hover:bg-[#76283c] group-hover:text-white">
                         <step.icon className="h-5 w-5" strokeWidth={1.5} />
                       </span>
@@ -687,11 +704,11 @@ export default function Home() {
               {FAQS.map((faq, index) => {
                 const open = activeFaq === index;
                 return (
-                  <div key={faq.question} className="border-t border-[#211a17]/15">
+                  <div key={faq.question} className="faq-item border-t border-[#211a17]/15">
                     <button
                       type="button"
                       onClick={() => setActiveFaq(open ? null : index)}
-                      className="flex min-h-20 w-full items-center justify-between gap-6 py-5 text-left"
+                      className="faq-trigger flex min-h-20 w-full items-center justify-between gap-6 py-5 text-left"
                       aria-expanded={open}
                       aria-controls={`faq-${index}`}
                     >
@@ -700,7 +717,7 @@ export default function Home() {
                         <ChevronDown className="h-4 w-4" />
                       </span>
                     </button>
-                    <div id={`faq-${index}`} className={`grid transition-[grid-template-rows] duration-500 ${open ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`}>
+                    <div id={`faq-${index}`} className={`faq-panel grid transition-[grid-template-rows] duration-500 ${open ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`}>
                       <div className="overflow-hidden">
                         <p className="max-w-[62ch] pb-7 text-sm leading-7 text-[#211a17]/60 sm:text-base">{faq.answer}</p>
                       </div>
@@ -713,7 +730,7 @@ export default function Home() {
         </section>
 
         <section className="px-5 pb-6 sm:px-8 lg:px-12">
-          <div className="closing-cta relative mx-auto max-w-[1400px] overflow-hidden rounded-[2rem] bg-[#ded0c1] px-6 py-20 sm:px-12 sm:py-24 lg:px-20" data-reveal="image">
+          <div className="closing-cta relative mx-auto max-w-[1400px] overflow-hidden rounded-[2rem] bg-[#ded0c1] px-6 py-20 sm:px-12 sm:py-24 lg:px-20" data-reveal="cream-cta">
             <div className="relative z-10 max-w-3xl">
               <p className="text-xs font-bold uppercase tracking-[0.22em] text-[#76283c]">Tu próxima sobremesa</p>
               <h2 className="font-display mt-5 text-5xl font-medium leading-[0.9] tracking-[-0.05em] sm:text-7xl">Elige el sabor. Nosotros cuidamos el frío.</h2>
@@ -728,8 +745,6 @@ export default function Home() {
                 <span className="rounded-full bg-white/14 px-2 py-0.5 text-[10px]">{itemCount}</span>
               </button>
             </div>
-            <div className="absolute -right-16 -top-20 h-72 w-72 rounded-full border border-[#76283c]/15 sm:h-[26rem] sm:w-[26rem]" aria-hidden="true" />
-            <div className="absolute -bottom-32 right-20 h-64 w-64 rounded-full bg-[#76283c]/8" aria-hidden="true" />
           </div>
         </section>
       </div>
@@ -918,6 +933,7 @@ export default function Home() {
       >
         <Check className="h-4 w-4 text-[#dba0ae]" />
         {recentlyAdded ? `${recentlyAdded} se añadió a tu pedido` : ''}
+      </div>
       </div>
     </main>
   );
