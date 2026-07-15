@@ -25,6 +25,10 @@ type NavigatorWithConnection = Navigator & {
 
 type IntroPhase = 'loading' | 'leaving' | 'done';
 
+type CreamIntroProps = {
+  onComplete?: () => void;
+};
+
 class CreamSceneBoundary extends Component<
   { children: ReactNode; onFailure: () => void },
   { failed: boolean }
@@ -65,7 +69,7 @@ function disposeBootstrapCanvas() {
   if (canvas) delete canvas.__creamPrepaint;
 }
 
-export function CreamIntro() {
+export function CreamIntro({ onComplete }: CreamIntroProps) {
   const [phase, setPhase] = useState<IntroPhase>('loading');
   const [allowWebgl, setAllowWebgl] = useState(false);
   const [webglReady, setWebglReady] = useState(false);
@@ -74,6 +78,7 @@ export function CreamIntro() {
   const leavingRef = useRef(false);
   const registerWebglReadyRef = useRef<() => void>(() => undefined);
   const registerWebglFailureRef = useRef<() => void>(() => undefined);
+  const completeNotifiedRef = useRef(false);
 
   const handleFirstFrame = useCallback(() => {
     if (leavingRef.current) return;
@@ -95,7 +100,6 @@ export function CreamIntro() {
     leavingRef.current = false;
     webglReadyRef.current = false;
     const motionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
-    const mobileFallback = window.matchMedia('(max-width: 767px), (hover: none) and (pointer: coarse)').matches;
     const saveData = (navigator as NavigatorWithConnection).connection?.saveData === true;
 
     if (motionQuery.matches || saveData) {
@@ -103,19 +107,21 @@ export function CreamIntro() {
       return () => window.cancelAnimationFrame(skipFrame);
     }
 
-    const enableFrame = mobileFallback
-      ? 0
-      : window.requestAnimationFrame(() => setAllowWebgl(true));
+    const enableFrame = window.requestAnimationFrame(() => setAllowWebgl(true));
 
     const root = document.documentElement;
     let disposed = false;
     let leaving = false;
     let fallbackMinimumReady = false;
     let shaderResidencyReady = false;
-    let fallbackMode = mobileFallback;
+    let fallbackMode = false;
     let pageReady = false;
     let exitTimer = 0;
     let shaderResidencyTimer = 0;
+    let fallbackMinimumTimer = 0;
+    let webglAcquisitionTimer = 0;
+    let hardDeadline = 0;
+    let cleanupResources = () => undefined;
 
     root.classList.add('cream-intro-active');
 
@@ -130,6 +136,7 @@ export function CreamIntro() {
       leavingRef.current = true;
       restorePage();
       setPhase('done');
+      cleanupResources();
     };
 
     const leave = () => {
@@ -174,22 +181,28 @@ export function CreamIntro() {
     registerWebglReadyRef.current = registerWebglReady;
     registerWebglFailureRef.current = registerWebglFailure;
 
-    const fallbackMinimumTimer = window.setTimeout(() => {
+    fallbackMinimumTimer = window.setTimeout(() => {
       fallbackMinimumReady = true;
       checkReadiness();
     }, FALLBACK_MINIMUM_MS);
 
-    const webglAcquisitionTimer = mobileFallback
-      ? 0
-      : window.setTimeout(() => {
-          if (webglReadyRef.current) return;
-          disposeBootstrapCanvas();
-          setCanvasFailed(true);
-          setAllowWebgl(false);
-          registerWebglFailure();
-        }, WEBGL_ACQUISITION_MS);
+    let acquisitionDeferrals = 0;
+    const verifyWebglAcquisition = () => {
+      if (disposed || leaving || webglReadyRef.current) return;
+      const canvas = document.getElementById(CREAM_INTRO_CANVAS_ID) as BootstrapCanvas | null;
+      if (canvas?.__creamPrepaint && acquisitionDeferrals < 3) {
+        acquisitionDeferrals += 1;
+        webglAcquisitionTimer = window.setTimeout(verifyWebglAcquisition, 700);
+        return;
+      }
+      disposeBootstrapCanvas();
+      setCanvasFailed(true);
+      setAllowWebgl(false);
+      registerWebglFailure();
+    };
+    webglAcquisitionTimer = window.setTimeout(verifyWebglAcquisition, WEBGL_ACQUISITION_MS);
 
-    const hardDeadline = window.setTimeout(leave, HARD_DEADLINE_MS);
+    hardDeadline = window.setTimeout(leave, HARD_DEADLINE_MS);
 
     let resolveWindowLoad: (() => void) | null = null;
     const handleWindowLoad = () => resolveWindowLoad?.();
@@ -218,7 +231,8 @@ export function CreamIntro() {
     motionQuery.addEventListener('change', handleMotionChange);
     document.addEventListener('visibilitychange', handleVisibility);
 
-    return () => {
+    cleanupResources = () => {
+      if (disposed) return;
       disposed = true;
       window.cancelAnimationFrame(enableFrame);
       window.clearTimeout(fallbackMinimumTimer);
@@ -234,7 +248,14 @@ export function CreamIntro() {
       disposeBootstrapCanvas();
       restorePage();
     };
+    return cleanupResources;
   }, []);
+
+  useEffect(() => {
+    if (phase !== 'done' || completeNotifiedRef.current) return;
+    completeNotifiedRef.current = true;
+    onComplete?.();
+  }, [onComplete, phase]);
 
   if (phase === 'done') return null;
 
@@ -249,13 +270,7 @@ export function CreamIntro() {
         dangerouslySetInnerHTML={{ __html: creamBootstrapScript }}
       />
       <CreamIntroPoster />
-      <div className="cream-intro-mobile-cream" aria-hidden="true">
-        <span className="mobile-cream-stroke mobile-cream-stroke--berry-left" />
-        <span className="mobile-cream-stroke mobile-cream-stroke--vanilla-center" />
-        <span className="mobile-cream-stroke mobile-cream-stroke--berry-right" />
-        <span className="mobile-cream-stroke mobile-cream-stroke--fold-top" />
-        <span className="mobile-cream-stroke mobile-cream-stroke--fold-bottom" />
-      </div>
+      <div className="cream-intro-flat-fallback" />
       <canvas
         id={CREAM_INTRO_CANVAS_ID}
         suppressHydrationWarning

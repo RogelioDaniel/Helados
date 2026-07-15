@@ -55,7 +55,7 @@ export default function CreamIntroScene({
       depth: false,
       stencil: false,
       premultipliedAlpha: false,
-      preserveDrawingBuffer: true,
+      preserveDrawingBuffer: false,
       powerPreference: 'low-power',
     };
     const prepaint = canvas.__creamPrepaint;
@@ -80,7 +80,7 @@ export default function CreamIntroScene({
     let renderWidth = 0;
     let renderHeight = 0;
     let renderDpr = 0;
-    const desktopMotionQuery = window.matchMedia('(min-width: 768px) and (hover: hover) and (pointer: fine)');
+    const ambientMotionQuery = window.matchMedia('(prefers-reduced-motion: no-preference)');
 
     const stop = () => {
       if (frame) window.cancelAnimationFrame(frame);
@@ -97,7 +97,7 @@ export default function CreamIntroScene({
         stencil: false,
         powerPreference: 'low-power',
         premultipliedAlpha: false,
-        preserveDrawingBuffer: true,
+        preserveDrawingBuffer: false,
       });
       renderer.resetState();
       renderer.setClearColor(0x000000, 0);
@@ -132,7 +132,7 @@ export default function CreamIntroScene({
         if (!renderer || !material) return;
         const width = Math.max(host.clientWidth, 1);
         const height = Math.max(host.clientHeight, 1);
-        const dprCap = width < 768 ? 1.1 : 1.35;
+        const dprCap = width < 768 ? 1 : 1.35;
         const dpr = Math.min(window.devicePixelRatio || 1, dprCap);
         if (width === renderWidth && height === renderHeight && dpr === renderDpr) return;
         renderWidth = width;
@@ -149,7 +149,8 @@ export default function CreamIntroScene({
         if (disposed || !renderer || !material || !pageVisible) return;
 
         const delta = Math.min((now - lastFrame) / 1000, 0.08);
-        if (!leavingRef.current && now - lastFrame < 1000 / 30) {
+        const residenceFps = renderWidth < 768 ? 24 : 30;
+        if (!leavingRef.current && now - lastFrame < 1000 / residenceFps) {
           frame = window.requestAnimationFrame(render);
           return;
         }
@@ -169,7 +170,7 @@ export default function CreamIntroScene({
       };
 
       const start = () => {
-        if (!frame && !disposed && pageVisible && (desktopMotionQuery.matches || leavingRef.current)) {
+        if (!frame && !disposed && pageVisible && (ambientMotionQuery.matches || leavingRef.current)) {
           lastFrame = performance.now();
           frame = window.requestAnimationFrame(render);
         }
@@ -182,7 +183,7 @@ export default function CreamIntroScene({
       };
 
       const handleMotionPreference = () => {
-        if (desktopMotionQuery.matches || leavingRef.current) start();
+        if (ambientMotionQuery.matches || leavingRef.current) start();
         else stop();
       };
 
@@ -195,7 +196,7 @@ export default function CreamIntroScene({
       const resizeObserver = new ResizeObserver(resize);
       resizeObserver.observe(host);
       document.addEventListener('visibilitychange', handleVisibility);
-      desktopMotionQuery.addEventListener('change', handleMotionPreference);
+      ambientMotionQuery.addEventListener('change', handleMotionPreference);
       canvas.addEventListener('webglcontextlost', handleContextLost);
       startRenderingRef.current = start;
       resize();
@@ -210,7 +211,7 @@ export default function CreamIntroScene({
         stop();
         resizeObserver.disconnect();
         document.removeEventListener('visibilitychange', handleVisibility);
-        desktopMotionQuery.removeEventListener('change', handleMotionPreference);
+        ambientMotionQuery.removeEventListener('change', handleMotionPreference);
         canvas.removeEventListener('webglcontextlost', handleContextLost);
         geometry?.dispose();
         material?.dispose();

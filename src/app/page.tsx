@@ -1,5 +1,6 @@
 'use client';
 
+import dynamic from 'next/dynamic';
 import Image from 'next/image';
 import {
   ArrowRight,
@@ -17,6 +18,7 @@ import {
 import {
   type CSSProperties,
   type MouseEvent as ReactMouseEvent,
+  useCallback,
   useEffect,
   useMemo,
   useRef,
@@ -25,6 +27,11 @@ import {
 import { CreamIntro } from '@/components/landing/cream-intro';
 import { LuxuryEffects } from '@/components/landing/luxury-effects';
 import { LuxuryHero } from '@/components/landing/luxury-hero';
+
+const CreamScrollTide = dynamic(() => import('@/components/landing/cream-scroll-tide'), {
+  ssr: false,
+  loading: () => null,
+});
 
 type Flavor = {
   id: string;
@@ -149,6 +156,7 @@ export default function Home() {
   const [activeFaq, setActiveFaq] = useState<number | null>(0);
   const [recentlyAdded, setRecentlyAdded] = useState<string | null>(null);
   const [cartReady, setCartReady] = useState(false);
+  const [introComplete, setIntroComplete] = useState(false);
   const closeCartRef = useRef<HTMLButtonElement>(null);
   const drawerRef = useRef<HTMLElement>(null);
   const returnFocusRef = useRef<HTMLElement | null>(null);
@@ -236,6 +244,8 @@ export default function Home() {
     '¿Me ayudan a confirmar disponibilidad, entrega y forma de pago?',
   ].join('\n');
 
+  const handleIntroComplete = useCallback(() => setIntroComplete(true), []);
+
   function addFlavor(flavor: Flavor, event?: ReactMouseEvent<HTMLButtonElement>) {
     setCart((current) => ({ ...current, [flavor.id]: (current[flavor.id] ?? 0) + 1 }));
     setRecentlyAdded(flavor.name);
@@ -305,7 +315,7 @@ export default function Home() {
 
   return (
     <main className="min-h-[100dvh] overflow-x-clip bg-[#f5efe5] text-[#211a17]">
-      <CreamIntro />
+      <CreamIntro onComplete={handleIntroComplete} />
       <LuxuryEffects />
       <script
         type="application/ld+json"
@@ -328,7 +338,10 @@ export default function Home() {
         </div>
       </div>
 
-      <header className="sticky top-0 z-50 border-b border-[#211a17]/10 bg-[#f5efe5]/90 backdrop-blur-xl">
+      <header
+        className="sticky top-0 z-50 border-b border-[#211a17]/10 bg-[#f5efe5]/90 backdrop-blur-xl"
+        data-site-header
+      >
         <div className="mx-auto flex h-[76px] max-w-[1400px] items-center justify-between px-5 sm:px-8 lg:px-12">
           <a href="#inicio" className="group flex items-center gap-3" aria-label="Helado Nube, inicio">
             <Image src="/logo.svg" alt="" width={42} height={42} className="transition-transform duration-500 group-hover:-rotate-6" />
@@ -408,6 +421,8 @@ export default function Home() {
           </nav>
         </div>
       </header>
+
+      {introComplete ? <CreamScrollTide suspended={menuOpen || cartOpen} /> : null}
 
       <div id="contenido">
         <LuxuryHero itemCount={itemCount} onOpenCart={openCart} />

@@ -22,9 +22,6 @@ export const creamBootstrapScript = `(() => {
     }
   }, 7400);
 
-  const mobileFallback = window.matchMedia('(max-width: 767px), (hover: none) and (pointer: coarse)').matches;
-  if (mobileFallback) return;
-
   let complete = false;
 
   const boot = () => {
@@ -47,7 +44,7 @@ export const creamBootstrapScript = `(() => {
     let creamTime = 0;
     let handleVisibility = () => undefined;
     let handleMotionPreference = () => undefined;
-    const desktopMotionQuery = window.matchMedia('(min-width: 768px) and (hover: hover) and (pointer: fine)');
+    const ambientMotionQuery = window.matchMedia('(prefers-reduced-motion: no-preference)');
 
     const stopAnimation = () => {
       if (frame) window.cancelAnimationFrame(frame);
@@ -59,7 +56,7 @@ export const creamBootstrapScript = `(() => {
       resizeObserver?.disconnect();
       return {
         timeSeconds: creamTime,
-        wasAnimating: desktopMotionQuery.matches,
+        wasAnimating: ambientMotionQuery.matches,
       };
     };
 
@@ -68,7 +65,7 @@ export const creamBootstrapScript = `(() => {
       disposed = true;
       stop();
       document.removeEventListener('visibilitychange', handleVisibility);
-      desktopMotionQuery.removeEventListener('change', handleMotionPreference);
+      ambientMotionQuery.removeEventListener('change', handleMotionPreference);
       if (vao) gl?.deleteVertexArray(vao);
       if (program) gl?.deleteProgram(program);
       if (vertex) gl?.deleteShader(vertex);
@@ -83,7 +80,7 @@ export const creamBootstrapScript = `(() => {
         depth: false,
         stencil: false,
         premultipliedAlpha: false,
-        preserveDrawingBuffer: true,
+        preserveDrawingBuffer: false,
         powerPreference: 'low-power',
       });
       if (!gl) return true;
@@ -124,7 +121,7 @@ export const creamBootstrapScript = `(() => {
       const draw = (time = creamTime) => {
         const width = Math.max(host.clientWidth, 1);
         const height = Math.max(host.clientHeight, 1);
-        const dprCap = width < 768 ? 1.1 : 1.35;
+        const dprCap = width < 768 ? 1 : 1.35;
         const dpr = Math.min(window.devicePixelRatio || 1, dprCap);
         const pixelWidth = Math.max(1, Math.floor(width * dpr));
         const pixelHeight = Math.max(1, Math.floor(height * dpr));
@@ -143,8 +140,9 @@ export const creamBootstrapScript = `(() => {
 
       const render = (now) => {
         frame = 0;
-        if (disposed || !pageVisible || !desktopMotionQuery.matches) return;
-        if (now - lastFrame < 1000 / 30) {
+        if (disposed || !pageVisible || !ambientMotionQuery.matches) return;
+        const fps = host.clientWidth < 768 ? 24 : 30;
+        if (now - lastFrame < 1000 / fps) {
           frame = window.requestAnimationFrame(render);
           return;
         }
@@ -156,7 +154,7 @@ export const creamBootstrapScript = `(() => {
       };
 
       const start = () => {
-        if (frame || disposed || !pageVisible || !desktopMotionQuery.matches) return;
+        if (frame || disposed || !pageVisible || !ambientMotionQuery.matches) return;
         lastFrame = performance.now();
         frame = window.requestAnimationFrame(render);
       };
@@ -168,7 +166,7 @@ export const creamBootstrapScript = `(() => {
       };
 
       handleMotionPreference = () => {
-        if (desktopMotionQuery.matches) start();
+        if (ambientMotionQuery.matches) start();
         else stopAnimation();
       };
 
@@ -176,7 +174,7 @@ export const creamBootstrapScript = `(() => {
       resizeObserver = new ResizeObserver(() => draw(creamTime));
       resizeObserver.observe(host);
       document.addEventListener('visibilitychange', handleVisibility);
-      desktopMotionQuery.addEventListener('change', handleMotionPreference);
+      ambientMotionQuery.addEventListener('change', handleMotionPreference);
       canvas.__creamPrepaint = {
         context: gl,
         stop,
