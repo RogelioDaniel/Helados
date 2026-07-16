@@ -77,11 +77,11 @@ export function HeroFlavorCatalogue({
     commitTimerRef.current = window.setTimeout(() => {
       setSelectedId(flavor.id);
       onFlavorChange?.(flavor);
-    }, 360);
+    }, 380);
     finishTimerRef.current = window.setTimeout(() => {
       setTransitioning(false);
       setSweepFlavorId(null);
-    }, 860);
+    }, 920);
   };
 
   const selectOffset = (offset: number) => {
@@ -116,20 +116,6 @@ export function HeroFlavorCatalogue({
       data-transitioning={transitioning ? 'true' : 'false'}
     >
       <div className="catalogue-grain" aria-hidden="true" />
-      {transitioning && sweepFlavor ? (
-        <span
-          key={`cream-sweep-${sweepToken}`}
-          className="catalogue-cream-sweep"
-          data-direction={direction}
-          style={{ '--catalogue-tone': sweepFlavor.theme.accent } as CSSProperties}
-          aria-hidden="true"
-        >
-          <span className="catalogue-cream-sweep__body" />
-          <span className="catalogue-cream-sweep__fold" />
-          <span className="catalogue-cream-sweep__drop catalogue-cream-sweep__drop--one" />
-          <span className="catalogue-cream-sweep__drop catalogue-cream-sweep__drop--two" />
-        </span>
-      ) : null}
       <header className="catalogue-topline">
         <div>
           <p className="catalogue-kicker">Selección de temporada</p>
@@ -156,6 +142,25 @@ export function HeroFlavorCatalogue({
       </header>
 
       <div className="catalogue-stage" data-catalogue-stage>
+        {/* The cream pass lives inside the stage so it only ever veils the
+            product card, never the whole hero. catalogue-stage already clips
+            with overflow: hidden. */}
+        {transitioning && sweepFlavor ? (
+          <span
+            key={`cream-sweep-${sweepToken}`}
+            className="catalogue-cream-sweep"
+            data-direction={direction}
+            style={{ '--catalogue-tone': sweepFlavor.theme.accent } as CSSProperties}
+            aria-hidden="true"
+          >
+            <span className="catalogue-cream-sweep__body" />
+            <span className="catalogue-cream-sweep__fold" />
+            <span className="catalogue-cream-sweep__highlight" />
+            <span className="catalogue-cream-sweep__drop catalogue-cream-sweep__drop--one" />
+            <span className="catalogue-cream-sweep__drop catalogue-cream-sweep__drop--two" />
+            <span className="catalogue-cream-sweep__drop catalogue-cream-sweep__drop--three" />
+          </span>
+        ) : null}
         <span key={`word-${selectedFlavor.id}`} className="catalogue-word" aria-hidden="true">{selectedFlavor.catalogueName}</span>
         <span key={`orbit-one-${selectedFlavor.id}`} className="catalogue-orbit catalogue-orbit--one" aria-hidden="true" />
         <span key={`orbit-two-${selectedFlavor.id}`} className="catalogue-orbit catalogue-orbit--two" aria-hidden="true" />
