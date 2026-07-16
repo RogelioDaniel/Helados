@@ -12,9 +12,20 @@ import {
   getOrCreateCreamSession,
 } from './cream-recipes';
 
+export type CreamIntroSceneMode = 'residence' | 'cover' | 'reveal';
+export type CreamIntroSceneDirection = 'down' | 'up';
+
 type CreamIntroSceneProps = {
   canvasId: string;
-  leaving: boolean;
+  /**
+   * residence: the cream sits fully covering the viewport (the loading hold).
+   * cover: the cream pours in, animating uReveal from 1 -> 0.
+   * reveal: the cream lifts out, animating uReveal from 0 -> 1 (the loading
+   * "recoge" gesture), reused for both the intro exit and the navigation exit.
+   */
+  mode: CreamIntroSceneMode;
+  /** down lifts toward the top (matches the loading); up mirrors vertically. */
+  direction?: CreamIntroSceneDirection;
   recipe?: CreamRecipe;
   onFirstFrame: () => void;
   onFailure: () => void;
@@ -35,6 +46,7 @@ type CreamCanvas = HTMLCanvasElement & {
 };
 
 const REVEAL_DURATION_SECONDS = 1.68;
+const COVER_DURATION_SECONDS = 0.82;
 
 function smootherStep(progress: number) {
   return progress * progress * progress * (progress * (progress * 6 - 15) + 10);
@@ -42,18 +54,27 @@ function smootherStep(progress: number) {
 
 export default function CreamIntroScene({
   canvasId,
-  leaving,
+  mode,
+  direction = 'down',
   recipe,
   onFirstFrame,
   onFailure,
 }: CreamIntroSceneProps) {
-  const leavingRef = useRef(leaving);
+  const modeRef = useRef<CreamIntroSceneMode>(mode);
+  const directionRef = useRef<CreamIntroSceneDirection>(direction);
+  const coverElapsedRef = useRef(0);
+  const revealElapsedRef = useRef(0);
   const startRenderingRef = useRef<() => void>(() => undefined);
 
   useEffect(() => {
-    leavingRef.current = leaving;
-    if (leaving) startRenderingRef.current();
-  }, [leaving]);
+    modeRef.current = mode;
+    directionRef.current = direction;
+    // A new animating mode starts from its natural origin, so reset both
+    // clocks; the inactive one is simply ignored by the render loop.
+    coverElapsedRef.current = 0;
+    revealElapsedRef.current = 0;
+    startRenderingRef.current();
+  }, [mode, direction]);
 
   useEffect(() => {
     const canvas = document.getElementById(canvasId) as CreamCanvas | null;
@@ -88,8 +109,9 @@ export default function CreamIntroScene({
     let pageVisible = !document.hidden;
     let lastFrame = performance.now();
     let creamTime = handoff?.timeSeconds ?? 0;
-    let revealElapsed = 0;
-    let reveal = leavingRef.current ? 1 : 0;
+    const initialMode = modeRef.current;
+    let reveal =
+      initialMode === 'cover' ? 1 : initialMode === 'reveal' ? 0 : 0;
     let renderWidth = 0;
     let renderHeight = 0;
     let renderDpr = 0;
@@ -126,6 +148,7 @@ export default function CreamIntroScene({
         uniforms: {
           uTime: { value: 0 },
           uReveal: { value: reveal },
+          uEdgeDir: { value: directionRef.current === 'up' ? -1 : 1 },
           uAspect: { value: 1 },
           uBaseColor: { value: new THREE.Vector3(...activeRecipe.base) },
           uLightColor: { value: new THREE.Vector3(...activeRecipe.light) },
@@ -149,6 +172,7 @@ export default function CreamIntroScene({
         if (!renderer || !material) return;
         material.uniforms.uTime.value = creamTime;
         material.uniforms.uReveal.value = reveal;
+        material.uniforms.uEdgeDir.value = directionRef.current === 'up' ? -1 : 1;
         renderer.render(scene, camera);
       };
 
@@ -172,29 +196,49 @@ export default function CreamIntroScene({
         frame = 0;
         if (disposed || !renderer || !material || !pageVisible) return;
 
+        const currentMode = modeRef.current;
+        const animating = currentMode !== 'residence';
         const delta = Math.min((now - lastFrame) / 1000, 0.08);
-        const residenceFps = renderWidth < 768 ? 24 : 30;
-        if (!leavingRef.current && now - lastFrame < 1000 / residenceFps) {
-          frame = window.requestAnimationFrame(render);
-          return;
+        // Residence holds a gentle ambient churn at a reduced framerate; the
+        // cover/reveal gestures run at the full cadence so the creamy edge
+        // stays smooth while it travels.
+        if (!animating) {
+          const residenceFps = renderWidth < 768 ? 24 : 30;
+          if (now - lastFrame < 1000 / residenceFps) {
+            frame = window.requestAnimationFrame(render);
+            return;
+          }
         }
 
         lastFrame = now;
         creamTime += delta * 1.15;
-        if (leavingRef.current) {
-          revealElapsed = Math.min(REVEAL_DURATION_SECONDS, revealElapsed + delta);
-          const progress = revealElapsed / REVEAL_DURATION_SECONDS;
-          reveal = smootherStep(progress);
-        }
-        renderCurrentFrame();
 
-        if (!(leavingRef.current && reveal >= 1)) {
-          frame = window.requestAnimationFrame(render);
+        if (currentMode === 'cover') {
+          coverElapsedRef.current = Math.min(
+            COVER_DURATION_SECONDS,
+            coverElapsedRef.current + delta,
+          );
+          const progress = coverElapsedRef.current / COVER_DURATION_SECONDS;
+          reveal = 1 - smootherStep(progress);
+        } else if (currentMode === 'reveal') {
+          revealElapsedRef.current = Math.min(
+            REVEAL_DURATION_SECONDS,
+            revealElapsedRef.current + delta,
+          );
+          const progress = revealElapsedRef.current / REVEAL_DURATION_SECONDS;
+          reveal = smootherStep(progress);
+        } else {
+          reveal = 0;
         }
+
+        renderCurrentFrame();
+        frame = window.requestAnimationFrame(render);
       };
 
       const start = () => {
-        if (!frame && !disposed && pageVisible && (ambientMotionQuery.matches || leavingRef.current)) {
+        const wantsMotion =
+          ambientMotionQuery.matches || modeRef.current !== 'residence';
+        if (!frame && !disposed && pageVisible && wantsMotion) {
           lastFrame = performance.now();
           frame = window.requestAnimationFrame(render);
         }
@@ -207,7 +251,7 @@ export default function CreamIntroScene({
       };
 
       const handleMotionPreference = () => {
-        if (ambientMotionQuery.matches || leavingRef.current) start();
+        if (ambientMotionQuery.matches || modeRef.current !== 'residence') start();
         else stop();
       };
 

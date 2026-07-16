@@ -13,6 +13,10 @@ import {
 } from 'react';
 import { creamBootstrapScript } from './cream-bootstrap-script';
 import { CREAM_INTRO_CANVAS_ID } from './cream-canvas-id';
+import type {
+  CreamIntroSceneDirection,
+  CreamIntroSceneMode,
+} from './cream-intro-scene';
 import { CreamIntroPoster } from './cream-intro-poster';
 import {
   type CreamRecipe,
@@ -76,9 +80,14 @@ const SHADER_RESIDENCY_MS = 2200;
 const WEBGL_ACQUISITION_MS = 2400;
 const EXIT_DURATION_MS = 1780;
 const HARD_DEADLINE_MS = 5000;
-const NAVIGATION_ENTER_MS = 860;
-const NAVIGATION_EXIT_MS = 1280;
-const NAVIGATION_HARD_DEADLINE_MS = 3600;
+// The navigation cream now reuses the WebGL reveal shader for both the pour
+// (cover) and the lift (reveal), instead of sliding a rigid CSS panel.
+// NAVIGATION_ENTER_MS keeps the destination hidden while the cream settles
+// over it; NAVIGATION_EXIT_MS tracks the shader's reveal gesture.
+const NAVIGATION_COVER_SETTLE_MS = 360;
+const NAVIGATION_ENTER_MS = 820 + NAVIGATION_COVER_SETTLE_MS;
+const NAVIGATION_EXIT_MS = 1780;
+const NAVIGATION_HARD_DEADLINE_MS = 4200;
 
 function waitForImage(image: HTMLImageElement | null) {
   if (!image) return Promise.resolve();
@@ -176,6 +185,7 @@ export function CreamIntro({
     let hardDeadline = 0;
     let navigationEnterFrame = 0;
     let navigationCoverTimer = 0;
+    let navigationSettleTimer = 0;
     let leaveCommitFrame = 0;
     let cleanupResources = () => undefined;
 
@@ -258,15 +268,20 @@ export function CreamIntro({
     registerWebglFailureRef.current = registerWebglFailure;
 
     if (variant === 'navigation') {
-      // Start off-canvas. The following frame lets CSS interpolate the cream
-      // into a fully covered viewport before any scroll position changes.
+      // Navigation reuses the reveal shader: the cream pours in (cover) while
+      // the React phase is 'entering', settles over the fully covered viewport
+      // (residence) for a beat, then lifts out (reveal). 'entering' is held
+      // long enough for the pour to complete before the phase advances.
       navigationEnterFrame = window.requestAnimationFrame(() => {
         if (disposed) return;
-        setPhase('covered');
         navigationCoverTimer = window.setTimeout(() => {
-          notifyCovered();
-          prepareLeave();
-        }, NAVIGATION_ENTER_MS);
+          if (disposed) return;
+          setPhase('covered');
+          navigationSettleTimer = window.setTimeout(() => {
+            notifyCovered();
+            prepareLeave();
+          }, NAVIGATION_COVER_SETTLE_MS);
+        }, NAVIGATION_ENTER_MS - NAVIGATION_COVER_SETTLE_MS);
       });
     } else {
       // The initial curtain already covers the viewport. Resolve the random
@@ -346,6 +361,7 @@ export function CreamIntro({
       window.cancelAnimationFrame(leaveCommitFrame);
       window.clearTimeout(fallbackMinimumTimer);
       window.clearTimeout(navigationCoverTimer);
+      window.clearTimeout(navigationSettleTimer);
       window.clearTimeout(webglAcquisitionTimer);
       window.clearTimeout(shaderResidencyTimer);
       window.clearTimeout(hardDeadline);
@@ -369,6 +385,18 @@ export function CreamIntro({
   }, [onComplete, phase]);
 
   if (phase === 'done') return null;
+
+  // Map the orchestration phase onto a shader mode the scene understands.
+  // The navigation variant pours the cream in (cover) before settling it
+  // (residence) and lifting it out (reveal); the intro variant only holds
+  // and lifts, since the cream already covers the viewport from SSR.
+  const sceneMode: CreamIntroSceneMode =
+    variant === 'navigation' && phase === 'entering'
+      ? 'cover'
+      : phase === 'leaving'
+        ? 'reveal'
+        : 'residence';
+  const sceneDirection: CreamIntroSceneDirection = direction;
 
   return (
     <div
@@ -394,7 +422,8 @@ export function CreamIntro({
         <CreamSceneBoundary onFailure={handleSceneFailure}>
           <CreamIntroScene
             canvasId={CREAM_INTRO_CANVAS_ID}
-            leaving={phase === 'leaving'}
+            mode={sceneMode}
+            direction={sceneDirection}
             recipe={recipe}
             onFirstFrame={handleFirstFrame}
             onFailure={handleSceneFailure}

@@ -13,6 +13,11 @@ export const creamFragmentShader = /* glsl */ `
   uniform float uTime;
   uniform float uReveal;
   uniform float uAspect;
+  // +1 reveals from the bottom up (cream lifts toward the top, like the
+  // initial loading). -1 mirrors the gesture vertically (cream pours in
+  // from the top / drops out toward the bottom). Lets navigation reuse the
+  // same reveal curve for the opposite direction.
+  uniform float uEdgeDir;
   uniform vec3 uBaseColor;
   uniform vec3 uLightColor;
   uniform vec3 uRibbonAColor;
@@ -104,6 +109,10 @@ export const creamFragmentShader = /* glsl */ `
     color += (noise(uv * 120.0 + seedOffset * 13.0) - 0.5) * 0.012;
 
     float revealEdge = uReveal * 1.32 - 0.16;
+    // vY mirrors the vertical axis for the edge geometry when uEdgeDir < 0,
+    // so the whole reveal gesture (edge travel, noise profile and hanging
+    // drips) flips to pour in / out from the opposite side.
+    float vY = mix(uv.y, 1.0 - uv.y, step(0.5, -uEdgeDir));
     float edgeNoise = (
       noise(vec2(
         uv.x * 4.8 + uDropletSeed * 9.0,
@@ -120,7 +129,7 @@ export const creamFragmentShader = /* glsl */ `
       bell(uv.x, dripB, 0.08) * 0.058 +
       bell(uv.x, dripC, 0.045) * 0.087
     ) * dripWindow * dripPulse;
-    float creamLip = uv.y + edgeNoise + drips;
+    float creamLip = vY + edgeNoise + drips;
     float alpha = smoothstep(revealEdge - 0.038, revealEdge + 0.038, creamLip);
     float edgeLight = exp(-abs(creamLip - revealEdge) * 48.0) * dripWindow;
     color += edgeLight * vec3(0.085, 0.065, 0.045);

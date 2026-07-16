@@ -184,6 +184,7 @@ export const creamBootstrapScript = `(() => {
       const flowStrengthLocation = gl.getUniformLocation(program, 'uFlowStrength');
       const materialSeedLocation = gl.getUniformLocation(program, 'uMaterialSeed');
       const dropletSeedLocation = gl.getUniformLocation(program, 'uDropletSeed');
+      const edgeDirLocation = gl.getUniformLocation(program, 'uEdgeDir');
       const draw = (time = creamTime) => {
         const width = Math.max(host.clientWidth, 1);
         const height = Math.max(host.clientHeight, 1);
@@ -212,6 +213,8 @@ export const creamBootstrapScript = `(() => {
         gl.uniform1f(flowStrengthLocation, creamSession.recipe.flowStrength);
         gl.uniform1f(materialSeedLocation, creamSession.materialPhase);
         gl.uniform1f(dropletSeedLocation, creamSession.dropletSeed / 0xffffffff);
+        // The loading reveal always lifts from the bottom up.
+        if (edgeDirLocation) gl.uniform1f(edgeDirLocation, 1);
         gl.drawArrays(gl.TRIANGLES, 0, 3);
       };
 
