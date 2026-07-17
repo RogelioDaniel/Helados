@@ -707,6 +707,19 @@ html.cream-intro-active:not(.cream-intro-revealing) .hero-flavor-catalogue * {
   background-color: color-mix(in srgb, var(--site-canvas, var(--nube-canvas)) 90%, transparent);
 }
 
+/* When the hero fills the viewport the header tucks away so the first screen
+   reads as an immersive cover; it slides back in the moment content appears.
+   Hidden state also neutralizes interaction so links/buttons are not reached
+   via keyboard or screen-reader while off-screen. */
+.site-header--hidden {
+  pointer-events: none;
+}
+
+.site-header--hidden a,
+.site-header--hidden button {
+  visibility: hidden;
+}
+
 .site-mobile-nav {
   background-color: var(--site-canvas, var(--nube-canvas));
 }

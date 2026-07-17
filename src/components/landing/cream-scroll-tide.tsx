@@ -287,8 +287,12 @@ export default function CreamScrollTide({
 
     const updateScrollState = () => {
       const headerRect = header.getBoundingClientRect();
+      const headerHidden = header.dataset.heroInView === 'true';
+      // When the header is tucked away on the hero, place the tide flush under
+      // the promo banner instead of chasing the translated-away header rect.
+      const tideTop = headerHidden ? 0 : Math.max(0, Math.round(headerRect.bottom - 1));
       const nextActive = headerRect.top <= 0.5 && lastScrollY > 2;
-      host.style.top = `${Math.max(0, Math.round(headerRect.bottom - 1))}px`;
+      host.style.top = `${tideTop}px`;
 
       if (nextActive) {
         const travel = Math.max(window.innerHeight * 2.2, 1_200);

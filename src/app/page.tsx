@@ -128,6 +128,7 @@ export default function Home() {
   const [navigationDirection, setNavigationDirection] = useState<CreamNavigationDirection>('down');
   const [creamSession, setCreamSession] = useState<CreamSession | null>(null);
   const [activeFlavorId, setActiveFlavorId] = useState<Flavor['id']>(FLAVORS[0]?.id ?? 'fresa');
+  const [heroInView, setHeroInView] = useState(true);
   const closeCartRef = useRef<HTMLButtonElement>(null);
   const drawerRef = useRef<HTMLElement>(null);
   const returnFocusRef = useRef<HTMLElement | null>(null);
@@ -167,6 +168,26 @@ export default function Home() {
     const timer = window.setTimeout(() => setRecentlyAdded(null), 2200);
     return () => window.clearTimeout(timer);
   }, [recentlyAdded]);
+
+  // Hide the site header while the hero is in view so the first screen feels
+  // immersive; bring it back once the visitor scrolls into the content. The
+  // banner strip above stays put. Resume the header whenever a drawer is open
+  // so its controls remain reachable.
+  useEffect(() => {
+    const hero = document.getElementById('inicio');
+    if (!hero) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const entry = entries[0];
+        if (entry) setHeroInView(entry.isIntersecting);
+      },
+      // Treat the hero as "in view" until a good slice has scrolled away, so
+      // the header does not flicker on small scrolls at the top of the page.
+      { threshold: 0, rootMargin: '-12% 0px -55% 0px' },
+    );
+    observer.observe(hero);
+    return () => observer.disconnect();
+  }, [introComplete]);
 
   useEffect(() => {
     if (!cartOpen && !menuOpen) return;
@@ -446,8 +467,13 @@ export default function Home() {
       </div>
 
       <header
-        className="site-header sticky top-0 z-50 border-b border-[#211a17]/10 backdrop-blur-xl"
+        className={`site-header sticky top-0 z-50 border-b border-[#211a17]/10 backdrop-blur-xl transition-[transform,opacity] duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+          heroInView && !cartOpen && !menuOpen
+            ? 'site-header--hidden -translate-y-full opacity-0'
+            : 'translate-y-0 opacity-100'
+        }`}
         data-site-header
+        data-hero-in-view={heroInView ? 'true' : 'false'}
       >
         <div className="mx-auto flex h-[76px] max-w-[1400px] items-center justify-between px-5 sm:px-8 lg:px-12">
           <a href="#inicio" className="group flex items-center gap-3" aria-label="Helado Nube, inicio">
@@ -932,19 +958,15 @@ export default function Home() {
             {cartItems.length === 0 ? (
               <div className="grid min-h-full place-items-center py-16 text-center">
                 <div>
-                  <span className="mx-auto grid h-16 w-16 place-items-center rounded-full border border-[#211a17]/15 text-[var(--nube-accent)]">
-                    <ShoppingBag className="h-6 w-6" strokeWidth={1.4} />
-                  </span>
-                  <h3 className="font-display mt-6 text-3xl font-medium">Tu selección está vacía.</h3>
+                  <h3 className="font-display text-3xl font-medium">Tu selección está vacía.</h3>
                   <p className="mx-auto mt-3 max-w-[30ch] text-sm leading-6 text-[#211a17]/55">Elige uno o varios sabores y vuelve cuando estés listo.</p>
-                  <button
-                    type="button"
-                    onClick={closeCart}
+                  <a
+                    href="#sabores"
                     className="mt-6 inline-flex min-h-11 items-center gap-2 border-b border-[#211a17] text-sm font-bold"
                   >
                     Explorar sabores
                     <ArrowRight className="h-4 w-4" />
-                  </button>
+                  </a>
                 </div>
               </div>
             ) : (
